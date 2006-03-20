@@ -5,22 +5,28 @@ use Carp qw(croak);
 use File::Find;
 
 sub new {
-    my ($class, %opts) = @_;
+    my ($class, $conf, $cache) = @_;
     my $self = bless {}, $class;
 
-    $self->{name}       = delete $opts{name};
-    $self->{dir}        = delete $opts{dir};
-    $self->{chunk_size} = delete $opts{chunk_size};
-    $self->{cache}      = delete $opts{cache};  # a Brackup::DigestCache object
+    my $name = $conf->name;
+    $name =~ s!^SOURCE:!! or die;
+
+    $self->{name}       = $name;
+    $self->{dir}        = $conf->path_value('path');
+    $self->{gpg_rcpt}   = $conf->value('gpg_recipient');
+    $self->{chunk_size} = $conf->byte_value('chunk_size'),
+    $self->{cache}      = $cache;   # a Brackup::DigestCache object
     $self->{ignore}     = [];
-    croak("Unknown options: " . join(', ', keys %opts)) if %opts;
 
     die "No backup-root name provided." unless $self->{name};
     die "Backup-root name must be only a-z, A-Z, 0-9, and _." unless $self->{name} =~ /^\w+/;
-    die "No backup-root directory provided." unless $self->{dir};
-    die "Backup-root directory isn't a directory: $self->{dir}" unless -d $self->{dir};
 
     return $self;
+}
+
+sub gpg_rcpt {
+    my $self = shift;
+    return $self->{gpg_rcpt};
 }
 
 sub cache {

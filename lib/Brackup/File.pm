@@ -124,7 +124,7 @@ sub full_digest {
     my $cache = $self->{root}->cache;
     my $key   = $self->cachekey;
     if ($cache) {
-	my $dig = $cache->full_digest($key);
+	my $dig = $cache->get($key);
 	return $dig if $dig;
     }
 
@@ -135,7 +135,7 @@ sub full_digest {
     close($fh);
 
     my $dig = "sha1-" . $sha1->hexdigest;
-    $cache->set_full_digest($key, $dig) if $cache;
+    $cache->set($key, $dig) if $cache;
     return $dig;
 }
 

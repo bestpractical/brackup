@@ -38,12 +38,8 @@ sub load_root {
     my $conf = $self->{"SOURCE:$name"} or
 	die "Unknown source '$name'\n";
 
-    my $root = Brackup::Root->new(
-				  name       => $name,
-				  dir        => $conf->value('path'),
-				  chunk_size => $conf->byte_value('chunk_size'),
-				  cache      => $cache,
-				  );
+    my $root = Brackup::Root->new($conf, $cache);
+
 
     # iterate over config's ignore, and add those
     foreach my $pat ($conf->values("ignore")) {
@@ -84,6 +80,11 @@ sub new {
     return bless {
 	_name => $name,
     }, $class;
+}
+
+sub name {
+    my $self = shift;
+    return $self->{_name};
 }
 
 sub add {

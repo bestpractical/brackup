@@ -12,13 +12,12 @@ sub new {
     return $self;
 }
 
-sub full_digest {
+sub get {
     my ($self, $key) = @_;
-    warn "GET KEY ($key)\n";
     return undef;
 }
 
-sub set_full_digest {
+sub set {
     my ($self, $key, $val) = @_;
     warn "SET KEY ($key) = $val\n";
 }
