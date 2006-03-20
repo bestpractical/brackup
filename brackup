@@ -1,0 +1,65 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+
+use FindBin qw($Bin);
+use lib "$Bin/lib";
+
+use Brackup::Config;
+use Brackup::File;
+use Brackup::DigestCache;
+use Brackup::Backup;
+use Brackup::Root;     # aka "source"
+use Brackup::Target;
+use Brackup::Target::Amazon;
+
+my ($src_name, $target_name, $opt_wipecache, $opt_verbose);
+usage() unless
+    GetOptions(
+	       'from=s' => \$src_name,
+	       'to=s'   => \$target_name,
+	       'wipecache'   => \$opt_wipecache,
+	       'verbose'     => \$opt_verbose,
+	       );
+usage() unless $src_name && $target_name;
+
+sub usage {
+    my $why = shift || "";
+    if ($why) {
+	$why =~ s/\s+$//;
+	$why = "Error: $why\n\n";
+    }
+    die "${why}brackup --from=[source_name] --to=[target_name]\n";
+}	
+
+my $config = eval { Brackup::Config->load("$ENV{HOME}/.brackup.conf") } or
+    usage($@);
+
+my $cache = Brackup::DigestCache->new("$ENV{HOME}/.wsbackup.digestcache");
+$cache->wipe if $opt_wipecache;
+
+my $root = eval { $config->load_root($src_name, $cache); } or
+    usage($@);
+
+my $target = eval { $config->load_target($target_name); } or
+    usage($@);
+
+
+my @now = localtime();
+my $backup_name = $root->name . "-" . sprintf("%04d%02d%02d", $now[5]+1900, $now[4]+1, $now[3]);
+
+my $backup = Brackup::Backup->new(
+				  name    => $backup_name,
+				  root    => $root,
+				  target  => $target,
+				  );
+
+if (eval { $backup->backup }) {
+    warn "Backup complete." if $opt_verbose;
+    exit 0;
+} else {
+    warn "Error running backup: $@\n";
+    exit 1;
+}
