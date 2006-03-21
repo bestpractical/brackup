@@ -15,7 +15,7 @@ sub chunkpath {
     my ($self, $dig) = @_;
     my @parts;
     my $fulldig = $dig;
-    $dig =~ s/^\w+-//; # remove the "hashtype-" from beginning
+    $dig =~ s/^\w+://; # remove the "hashtype:" from beginning
     while (length $dig && @parts < 4) {
 	$dig =~ s/^(.{1,4})//;
 	push @parts, $1;
@@ -25,7 +25,7 @@ sub chunkpath {
 
 sub has_chunk {
     my ($self, $chunk) = @_;
-    my $dig = $chunk->backup_digest;   # "sha1-sdfsdf" format scalar
+    my $dig = $chunk->backup_digest;   # "sha1:sdfsdf" format scalar
     my $path = $self->chunkpath($dig);
     my $exists = -e $path;
     warn "Doesn't exist: $path ($dig)" unless $exists;

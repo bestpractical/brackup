@@ -41,18 +41,19 @@ that implements a dictionary (get/set keys/values).
 
 The keys/values used are:
 
-    <FileCacheKey>  -->  <TypedDigest>
+    <FileCacheKey>  -->  <TypedDigest(original_unencrypted_file)>
 
     <ChunkCacheKey> -->  <ChunkDetails>
+
 Where:
 
     FileCacheKey ::= "[" <RootName> "]" <FileRelativePath> ":" join(",", <ctime>, <mtime>, <size>, <inode>)
 
-    ChunkCacheKey ::= <FileCacheKey> "-" <raw_offset> "-" <raw_length>
+    ChunkCacheKey ::= <TypedDigest(original_unencrypted_file)> "-" <raw_offset> "-" <raw_length>
 
-    ChunkDetails  ::= <EncryptedLength> " " <TypedDigest>
+    ChunkDetails  ::= <EncryptedLength> " " <TypedDigest(encrypted_chunk)>
 
-    TypedDigest  ::= <DigestAlgo> "-" <hex_digest>
+    TypedDigest  ::= <DigestAlgo> ":" <hex_digest>
 
     DigestAlgo   ::= { "sha1" }
 

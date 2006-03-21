@@ -30,7 +30,7 @@ sub digdb {
 
 sub cachekey {
     my $self = shift;
-    return join("-", $self->{file}->cachekey, $self->{offset}, $self->{length});
+    return join("-", $self->{file}->full_digest, $self->{offset}, $self->{length});
 }
 
 sub as_string {
@@ -89,6 +89,9 @@ sub _learn_lengthdigest_from_cache {
     my $lendig = $db->get($self->cachekey)
 	or return 0;
     my ($length, $digest) = split(/\s+/, $lendig);
+
+    return 0 unless $digest =~ /^sha1:/;
+
     $self->{backlength} = $length;
     $self->{digest} = $digest;
     return 1;
@@ -97,7 +100,7 @@ sub _learn_lengthdigest_from_cache {
 sub _learn_lengthdigest {
     my ($self, $dataref) = @_;
     $self->{backlength} = length $$dataref;
-    $self->{digest} = "sha1-" . sha1_hex($$dataref);
+    $self->{digest} = "sha1:" . sha1_hex($$dataref);
     my $db = $self->digdb;
     $db->set($self->cachekey, "$self->{backlength} $self->{digest}");
     1;

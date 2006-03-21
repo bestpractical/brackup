@@ -133,7 +133,7 @@ sub full_digest {
     $sha1->addfile($fh);
     close($fh);
 
-    $dig = "sha1-" . $sha1->hexdigest;
+    $dig = "sha1:" . $sha1->hexdigest;
     $db->set($key, $dig);
     return $dig;
 }
