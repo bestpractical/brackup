@@ -1,0 +1,43 @@
+This file documents the main classes, data structures, file formats,
+etc used in Brackup.
+
+----------------------------------------------------------------------------
+Class-wise, we have:
+----------------------------------------------------------------------------
+
+  Root -- describes a path on the filesystem to be backed up.  has as
+          properties how small large files are cut up into
+          ("chunk_size"), what files to ignore, and the encryption
+          settings.
+
+  Target -- a destination for the backups.
+
+  File -- a directory, symlink, or file in a Root.
+
+  Chunk -- part of a file, defined as an offset and length.  depending
+           on encryption settings, the serialized backup length can be
+           more or less than the unencrypted length.
+
+  Backup -- a snapshot in time of all a Root's Files and Chunks.
+            during the backup, the Target is consulted to see if it
+            has chunks before they're re-stored.  The backup upon
+	    completion writes a YAML file as described below.
+
+  DigestDatabase -- the digest database, a property of the Root, acts
+                    mostly as a cache, but is pretty important when
+		    using encryption.  If you lose the database, all your
+		    files will need to be re-encrypted, as Brackup won't
+		    know if the chunks already exist, as encryption makes
+		    different files each time.  Note that you don't need
+		    the digest database to do a restore.
+
+
+----------------------------------------------------------------------------
+[backup-name].brackup YAML format
+----------------------------------------------------------------------------
+
+....
+
+		    
+            
+
