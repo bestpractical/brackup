@@ -28,6 +28,12 @@ sub digdb {
     return $self->{file}->root->digdb;
 }
 
+# to the format used by the metafile
+sub to_meta {
+    my $self = shift;
+    return join(";", $self->{offset}, $self->{length}, $self->backup_length, $self->backup_digest);
+}
+
 sub cachekey {
     my $self = shift;
     return join("-", $self->{file}->full_digest, $self->{offset}, $self->{length});

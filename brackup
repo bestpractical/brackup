@@ -54,6 +54,12 @@ my $backup = Brackup::Backup->new(
 
 if (eval { $backup->backup }) {
     warn "Backup complete." if $opt_verbose;
+    open (my $metafh, ">$Bin/brackup.dat") or die;
+    $backup->foreach_saved_file(sub {
+	my $file = shift;
+	print $metafh $file->as_rfc822;
+    });
+    close $metafh or die;
     exit 0;
 } else {
     warn "Error running backup: $@\n";

@@ -93,28 +93,42 @@ sub cachekey {
 # iterate over chunks sized by the root's configuration
 sub foreach_chunk {
     my ($self, $cb) = @_;
+
+    foreach my $chunk ($self->chunks) {
+	$cb->($chunk);
+    }
+}
+
+sub _min {
+    return (sort { $a <=> $b } @_)[0];
+}
+
+sub chunks {
+    my $self = shift;
+    return @{ $self->{chunks} } if $self->{chunks};
+
     my $root = $self->{root};
     my $chunk_size = $root->chunk_size;
-    my $key  = $self->cachekey;
 
     # non-files don't have chunks
-    return unless $self->is_file;
-
-    my $offset = 0;
-    my $size   = $self->size;
-
-    my $min = sub { (sort { $a <=> $b } @_)[0] };
-
-    while ($offset < $size) {
-	my $len = $min->($chunk_size, $size - $offset);
-	my $chunk = Brackup::Chunk->new(
-					file   => $self,
-					offset => $offset,
-					length => $len,
-					);
-	$cb->($chunk);
-	$offset += $len;
+    my @list;
+    if ($self->is_file) {
+	my $offset = 0;
+	my $size   = $self->size;
+	while ($offset < $size) {
+	    my $len = _min($chunk_size, $size - $offset);
+	    my $chunk = Brackup::Chunk->new(
+					    file   => $self,
+					    offset => $offset,
+					    length => $len,
+					    );
+	    push @list, $chunk;
+	    $offset += $len;
+	}
     }
+
+    $self->{chunks} = \@list;
+    return @list;
 }
 
 sub full_digest {
@@ -138,10 +152,40 @@ sub full_digest {
     return $dig;
 }
 
+sub link_target {
+    my $self = shift;
+    return $self->{linktarget} if $self->{linktarget};
+    return undef unless $self->is_link;
+    return $self->{linktarget} = readlink($self->fullpath);
+}
+
 sub as_string {
     my $self = shift;
     my $type = $self->type;
     return "[" . $self->{root}->as_string . "] t=$type $self->{path}";
+}
+
+sub as_rfc822 {
+    my $self = shift;
+    my $ret = "";
+    my $set = sub {
+	my ($key, $val) = @_;
+	return unless length $val;
+	$ret .= "$key: $val\n";
+    };
+    $set->("Path", $self->{path});
+    if ($self->is_file) {
+	$set->("Size", $self->size);
+	$set->("Digest", $self->full_digest);
+    } else {
+	$set->("Type", $self->type);
+	if  ($self->is_link) {
+	    $set->("Link", $self->link_target);
+	}
+    }
+    $set->("Chunks", join("\n ", map { $_->to_meta } $self->chunks));
+
+    return $ret . "\n";
 }
 
 1;
