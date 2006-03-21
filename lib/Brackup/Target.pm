@@ -23,5 +23,10 @@ sub store_chunk {
     die "ERROR: store_chunk not implemented in sub-class $self";
 }
 
+sub store_backup_meta {
+    my ($self, $name, $file) = @_;
+    die "ERROR: store_backup_meta not implemented in sub-class $self";
+}
+
 1;
 

@@ -50,17 +50,22 @@ sub backup {
     });
     close $metafh or die;
 
-    my $upfile   = $backup_file;
+    my $contents;
+
     # store the metafile, encrypted, on the target
     if (my $rcpt = $self->{root}->gpg_rcpt) {
-	$upfile .= ".enc";
-        system("gpg", "--recipient", $rcpt, "--encrypt", "--output=$upfile", "--yes", $backup_file)
+	my $encfile .= ".enc";
+        system("gpg", "--recipient", $rcpt, "--encrypt", "--output=$encfile", "--yes", $backup_file)
 	    and die "Failed to run gpg while encryping metafile: $!\n";
+	$contents = contents_of($encfile);
+	unlink $encfile;
+    } else {
+	$contents = contents_of($backup_file);
     }
 
     # store it on the target
     my $name = $self->{root}->publicname . "-" . $self->backup_time;
-    $target->store_backup_meta($name, contents_of($upfile));
+    $target->store_backup_meta($name, $contents);
 
     return 1;
 }
