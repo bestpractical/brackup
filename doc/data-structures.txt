@@ -57,10 +57,13 @@ Where:
     DigestAlgo   ::= { "sha1" }
 
 
+----------------------------------------------------------------------------
+[backup-name].brackup YAML/XML/txt format (undecided)
+----------------------------------------------------------------------------
 
-----------------------------------------------------------------------------
-[backup-name].brackup YAML format
-----------------------------------------------------------------------------
+XML: Net::Amazon::S3 already uses LibXML
+YAML:  in Perl sucks
+RFC822?  easy.  well-understood, readable.
 
 ....
 
