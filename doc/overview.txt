@@ -1,3 +1,6 @@
+Originally posted to:
+  <http://brad.livejournal.com/2205732.html>
+
 There are lots of ways to store files on the net lately:
 
 -- Amazon S3 is the most interesting,
