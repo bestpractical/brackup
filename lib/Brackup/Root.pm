@@ -41,6 +41,12 @@ sub chunk_size {
     return $self->{chunk_size} || (64 * 2**20);  # default to 64MB
 }
 
+sub publicname {
+    # FIXME: let users define the public (obscured) name of their roots.  s/porn/media/, etc.
+    # because their metafile key names (which contain the root) aren't encrypted.
+    return $_[0]{name};
+}
+
 sub name {
     return $_[0]{name};
 }

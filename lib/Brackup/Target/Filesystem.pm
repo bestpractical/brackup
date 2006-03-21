@@ -52,5 +52,17 @@ sub store_chunk {
     return 1;
 }
 
+sub store_backup_meta {
+    my ($self, $name, $file) = @_;
+    my $dir = "$self->{path}/backups/";
+    unless (-d $dir) {
+	mkdir $dir or die "Failed to mkdir $dir: $!\n";
+    }
+    open (my $fh, ">$dir/$name.brackup") or die;
+    print $fh $file;
+    close $fh or die;
+    return 1;
+}
+
 1;
 

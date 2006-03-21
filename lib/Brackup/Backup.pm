@@ -19,13 +19,15 @@ sub new {
 
 # returns 1 on success, or dies with error
 sub backup {
-    my $self = shift;
+    my ($self, $backup_file) = @_;
 
     my $root   = $self->{root};
     my $target = $self->{target};
 
+    # store the files
     $root->foreach_file(sub {
-	my $file = shift;  # a Brackup::File object
+	my ($file, $progress) = @_;  # a Brackup::File and Brackup::Progress
+
 	print ($file->as_string . ":\n");
 
 	$file->foreach_chunk(sub {
@@ -39,7 +41,53 @@ sub backup {
 	$self->add_file($file);
     });
 
+    # write the metafile
+    open (my $metafh, ">$backup_file") or die "Failed to open $backup_file for writing: $!\n";
+    print $metafh $self->backup_header;
+    $self->foreach_saved_file(sub {
+	my $file = shift;
+	print $metafh $file->as_rfc822;
+    });
+    close $metafh or die;
+
+    my $upfile   = $backup_file;
+    # store the metafile, encrypted, on the target
+    if (my $rcpt = $self->{root}->gpg_rcpt) {
+	$upfile .= ".enc";
+        system("gpg", "--recipient", $rcpt, "--encrypt", "--output=$upfile", "--yes", $backup_file)
+	    and die "Failed to run gpg while encryping metafile: $!\n";
+    }
+
+    # store it on the target
+    my $name = $self->{root}->publicname . "-" . $self->backup_time;
+    $target->store_backup_meta($name, contents_of($upfile));
+
     return 1;
+}
+
+sub contents_of {
+    my $file = shift;
+    open (my $fh, $file) or die "Failed to read contents of $file: $!\n";
+    return do { local $/; <$fh>; };
+}
+
+sub backup_time {
+    my $self = shift;
+    return $self->{backup_time} ||= time();
+}
+
+sub backup_header {
+    my $self = shift;
+    my $ret = "";
+    my $now = $self->backup_time;
+    $ret .= "BackupTime: " . $now . " (" . localtime($now) . ")\n";
+    $ret .= "RootName: " . $self->{root}->name . "\n";
+    $ret .= "RootPath: " . $self->{root}->path . "\n";
+    if (my $rcpt = $self->{root}->gpg_rcpt) {
+	$ret .= "GPG-Recipient: $rcpt\n";
+    }
+    $ret .= "\n";
+    return $ret; 
 }
 
 sub add_file {
