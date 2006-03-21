@@ -8,7 +8,6 @@ sub new {
     my $self = bless {}, $class;
 
     $self->{root}    = delete $opts{root};     # Brackup::Root
-    $self->{name}    = delete $opts{name};
     $self->{target}  = delete $opts{target};   # Brackup::Target
 
     $self->{saved_files} = [];   # list of hashrefs

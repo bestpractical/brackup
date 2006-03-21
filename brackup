@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 
+use Cwd;
 use FindBin qw($Bin);
 use lib "$Bin/lib";
 
@@ -15,14 +16,17 @@ use Brackup::Root;     # aka "source"
 use Brackup::Target;
 use Brackup::Target::Amazon;
 
-my ($src_name, $target_name, $opt_verbose);
+my ($src_name, $target_name, $opt_verbose, $backup_file);
 usage() unless
     GetOptions(
-	       'from=s' => \$src_name,
-	       'to=s'   => \$target_name,
-	       'verbose'     => \$opt_verbose,
+	       'from=s'    => \$src_name,
+	       'to=s'      => \$target_name,
+	       'verbose'   => \$opt_verbose,
+	       'output=s'  => \$backup_file,
 	       );
 usage() unless $src_name && $target_name;
+
+my $cwd = getcwd();
 
 sub usage {
     my $why = shift || "";
@@ -44,17 +48,17 @@ my $target = eval { $config->load_target($target_name); } or
 
 
 my @now = localtime();
-my $backup_name = $root->name . "-" . sprintf("%04d%02d%02d", $now[5]+1900, $now[4]+1, $now[3]);
+$backup_file ||= $root->name . "-" . sprintf("%04d%02d%02d", $now[5]+1900, $now[4]+1, $now[3]) . ".brackup";
+$backup_file = "$cwd/$backup_file" unless $backup_file =~ m!^/!;
 
 my $backup = Brackup::Backup->new(
-				  name    => $backup_name,
 				  root    => $root,
 				  target  => $target,
 				  );
 
 if (eval { $backup->backup }) {
     warn "Backup complete." if $opt_verbose;
-    open (my $metafh, ">$Bin/brackup.dat") or die;
+    open (my $metafh, ">$backup_file") or die "Failed to open $backup_file for writing: $!\n";
     $backup->foreach_saved_file(sub {
 	my $file = shift;
 	print $metafh $file->as_rfc822;
