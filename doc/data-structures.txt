@@ -33,6 +33,32 @@ Class-wise, we have:
 
 
 ----------------------------------------------------------------------------
+DigestDatabase
+----------------------------------------------------------------------------
+
+The digest database is an SQLite file, but in theory can be anything
+that implements a dictionary (get/set keys/values).
+
+The keys/values used are:
+
+    <FileCacheKey>  -->  <TypedDigest>
+
+    <ChunkCacheKey> -->  <ChunkDetails>
+Where:
+
+    FileCacheKey ::= "[" <RootName> "]" <FileRelativePath> ":" join(",", <ctime>, <mtime>, <size>, <inode>)
+
+    ChunkCacheKey ::= <FileCacheKey> "-" <raw_offset> "-" <raw_length>
+
+    ChunkDetails  ::= <EncryptedLength> " " <TypedDigest>
+
+    TypedDigest  ::= <DigestAlgo> "-" <hex_digest>
+
+    DigestAlgo   ::= { "sha1" }
+
+
+
+----------------------------------------------------------------------------
 [backup-name].brackup YAML format
 ----------------------------------------------------------------------------
 
