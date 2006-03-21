@@ -9,18 +9,17 @@ use lib "$Bin/lib";
 
 use Brackup::Config;
 use Brackup::File;
-use Brackup::DigestCache;
+use Brackup::DigestDatabase;
 use Brackup::Backup;
 use Brackup::Root;     # aka "source"
 use Brackup::Target;
 use Brackup::Target::Amazon;
 
-my ($src_name, $target_name, $opt_wipecache, $opt_verbose);
+my ($src_name, $target_name, $opt_verbose);
 usage() unless
     GetOptions(
 	       'from=s' => \$src_name,
 	       'to=s'   => \$target_name,
-	       'wipecache'   => \$opt_wipecache,
 	       'verbose'     => \$opt_verbose,
 	       );
 usage() unless $src_name && $target_name;
@@ -37,10 +36,7 @@ sub usage {
 my $config = eval { Brackup::Config->load("$ENV{HOME}/.brackup.conf") } or
     usage($@);
 
-my $cache = Brackup::DigestCache->new("$ENV{HOME}/.wsbackup.digestcache");
-$cache->wipe if $opt_wipecache;
-
-my $root = eval { $config->load_root($src_name, $cache); } or
+my $root = eval { $config->load_root($src_name); } or
     usage($@);
 
 my $target = eval { $config->load_target($target_name); } or

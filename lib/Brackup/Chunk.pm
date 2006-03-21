@@ -23,9 +23,9 @@ sub new {
     return $self;
 }
 
-sub cache {
+sub digdb {
     my $self = shift;
-    return $self->{file}->root->cache;
+    return $self->{file}->root->digdb;
 }
 
 sub cachekey {
@@ -83,10 +83,10 @@ sub _populate_lengthdigest {
 sub _learn_lengthdigest_from_cache {
     my $self = shift;
 
-    my $cache = $self->cache;
+    my $db = $self->digdb or die "No digest database?";
     my $file = $self->{file};
 
-    my $lendig = $cache->get($self->cachekey)
+    my $lendig = $db->get($self->cachekey)
 	or return 0;
     my ($length, $digest) = split(/\s+/, $lendig);
     $self->{backlength} = $length;
@@ -98,8 +98,8 @@ sub _learn_lengthdigest {
     my ($self, $dataref) = @_;
     $self->{backlength} = length $$dataref;
     $self->{digest} = "sha1-" . sha1_hex($$dataref);
-    my $cache = $self->cache;
-    $cache->set($self->cachekey, "$self->{backlength} $self->{digest}");
+    my $db = $self->digdb;
+    $db->set($self->cachekey, "$self->{backlength} $self->{digest}");
     1;
 }
 

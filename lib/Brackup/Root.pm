@@ -3,9 +3,10 @@ use strict;
 use warnings;
 use Carp qw(croak);
 use File::Find;
+use Brackup::DigestDatabase;
 
 sub new {
-    my ($class, $conf, $cache) = @_;
+    my ($class, $conf) = @_;
     my $self = bless {}, $class;
 
     my $name = $conf->name;
@@ -15,8 +16,9 @@ sub new {
     $self->{dir}        = $conf->path_value('path');
     $self->{gpg_rcpt}   = $conf->value('gpg_recipient');
     $self->{chunk_size} = $conf->byte_value('chunk_size'),
-    $self->{cache}      = $cache;   # a Brackup::DigestCache object
     $self->{ignore}     = [];
+
+    $self->{digdb}      = Brackup::DigestDatabase->new("$self->{dir}/.brackup-digest.db");
 
     die "No backup-root name provided." unless $self->{name};
     die "Backup-root name must be only a-z, A-Z, 0-9, and _." unless $self->{name} =~ /^\w+/;
@@ -29,9 +31,9 @@ sub gpg_rcpt {
     return $self->{gpg_rcpt};
 }
 
-sub cache {
+sub digdb {
     my $self = shift;
-    return $self->{cache};
+    return $self->{digdb};
 }
 
 sub chunk_size {
