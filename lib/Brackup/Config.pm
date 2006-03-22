@@ -8,7 +8,13 @@ sub load {
     my ($class, $file) = @_;
     my $self = bless {}, $class;
 
-    open (my $fh, $file) or die "No config file at: $file\n";
+    open (my $fh, $file) or do {
+	if (write_dummy_config($file)) {
+	    die "Your config file needs tweaking.  I put a commented-out template at: $file\n";
+	} else {
+	    die "No config file at: $file\n";
+	}
+    };
     my $sec = undef;
     while (my $line = <$fh>) {
 	$line =~ s/^\#.*//;   # kill comments starting at beginning of line
@@ -30,7 +36,43 @@ sub load {
 	}
     }
 
+    unless ($sec) {
+	die "Your config file needs tweaking.  There's a starting template at: $file\n";
+    }
+
     return $self;
+}
+
+sub write_dummy_config {
+    my $file = shift;
+    open (my $fh, ">$file") or return;
+    print $fh <<ENDCONF;
+# This is an example config
+
+#[TARGET:raidbackups]
+#type = Filesystem
+#path = /raid/backup/brackup
+
+#[TARGET:amazon]
+#type = Amazon
+#aws_access_key_id  = XXXXXXXXXX
+#aws_secret_access_key =  XXXXXXXXXXXX
+
+#[SOURCE:proj]
+#path = /raid/bradfitz/proj/
+#chunk_size = 5m
+#gpg_recipient = 5E1B3EC5
+
+#[SOURCE:bradhome]
+#path = /raid/bradfitz/
+#chunk_size = 64MB
+#ignore = ^\.thumbnails/
+#ignore = ^\.kde/share/thumbnails/
+#ignore = ^\.ee/minis/
+#ignore = ^build/
+#ignore = ^(gqview|nautilus)/thumbnails/
+
+ENDCONF
 }
 
 sub load_root {

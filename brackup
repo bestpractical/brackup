@@ -15,7 +15,8 @@ brackup - Flexible backup tool.  Slices, dices, encrypts, and sprays across the 
 =item --from=NAME
 
 Required.  The source of your backup.  Must match a [SOURCE:NAME]
-config section in your ~/.brackup.conf
+config section in your ~/.brackup.conf (which is auto-created for you
+on first run, so then you just have to go modify it)
 
 =item --to=NAME
 
@@ -72,10 +73,10 @@ if ($opt_help) {
     exit 0;
 }
 
-usage() unless $src_name && $target_name;
-
-my $config = eval { Brackup::Config->load("$ENV{HOME}/.brackup.conft") } or
+my $config = eval { Brackup::Config->load("$ENV{HOME}/.brackup.conf") } or
     usage($@);
+
+usage() unless $src_name && $target_name;
 
 my $cwd = getcwd();
 
