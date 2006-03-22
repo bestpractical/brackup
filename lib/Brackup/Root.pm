@@ -18,7 +18,8 @@ sub new {
     $self->{chunk_size} = $conf->byte_value('chunk_size'),
     $self->{ignore}     = [];
 
-    $self->{digdb}      = Brackup::DigestDatabase->new("$self->{dir}/.brackup-digest.db");
+    $self->{digdb_file} = "$self->{dir}/.brackup-digest.db";
+    $self->{digdb}      = Brackup::DigestDatabase->new($self->{digdb_file});
 
     die "No backup-root name provided." unless $self->{name};
     die "Backup-root name must be only a-z, A-Z, 0-9, and _." unless $self->{name} =~ /^\w+/;
@@ -71,6 +72,12 @@ sub foreach_file {
 	    my (@stat) = stat(_);
 	    my $path = $_;
 	    $path =~ s!^\./!!;
+
+	    # skip the digest database file.  not sure if this is smart or not.
+	    # for now it'd be kinda nice to have, but it's re-creatable from
+	    # the backup meta files later, so let's skip it.
+	    return if $path eq $self->{digdb_file};
+
 	    foreach my $pattern (@{ $self->{ignore} }) {
 		return if $path =~ /$pattern/;
 	    }
