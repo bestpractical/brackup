@@ -34,7 +34,7 @@ sub backup {
 	    my $chunk = shift;  # a Brackup::Chunk object
 	    print "  " . $chunk->as_string . "\n";
 	    unless ($target->has_chunk($chunk)) {
-		$target->store_chunk($chunk);
+		$target->store_chunk($chunk) or die "Chunk storage failed.\n";
 	    }
 	});
 
