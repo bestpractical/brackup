@@ -1,5 +1,45 @@
 #!/usr/bin/perl
 
+=head1 NAME
+
+brackup - Flexible backup tool.  Slices, dices, encrypts, and sprays across the net.
+
+=head1 SYNOPSIS
+
+ $ brackup --from=<source_name> --to=<target_name> --output=my_backup.brackup
+
+=head2 OPTIONS
+
+=over 4
+
+=item --from=NAME
+
+Required.  The source of your backup.  Must match a [SOURCE:NAME]
+config section in your ~/.brackup.conf
+
+=item --to=NAME
+
+Required.  The destination for your backup.  Must match a [TARGET:NAME]
+config section in your ~/.brackup.conf
+
+=item --output=FILE
+
+Option.  Defaults to "source-YYYYMMDD.brackup".  This is the "metafile" index
+you'll need to restore.
+
+=back
+
+=head1 AUTHOR
+
+Brad Fitzpatrick E<lt>brad@danga.comE<gt>
+
+Copyright (c) 2006 Six Apart, Ltd. All rights reserved.
+
+This module is free software. You may use, modify, and/or redistribute this
+software under the terms of same terms as perl itself.
+
+=cut
+
 use strict;
 use warnings;
 use Getopt::Long;
@@ -14,17 +54,28 @@ use Brackup::DigestDatabase;
 use Brackup::Backup;
 use Brackup::Root;     # aka "source"
 use Brackup::Target;
-use Brackup::Target::Amazon;
 
-my ($src_name, $target_name, $opt_verbose, $backup_file);
+my ($src_name, $target_name, $opt_verbose, $backup_file, $opt_help);
+
 usage() unless
     GetOptions(
 	       'from=s'    => \$src_name,
 	       'to=s'      => \$target_name,
 	       'verbose'   => \$opt_verbose,
 	       'output=s'  => \$backup_file,
+	       'help'      => \$opt_help,
 	       );
+
+if ($opt_help) {
+    eval "use Pod::Usage;";
+    Pod::Usage::pod2usage( -verbose => 1, -exitval => 0 );
+    exit 0;
+}
+
 usage() unless $src_name && $target_name;
+
+my $config = eval { Brackup::Config->load("$ENV{HOME}/.brackup.conft") } or
+    usage($@);
 
 my $cwd = getcwd();
 
@@ -34,11 +85,8 @@ sub usage {
 	$why =~ s/\s+$//;
 	$why = "Error: $why\n\n";
     }
-    die "${why}brackup --from=[source_name] --to=[target_name]\n";
+    die "${why}brackup --from=[source_name] --to=[target_name] [--output=<backup_metafile.brackup>]\nbrackup --help\n";
 }	
-
-my $config = eval { Brackup::Config->load("$ENV{HOME}/.brackup.conf") } or
-    usage($@);
 
 my $root = eval { $config->load_root($src_name); } or
     usage($@);
