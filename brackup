@@ -56,16 +56,19 @@ use Brackup::Backup;
 use Brackup::Root;     # aka "source"
 use Brackup::Target;
 
+use vars qw($VERSION);
+$VERSION = '0.7';
+
 my ($src_name, $target_name, $opt_verbose, $backup_file, $opt_help);
 
 usage() unless
     GetOptions(
-	       'from=s'    => \$src_name,
-	       'to=s'      => \$target_name,
-	       'verbose'   => \$opt_verbose,
-	       'output=s'  => \$backup_file,
-	       'help'      => \$opt_help,
-	       );
+               'from=s'    => \$src_name,
+               'to=s'      => \$target_name,
+               'verbose'   => \$opt_verbose,
+               'output=s'  => \$backup_file,
+               'help'      => \$opt_help,
+               );
 
 if ($opt_help) {
     eval "use Pod::Usage;";
@@ -83,11 +86,11 @@ my $cwd = getcwd();
 sub usage {
     my $why = shift || "";
     if ($why) {
-	$why =~ s/\s+$//;
-	$why = "Error: $why\n\n";
+        $why =~ s/\s+$//;
+        $why = "Error: $why\n\n";
     }
     die "${why}brackup --from=[source_name] --to=[target_name] [--output=<backup_metafile.brackup>]\nbrackup --help\n";
-}	
+}
 
 my $root = eval { $config->load_root($src_name); } or
     usage($@);
@@ -102,9 +105,9 @@ $backup_file =~ s!^~/!$ENV{HOME}/!;
 $backup_file = "$cwd/$backup_file" unless $backup_file =~ m!^/!;
 
 my $backup = Brackup::Backup->new(
-				  root    => $root,
-				  target  => $target,
-				  );
+                                  root    => $root,
+                                  target  => $target,
+                                  );
 
 if (eval { $backup->backup($backup_file) }) {
     warn "Backup complete." if $opt_verbose;

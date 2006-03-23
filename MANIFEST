@@ -1,0 +1,15 @@
+brackup
+doc/data-structures.txt
+doc/exampleconfig.txt
+doc/overview.txt
+lib/Brackup/Backup.pm
+lib/Brackup/Chunk.pm
+lib/Brackup/Config.pm
+lib/Brackup/DigestDatabase.pm
+lib/Brackup/File.pm
+lib/Brackup/Root.pm
+lib/Brackup/Target.pm
+lib/Brackup/Target/Amazon.pm
+lib/Brackup/Target/Filesystem.pm
+Makefile.PL
+MANIFEST			This list of files
