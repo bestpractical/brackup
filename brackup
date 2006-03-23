@@ -30,6 +30,13 @@ you'll need to restore.
 
 =back
 
+=head1 WARRANTY
+
+Brackup is distributed as-is and comes without warranty of any kind.
+It'll probably eat your files, kick your cat, and knock up your
+mother.  You've been warned.  If you feel like trusting it with your
+data, why don't you audit it first?
+
 =head1 AUTHOR
 
 Brad Fitzpatrick E<lt>brad@danga.comE<gt>
