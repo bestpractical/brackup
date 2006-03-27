@@ -95,7 +95,7 @@ sub foreach_chunk {
     my ($self, $cb) = @_;
 
     foreach my $chunk ($self->chunks) {
-	$cb->($chunk);
+        $cb->($chunk);
     }
 }
 
@@ -113,18 +113,18 @@ sub chunks {
     # non-files don't have chunks
     my @list;
     if ($self->is_file) {
-	my $offset = 0;
-	my $size   = $self->size;
-	while ($offset < $size) {
-	    my $len = _min($chunk_size, $size - $offset);
-	    my $chunk = Brackup::Chunk->new(
-					    file   => $self,
-					    offset => $offset,
-					    length => $len,
-					    );
-	    push @list, $chunk;
-	    $offset += $len;
-	}
+        my $offset = 0;
+        my $size   = $self->size;
+        while ($offset < $size) {
+            my $len = _min($chunk_size, $size - $offset);
+            my $chunk = Brackup::Chunk->new(
+                                            file   => $self,
+                                            offset => $offset,
+                                            length => $len,
+                                            );
+            push @list, $chunk;
+            $offset += $len;
+        }
     }
 
     $self->{chunks} = \@list;
@@ -169,19 +169,20 @@ sub as_rfc822 {
     my $self = shift;
     my $ret = "";
     my $set = sub {
-	my ($key, $val) = @_;
-	return unless length $val;
-	$ret .= "$key: $val\n";
+        my ($key, $val) = @_;
+        return unless length $val;
+        $ret .= "$key: $val\n";
     };
     $set->("Path", $self->{path});
     if ($self->is_file) {
-	$set->("Size", $self->size);
-	$set->("Digest", $self->full_digest);
+        my $size = $self->size;
+        $set->("Size", $size);
+        $set->("Digest", $self->full_digest) if $size;
     } else {
-	$set->("Type", $self->type);
-	if  ($self->is_link) {
-	    $set->("Link", $self->link_target);
-	}
+        $set->("Type", $self->type);
+        if  ($self->is_link) {
+            $set->("Link", $self->link_target);
+        }
     }
     $set->("Chunks", join("\n ", map { $_->to_meta } $self->chunks));
 
@@ -189,4 +190,3 @@ sub as_rfc822 {
 }
 
 1;
-
