@@ -36,7 +36,7 @@ sub to_meta {
 
 sub cachekey {
     my $self = shift;
-    return join("-", $self->{file}->full_digest, $self->{offset}, $self->{length});
+    return join("-", $self->{file}->full_digest, $self->{offset}, $self->{length}, $self->root->gpg_rcpt);
 }
 
 sub as_string {

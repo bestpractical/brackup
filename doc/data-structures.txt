@@ -49,7 +49,7 @@ Where:
 
     FileCacheKey ::= "[" <RootName> "]" <FileRelativePath> ":" join(",", <ctime>, <mtime>, <size>, <inode>)
 
-    ChunkCacheKey ::= <TypedDigest(original_unencrypted_file)> "-" <raw_offset> "-" <raw_length>
+    ChunkCacheKey ::= <TypedDigest(original_unencrypted_file)> "-" <raw_offset> "-" <raw_length> "-" <gpg-recipient>
 
     ChunkDetails  ::= <EncryptedLength> " " <TypedDigest(encrypted_chunk)>
 
