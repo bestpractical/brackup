@@ -50,7 +50,6 @@ sub has_chunk {
 
     if (my $dbh = $self->{dbh}) {
 	my $ans = $dbh->selectrow_array("SELECT COUNT(*) FROM amazon_key_exists WHERE key=?", undef, $dig);
-	warn "amazon database for $dig is = $ans\n";
 	return 1 if $ans;
     }
 
