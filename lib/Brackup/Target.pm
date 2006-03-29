@@ -11,6 +11,13 @@ sub new {
     croak("Unknown options: " . join(', ', keys %opts)) if %opts;
 }
 
+# return hashref of key/value pairs you want returned to you during a restore
+# you should include anything you need to restore.
+# keys should only contain \w
+sub backup_header {
+    return {}
+}
+
 # returns bool
 sub has_chunk {
     my ($self, $chunk) = @_;

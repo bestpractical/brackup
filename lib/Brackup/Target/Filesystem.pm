@@ -11,6 +11,13 @@ sub new {
     return $self;
 }
 
+sub backup_header {
+    my $self = shift;
+    return {
+        "BackupPath" => $self->{path},
+    };
+}
+
 sub chunkpath {
     my ($self, $dig) = @_;
     my @parts;
