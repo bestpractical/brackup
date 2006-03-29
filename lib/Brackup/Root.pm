@@ -18,7 +18,7 @@ sub new {
     $self->{chunk_size} = $conf->byte_value('chunk_size'),
     $self->{ignore}     = [];
 
-    $self->{digdb_file} = "$self->{dir}/.brackup-digest.db";
+    $self->{digdb_file} = $conf->value('digestdb_file') || "$self->{dir}/.brackup-digest.db";
     $self->{digdb}      = Brackup::DigestDatabase->new($self->{digdb_file});
 
     die "No backup-root name provided." unless $self->{name};
