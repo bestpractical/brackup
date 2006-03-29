@@ -17,8 +17,8 @@ sub chunkpath {
     my $fulldig = $dig;
     $dig =~ s/^\w+://; # remove the "hashtype:" from beginning
     while (length $dig && @parts < 4) {
-	$dig =~ s/^(.{1,4})//;
-	push @parts, $1;
+        $dig =~ s/^(.{1,4})//;
+        push @parts, $1;
     }
     return $self->{path} . "/" . join("/", @parts) . "/$fulldig.chunk";
 }
@@ -27,9 +27,7 @@ sub has_chunk {
     my ($self, $chunk) = @_;
     my $dig = $chunk->backup_digest;   # "sha1:sdfsdf" format scalar
     my $path = $self->chunkpath($dig);
-    my $exists = -e $path;
-    warn "Doesn't exist: $path ($dig)" unless $exists;
-    return $exists;
+    return -e $path;
 }
 
 sub store_chunk {
@@ -38,13 +36,11 @@ sub store_chunk {
     my $blen = $chunk->backup_length;
     my $len = $chunk->length;
 
-    warn "Storing chunk: $dig\n";
-
     my $path = $self->chunkpath($dig);
     my $dir = $path;
     $dir =~ s!/[^/]+$!!;
     unless (-d $dir) {
-	File::Path::mkpath($dir) or die "Failed to mkdir: $dir: $!\n";
+        File::Path::mkpath($dir) or die "Failed to mkdir: $dir: $!\n";
     }
     open (my $fh, ">$path") or die "Failed to open $path for writing: $!\n";
     print $fh ${ $chunk->chunkref };
@@ -56,7 +52,7 @@ sub store_backup_meta {
     my ($self, $name, $file) = @_;
     my $dir = "$self->{path}/backups/";
     unless (-d $dir) {
-	mkdir $dir or die "Failed to mkdir $dir: $!\n";
+        mkdir $dir or die "Failed to mkdir $dir: $!\n";
     }
     open (my $fh, ">$dir/$name.brackup") or die;
     print $fh $file;
