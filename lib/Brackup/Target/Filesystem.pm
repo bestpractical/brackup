@@ -11,6 +11,17 @@ sub new {
     return $self;
 }
 
+sub new_from_backup_header {
+    my ($class, $header) = @_;
+    my $self = bless {}, $class;
+    $self->{path} = $header->{"BackupPath"} or
+        die "No BackupPath specified in the backup metafile.\n";
+    unless (-d $self->{path}) {
+        die "Restore path $self->{path} doesn't exist.\n";
+    }
+    return $self;
+}
+
 sub backup_header {
     my $self = shift;
     return {
@@ -35,6 +46,14 @@ sub has_chunk {
     my $dig = $chunk->backup_digest;   # "sha1:sdfsdf" format scalar
     my $path = $self->chunkpath($dig);
     return -e $path;
+}
+
+sub load_chunk {
+    my ($self, $dig) = @_;
+    my $path = $self->chunkpath($dig);
+    open (my $fh, $path) or die "Error opening $path to load chunk: $!";
+    my $chunk = do { local $/; <$fh>; };
+    return \$chunk;
 }
 
 sub store_chunk {

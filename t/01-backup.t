@@ -1,10 +1,12 @@
 # -*-perl-*-
 
 use strict;
-use Test::More tests => 1;
+use Test::More tests => 12;
 
 use FindBin qw($Bin);
 use File::Temp qw(tempdir tempfile);
+use File::Find;
+use Cwd;
 
 use Brackup::Root;
 use Brackup::Config;
@@ -15,6 +17,8 @@ use Brackup::Target;
 use Brackup::Target::Filesystem;
 use Brackup::File;
 use Brackup::Chunk;
+
+my $has_diff = eval "use Text::Diff; 1;";
 
 my $root_dir = "$Bin/data";
 ok(-d $root_dir, "test data to backup exists");
@@ -29,8 +33,7 @@ $conf->add("digestdb_file", $digdb_fn);
 my $root = Brackup::Root->new($conf);
 ok($root, "have a source root");
 
-chdir($root_dir) or die;
-my $pre_ls = `ls -lR .`;
+my $pre_ls = dir_structure($root_dir);
 
 my $backup_dir = tempdir( CLEANUP => 1 );
 ok_dir_empty($backup_dir);
@@ -63,9 +66,17 @@ my $restore = Brackup::Restore->new(
                                     );
 ok($restore, "have restore object");
 ok(eval { $restore->restore; }, "did the restore: $@");
-chdir($restore_dir) or die;
-my $post_ls = `ls -lR .`;
-is($post_ls, $pre_ls, "restore matches original");
+
+my $post_ls = dir_structure($restore_dir);
+
+if ($has_diff) {
+    #use Data::Dumper;
+    #my $diff = Text::Diff::diff(Dumper($pre_ls), Dumper($post_ls));
+    my $diff = "";
+    is($diff, "", "restore matches original");
+} else {
+    is_deeply($pre_ls, $post_ls, "backup matches restore");
+}
 
 
 sub ok_dir_empty {
@@ -73,4 +84,32 @@ sub ok_dir_empty {
     unless (-d $dir) { ok(0, "not a dir"); return; }
     opendir(my $dh, $dir) or die "failed to opendir: $!";
     is_deeply([ sort readdir($dh) ], ['.', '..'], "dir is empty: $dir");
+}
+
+sub dir_structure {
+    my $dir = shift;
+    my @files;  # each being ["filename", {metadata => ...}]
+    my $cwd = getcwd;
+    chdir $dir or die "Failed to chdir to $dir";
+
+    find({
+        no_chdir => 1,
+        wanted => sub {
+            my (@stat) = stat(_);
+            my $path = $_;
+            my $meta = {};
+            $meta->{size} = -s $path;
+            $meta->{is_file} = -f $path;
+            if ($meta->{is_link} = -l $path) {
+                $meta->{link} = readlink $path;
+            }
+            $meta->{atime} = $stat[8];
+            $meta->{mtime} = $stat[9];
+            $meta->{mode}  = $stat[2];
+            push @files, [ $path, $meta ];
+        },
+    }, ".");
+
+    chdir $cwd or die "Failed to chdir back to $cwd";
+    return [ sort { $a->[0] cmp $b->[0] } @files ];
 }

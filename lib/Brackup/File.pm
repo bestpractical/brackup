@@ -173,6 +173,8 @@ sub as_rfc822 {
         return unless length $val;
         $ret .= "$key: $val\n";
     };
+    my $st = $self->stat;
+
     $set->("Path", $self->{path});
     if ($self->is_file) {
         my $size = $self->size;
@@ -185,6 +187,9 @@ sub as_rfc822 {
         }
     }
     $set->("Chunks", join("\n ", map { $_->to_meta } $self->chunks));
+    $set->("Mtime", $st->mtime);
+    $set->("Atime", $st->atime);
+    $set->("Mode", sprintf('%#o', $st->mode & 0777));
 
     return $ret . "\n";
 }
