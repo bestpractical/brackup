@@ -19,7 +19,6 @@ use Brackup::Backup;
 use Brackup::Restore;
 use Brackup::DigestDatabase;
 use Brackup::Target;
-use Brackup::Target::Filesystem;
 use Brackup::File;
 use Brackup::Chunk;
 
@@ -27,19 +26,26 @@ my $has_diff = eval "use Text::Diff; 1;";
 
 sub do_backup {
     my $initer = shift;
-    my $conf = Brackup::ConfigSection->new("SOURCE:test_root");
-    $initer->($conf) if $initer;
 
-    my $root = Brackup::Root->new($conf);
+    my $conf = Brackup::Config->new;
+    my $confsec;
+
+    $confsec = Brackup::ConfigSection->new("SOURCE:test_root");
+    $initer->($confsec) if $initer;
+    $conf->add_section($confsec);
+
+    my $root = $conf->load_root("test_root");
     ok($root, "have a source root");
 
     my $backup_dir = tempdir( CLEANUP => 1 );
     ok_dir_empty($backup_dir);
 
-    $conf = Brackup::ConfigSection->new("TARGET:test_restore");
-    $conf->add("type" => "Filesystem");
-    $conf->add("path" => $backup_dir);
-    my $target = Brackup::Target::Filesystem->new($conf);
+    $confsec = Brackup::ConfigSection->new("TARGET:test_restore");
+    $confsec->add("type" => "Filesystem");
+    $confsec->add("path" => $backup_dir);
+    $conf->add_section($confsec);
+
+    my $target = $conf->load_target("test_restore");
     ok($target, "have a target");
 
     my $backup = Brackup::Backup->new(
