@@ -2,6 +2,7 @@ package Brackup::Restore;
 use strict;
 use warnings;
 use Carp qw(croak);
+use Digest::SHA1;
 
 sub new {
     my ($class, %opts) = @_;
@@ -61,26 +62,25 @@ sub restore {
 
         if ($type eq "l") {
             if (-e $full) {
-                # FIXME: add --conflict={skip,overwrite} option, defaulting to nothing: which dies
+                # TODO: add --conflict={skip,overwrite} option, defaulting to nothing: which dies
                 die "Link $full ($it->{Path}) already exists.  Aborting.";
             }
             symlink $it->{Link}, $full
                 or die "Failed to link";
 
-            #next; # don't fall through to mode/mtime/atime setting
+            next; # don't fall through to mode/mtime/atime setting
         }
 
         if ($type eq "f") {
             if (-e $full) {
-                # FIXME: add --conflict={skip,overwrite} option, defaulting to nothing: which dies
+                # TODO: add --conflict={skip,overwrite} option, defaulting to nothing: which dies
                 die "File $full ($it->{Path}) already exists.  Aborting.";
             }
 
             open (my $fh, ">$full") or die "Failed to open $full for writing";
-            my @chunks = grep { $_ } split(/\s+/, $it->{Chunks});
+            my @chunks = grep { $_ } split(/\s+/, $it->{Chunks} || "");
             foreach my $ch (@chunks) {
                 my ($offset, $len, $enc_len, $dig) = split(/;/, $ch);
-                print "  dig = [$dig]\n";
                 my $dataref = $target->load_chunk($dig) or
                     die "Error loading chunk $dig from the restore target\n";
                 unless (length $$dataref == $enc_len) {
@@ -89,9 +89,18 @@ sub restore {
                 # TODO: decrypt if encrypted
                 print $fh $$dataref;
             }
-            close($fh);
-            if ($it->{Digest}) {
-                # verify digest matches
+            close($fh) or die "Close failed";
+            if (my $good_dig = $it->{Digest}) {
+                die "not capable of restoring from anything but sha1" unless $good_dig =~ /^sha1:(.+)/;
+                $good_dig = $1;
+
+                open (my $readfh, $full) or die "Couldn't reopen file for verification";
+                my $sha1 = Digest::SHA1->new;
+                $sha1->addfile($readfh);
+                my $actual_dig = $sha1->hexdigest;
+
+                # TODO: support --onerror={continue,prompt}, etc, but for now we just die
+                die "Digest of restored file doesn't match" unless $actual_dig eq $good_dig;
             }
         }
 

@@ -6,6 +6,7 @@ use Test::More tests => 12;
 use FindBin qw($Bin);
 use File::Temp qw(tempdir tempfile);
 use File::Find;
+use File::stat ();
 use Cwd;
 
 use Brackup::Root;
@@ -33,8 +34,6 @@ $conf->add("digestdb_file", $digdb_fn);
 my $root = Brackup::Root->new($conf);
 ok($root, "have a source root");
 
-my $pre_ls = dir_structure($root_dir);
-
 my $backup_dir = tempdir( CLEANUP => 1 );
 ok_dir_empty($backup_dir);
 
@@ -57,7 +56,6 @@ my ($meta_fh, $meta_filename) = tempfile();
 
 ok(eval { $backup->backup($meta_filename) }, "backup succeeded");
 ok(-s $meta_filename, "backup file has size");
-system("cat", $meta_filename);
 
 my $restore = Brackup::Restore->new(
                                     to     => $restore_dir,
@@ -67,6 +65,7 @@ my $restore = Brackup::Restore->new(
 ok($restore, "have restore object");
 ok(eval { $restore->restore; }, "did the restore: $@");
 
+my $pre_ls  = dir_structure($root_dir);
 my $post_ls = dir_structure($restore_dir);
 
 if ($has_diff) {
@@ -92,27 +91,31 @@ sub dir_structure {
     my $dir = shift;
     my %files;  # "filename" -> {metadata => ...}
     my $cwd = getcwd;
-    chdir $dir or die "Failed to chdir to $dir";
+    chdir($dir) or die "Failed to chdir to $dir";
 
     find({
         no_chdir => 1,
         wanted => sub {
-            my (@stat) = stat(_);
             my $path = $_;
+            my $st = File::stat::lstat($path);
+
             my $meta = {};
-            $meta->{size} = -s $path;
+            $meta->{size} = $st->size;
             $meta->{is_file} = 1 if -f $path;
             $meta->{is_link} = 1 if -l $path;
             if ($meta->{is_link}) {
                 $meta->{link} = readlink $path;
+            } else {
+                # we ignore these for links, since Linux doesn't let us restore anyway,
+                # as Linux as no lutimes(2) syscall, as of Linux 2.6.16 at least
+                $meta->{atime} = $st->atime;
+                $meta->{mtime} = $st->mtime;
+                $meta->{mode}  = sprintf('%#o', $st->mode & 0777);
             }
-            $meta->{atime} = $stat[8];
-            $meta->{mtime} = $stat[9];
-            $meta->{mode}  = sprintf('%#o', $stat[2] & 0777);
             $files{$path} = $meta;
         },
     }, ".");
 
-    chdir $cwd or die "Failed to chdir back to $cwd";
+    chdir($cwd) or die "Failed to chdir back to $cwd";
     return \%files;
 }
