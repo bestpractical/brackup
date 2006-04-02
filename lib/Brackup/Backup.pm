@@ -28,11 +28,10 @@ sub backup {
     $root->foreach_file(sub {
         my ($file, $progress) = @_;  # a Brackup::File and Brackup::Progress
 
-        print ($file->as_string . ":\n");
+        print STDERR "  ", $file->path, "\n";
 
         $file->foreach_chunk(sub {
             my $chunk = shift;  # a Brackup::Chunk object
-            print "  " . $chunk->as_string . "\n";
             unless ($target->has_chunk($chunk)) {
                 $target->store_chunk($chunk) or die "Chunk storage failed.\n";
             }

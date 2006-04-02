@@ -79,10 +79,6 @@ sub fullpath {
     return $self->{root}->path . "/" . $self->{path};
 }
 
-sub parts {
-    return ("foo", "bar");
-}
-
 # a scalar that hopefully uniquely represents a single version of a file in time.
 sub cachekey {
     my $self = shift;
@@ -157,6 +153,11 @@ sub link_target {
     return $self->{linktarget} if $self->{linktarget};
     return undef unless $self->is_link;
     return $self->{linktarget} = readlink($self->fullpath);
+}
+
+sub path {
+    my $self = shift;
+    return $self->{path};
 }
 
 sub as_string {
