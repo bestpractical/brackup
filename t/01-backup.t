@@ -70,12 +70,13 @@ ok(eval { $restore->restore; }, "did the restore: $@");
 my $post_ls = dir_structure($restore_dir);
 
 if ($has_diff) {
-    #use Data::Dumper;
-    #my $diff = Text::Diff::diff(Dumper($pre_ls), Dumper($post_ls));
-    my $diff = "";
+    use Data::Dumper;
+    my $pre_dump = Dumper($pre_ls);
+    my $post_dump = Dumper($post_ls);
+    my $diff = Text::Diff::diff(\$pre_dump, \$post_dump);
     is($diff, "", "restore matches original");
 } else {
-    is_deeply($pre_ls, $post_ls, "backup matches restore");
+    is_deeply($post_ls, $pre_ls, "backup matches restore");
 }
 
 
@@ -86,9 +87,10 @@ sub ok_dir_empty {
     is_deeply([ sort readdir($dh) ], ['.', '..'], "dir is empty: $dir");
 }
 
+# given a directory, returns a hashref of its contentn
 sub dir_structure {
     my $dir = shift;
-    my @files;  # each being ["filename", {metadata => ...}]
+    my %files;  # "filename" -> {metadata => ...}
     my $cwd = getcwd;
     chdir $dir or die "Failed to chdir to $dir";
 
@@ -99,17 +101,18 @@ sub dir_structure {
             my $path = $_;
             my $meta = {};
             $meta->{size} = -s $path;
-            $meta->{is_file} = -f $path;
-            if ($meta->{is_link} = -l $path) {
+            $meta->{is_file} = 1 if -f $path;
+            $meta->{is_link} = 1 if -l $path;
+            if ($meta->{is_link}) {
                 $meta->{link} = readlink $path;
             }
             $meta->{atime} = $stat[8];
             $meta->{mtime} = $stat[9];
-            $meta->{mode}  = $stat[2];
-            push @files, [ $path, $meta ];
+            $meta->{mode}  = sprintf('%#o', $stat[2] & 0777);
+            $files{$path} = $meta;
         },
     }, ".");
 
     chdir $cwd or die "Failed to chdir back to $cwd";
-    return [ sort { $a->[0] cmp $b->[0] } @files ];
+    return \%files;
 }
