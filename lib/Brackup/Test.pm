@@ -25,17 +25,23 @@ use Brackup::Chunk;
 my $has_diff = eval "use Text::Diff; 1;";
 
 sub do_backup {
+    my %opts = @_;
+    my $with_confsec = delete $opts{'with_confsec'} || sub {};
+    my $with_root    = delete $opts{'with_root'}    || sub {};
+    die if %opts;
+
     my $initer = shift;
 
     my $conf = Brackup::Config->new;
     my $confsec;
 
     $confsec = Brackup::ConfigSection->new("SOURCE:test_root");
-    $initer->($confsec) if $initer;
+    $with_confsec->($confsec);
     $conf->add_section($confsec);
 
     my $root = $conf->load_root("test_root");
     ok($root, "have a source root");
+    $with_root->($root);
 
     my $backup_dir = tempdir( CLEANUP => 1 );
     ok_dir_empty($backup_dir);

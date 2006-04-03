@@ -14,12 +14,14 @@ my ($digdb_fh, $digdb_fn) = tempfile();
 my $root_dir = "$Bin/data";
 ok(-d $root_dir, "test data to backup exists");
 
-my $backup_file = do_backup(sub {
-    my $conf = shift;
-    $conf->add("path",       $root_dir);
-    $conf->add("chunk_size", "2k");
-    $conf->add("digestdb_file", $digdb_fn);
-});
+my $backup_file = do_backup(
+                            with_confsec => sub {
+                                my $csec = shift;
+                                $csec->add("path",          $root_dir);
+                                $csec->add("chunk_size",    "2k");
+                                $csec->add("digestdb_file", $digdb_fn);
+                            },
+                            );
 
 ############### Restore
 

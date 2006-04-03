@@ -68,10 +68,10 @@ sub chunkref {
     my ($tmpfh, $tmpfn) = tempfile();
     print $tmpfh $data or die "failed to print: $!";
     close $tmpfh or die "failed to close: $!\n";
-	
+
     my ($etmpfh, $etmpfn) = tempfile();
-    system("gpg", "--recipient", $gpg_rcpt, "--encrypt", "--output=$etmpfn", "--yes", $tmpfn)
-	and die "Failed to run gpg: $!\n";
+    system($self->root->gpg_path, $self->root->gpg_args, "--recipient", $gpg_rcpt, "--encrypt", "--output=$etmpfn", "--yes", $tmpfn)
+        and die "Failed to run gpg: $!\n";
     open (my $enc_fh, $etmpfn) or die "Failed to open $etmpfn: $!\n";
     $data = do { local $/; <$enc_fh>; };
 
@@ -81,8 +81,8 @@ sub chunkref {
 sub _populate_lengthdigest {
     my $self = shift;
     unless ($self->_learn_lengthdigest_from_cache) {
-	my $dataref = $self->chunkref;
-	$self->_learn_lengthdigest($dataref);
+        my $dataref = $self->chunkref;
+        $self->_learn_lengthdigest($dataref);
     }
 }
 
@@ -93,7 +93,7 @@ sub _learn_lengthdigest_from_cache {
     my $file = $self->{file};
 
     my $lendig = $db->get($self->cachekey)
-	or return 0;
+        or return 0;
     my ($length, $digest) = split(/\s+/, $lendig);
 
     return 0 unless $digest =~ /^sha1:/;

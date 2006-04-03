@@ -14,9 +14,12 @@ sub new {
 
     $self->{name}       = $name;
     $self->{dir}        = $conf->path_value('path');
+    $self->{gpg_path}   = $conf->value('gpg_path') || "/usr/bin/gpg";
     $self->{gpg_rcpt}   = $conf->value('gpg_recipient');
     $self->{chunk_size} = $conf->byte_value('chunk_size'),
     $self->{ignore}     = [];
+
+    $self->{gpg_args}   = [];  # TODO: let user set this.  for now, not possible
 
     $self->{digdb_file} = $conf->value('digestdb_file') || "$self->{dir}/.brackup-digest.db";
     $self->{digdb}      = Brackup::DigestDatabase->new($self->{digdb_file});
@@ -25,6 +28,16 @@ sub new {
     die "Backup-root name must be only a-z, A-Z, 0-9, and _." unless $self->{name} =~ /^\w+/;
 
     return $self;
+}
+
+sub gpg_path {
+    my $self = shift;
+    return $self->{gpg_path};
+}
+
+sub gpg_args {
+    my $self = shift;
+    return @{ $self->{gpg_args} };
 }
 
 sub gpg_rcpt {
@@ -67,23 +80,23 @@ sub foreach_file {
     chdir $self->{dir} or die "Failed to chdir to $self->{dir}";
 
     find({
-	no_chdir => 1,
-	wanted => sub {
-	    my (@stat) = stat(_);
-	    my $path = $_;
-	    $path =~ s!^\./!!;
+        no_chdir => 1,
+        wanted => sub {
+            my (@stat) = stat(_);
+            my $path = $_;
+            $path =~ s!^\./!!;
 
-	    # skip the digest database file.  not sure if this is smart or not.
-	    # for now it'd be kinda nice to have, but it's re-creatable from
-	    # the backup meta files later, so let's skip it.
-	    return if $path eq $self->{digdb_file};
+            # skip the digest database file.  not sure if this is smart or not.
+            # for now it'd be kinda nice to have, but it's re-creatable from
+            # the backup meta files later, so let's skip it.
+            return if $path eq $self->{digdb_file};
 
-	    foreach my $pattern (@{ $self->{ignore} }) {
-		return if $path =~ /$pattern/;
-	    }
-	    my $file = Brackup::File->new(root => $self, path => $path);
-	    $cb->($file);
-	},
+            foreach my $pattern (@{ $self->{ignore} }) {
+                return if $path =~ /$pattern/;
+            }
+            my $file = Brackup::File->new(root => $self, path => $path);
+            $cb->($file);
+        },
     }, ".");
 }
 

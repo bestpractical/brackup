@@ -54,7 +54,8 @@ sub backup {
     # store the metafile, encrypted, on the target
     if (my $rcpt = $self->{root}->gpg_rcpt) {
         my $encfile .= ".enc";
-        system("gpg", "--recipient", $rcpt, "--encrypt", "--output=$encfile", "--yes", $backup_file)
+        system($self->{root}->gpg_path, $self->{root}->gpg_args,
+               "--recipient", $rcpt, "--encrypt", "--output=$encfile", "--yes", $backup_file)
             and die "Failed to run gpg while encryping metafile: $!\n";
         $contents = _contents_of($encfile);
         unlink $encfile;

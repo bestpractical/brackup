@@ -12,6 +12,8 @@ sub new {
     $self->{prefix} = delete $opts{prefix};  # directory/file filename prefix, or "" for all
     $self->{file}   = delete $opts{file};    # filename we're restoring from
 
+    $self->{_stats_to_run} = [];  # stack (push/pop) of subrefs to reset stat info on
+
     die "Destination directory doesn't exist" unless $self->{to} && -d $self->{to};
     die "Backup file doesn't exist"           unless $self->{file} && -f $self->{file};
     croak("Unknown options: " . join(', ', keys %opts)) if %opts;
@@ -44,89 +46,109 @@ sub restore {
     if ($@) {
         die "Failed to instantiate target ($driver_class) for restore, perhaps it doesn't support restoring yet?\n\nThe error was: $@";
     }
-
-    # subrefs to run in reverse order later
-    my @mode_time_updates;
+    $self->{_target} = $target;
 
     while (my $it = $parser->()) {
         my $full = $self->{to} . "/" . $it->{Path};
         my $type = $it->{Type} || "f";
 
-        # restore directories
-        if ($type eq "d") {
-            unless (-d $full) {
-                mkdir $full or    # FIXME: permissions on directory
-                    die "Failed to make directory: $full ($it->{Path})";
-            }
-        }
-
-        if ($type eq "l") {
-            if (-e $full) {
-                # TODO: add --conflict={skip,overwrite} option, defaulting to nothing: which dies
-                die "Link $full ($it->{Path}) already exists.  Aborting.";
-            }
-            symlink $it->{Link}, $full
-                or die "Failed to link";
-
-            next; # don't fall through to mode/mtime/atime setting
-        }
-
-        if ($type eq "f") {
-            if (-e $full) {
-                # TODO: add --conflict={skip,overwrite} option, defaulting to nothing: which dies
-                die "File $full ($it->{Path}) already exists.  Aborting.";
-            }
-
-            open (my $fh, ">$full") or die "Failed to open $full for writing";
-            my @chunks = grep { $_ } split(/\s+/, $it->{Chunks} || "");
-            foreach my $ch (@chunks) {
-                my ($offset, $len, $enc_len, $dig) = split(/;/, $ch);
-                my $dataref = $target->load_chunk($dig) or
-                    die "Error loading chunk $dig from the restore target\n";
-                unless (length $$dataref == $enc_len) {
-                    die "Backup chunk $dig isn't of expected length\n";
-                }
-                # TODO: decrypt if encrypted
-                print $fh $$dataref;
-            }
-            close($fh) or die "Close failed";
-            if (my $good_dig = $it->{Digest}) {
-                die "not capable of restoring from anything but sha1" unless $good_dig =~ /^sha1:(.+)/;
-                $good_dig = $1;
-
-                open (my $readfh, $full) or die "Couldn't reopen file for verification";
-                my $sha1 = Digest::SHA1->new;
-                $sha1->addfile($readfh);
-                my $actual_dig = $sha1->hexdigest;
-
-                # TODO: support --onerror={continue,prompt}, etc, but for now we just die
-                die "Digest of restored file doesn't match" unless $actual_dig eq $good_dig;
-            }
-        }
-
-        # note to do this later, after we're done with directory
-        push @mode_time_updates, sub {
-            if (defined $it->{Mode}) {
-                chmod(oct $it->{Mode}, $full) or
-                    die "Failed to change mode of $full: $!";
-            }
-
-            if ($it->{Mtime} || $it->{Atime}) {
-                utime($it->{Atime}, $it->{Mtime}, $full) or
-                    die "Failed to change utime of $full: $!";
-            }
-        };
+        $self->_restore_link     ($full, $it) if $type eq "l";
+        $self->_restore_directory($full, $it) if $type eq "d";
+        $self->_restore_file     ($full, $it) if $type eq "f";
     }
+
+    $self->_exec_statinfo_updates;
+
+    return 1;
+}
+
+sub _update_statinfo {
+    my ($self, $full, $it) = @_;
+
+    push @{ $self->{_stats_to_run} }, sub {
+        if (defined $it->{Mode}) {
+            chmod(oct $it->{Mode}, $full) or
+                die "Failed to change mode of $full: $!";
+        }
+
+        if ($it->{Mtime} || $it->{Atime}) {
+            utime($it->{Atime}, $it->{Mtime}, $full) or
+                die "Failed to change utime of $full: $!";
+        }
+    };
+}
+
+sub _exec_statinfo_updates {
+    my $self = shift;
 
     # change the modes/times in backwards order, going from deep
     # files/directories to shallow ones.  (so we can reliably change
     # all the directory mtimes without kernel doing it for us when we
     # modify files deeper)
-    while (my $sb = pop @mode_time_updates) {
+    while (my $sb = pop @{ $self->{_stats_to_run} }) {
         $sb->();
     }
+}
 
-    return 1;
+sub _restore_directory {
+    my ($self, $full, $it) = @_;
+
+    unless (-d $full) {
+        mkdir $full or    # FIXME: permissions on directory
+            die "Failed to make directory: $full ($it->{Path})";
+    }
+
+    $self->_update_statinfo($full, $it);
+}
+
+sub _restore_link {
+    my ($self, $full, $it) = @_;
+
+    if (-e $full) {
+        # TODO: add --conflict={skip,overwrite} option, defaulting to nothing: which dies
+        die "Link $full ($it->{Path}) already exists.  Aborting.";
+    }
+    symlink $it->{Link}, $full
+        or die "Failed to link";
+}
+
+sub _restore_file {
+    my ($self, $full, $it) = @_;
+
+    if (-e $full) {
+        # TODO: add --conflict={skip,overwrite} option, defaulting to nothing: which dies
+        die "File $full ($it->{Path}) already exists.  Aborting.";
+    }
+
+    open (my $fh, ">$full") or die "Failed to open $full for writing";
+    my @chunks = grep { $_ } split(/\s+/, $it->{Chunks} || "");
+    foreach my $ch (@chunks) {
+        my ($offset, $len, $enc_len, $dig) = split(/;/, $ch);
+        my $dataref = $self->{_target}->load_chunk($dig) or
+            die "Error loading chunk $dig from the restore target\n";
+        unless (length $$dataref == $enc_len) {
+            die "Backup chunk $dig isn't of expected length\n";
+        }
+
+        # TODO: decrypt if encrypted
+        print $fh $$dataref;
+    }
+    close($fh) or die "Close failed";
+
+    if (my $good_dig = $it->{Digest}) {
+        die "not capable of restoring from anything but sha1" unless $good_dig =~ /^sha1:(.+)/;
+        $good_dig = $1;
+
+                open (my $readfh, $full) or die "Couldn't reopen file for verification";
+        my $sha1 = Digest::SHA1->new;
+        $sha1->addfile($readfh);
+        my $actual_dig = $sha1->hexdigest;
+
+        # TODO: support --onerror={continue,prompt}, etc, but for now we just die
+        die "Digest of restored file doesn't match" unless $actual_dig eq $good_dig;
+    }
+
+    $self->_update_statinfo($full, $it);
 }
 
 # returns iterator subref which returns hashrefs or undef on EOF
