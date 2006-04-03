@@ -9,6 +9,10 @@ use File::Temp qw(tempdir tempfile);
 
 ############### Backup
 
+my $gpg_args = ["--no-default-keyring",
+                "--keyring=$Bin/data/pubring-test.gpg",
+                "--secret-keyring=$Bin/data/secring-test.gpg"];
+
 my ($digdb_fh, $digdb_fn) = tempfile();
 
 my $root_dir = "$Bin/data";
@@ -24,15 +28,16 @@ my $backup_file = do_backup(
                             },
                             with_root => sub {
                                 my $root = shift;
-                                $root->{gpg_args} = ["--no-default-keyring",
-                                                     "--keyring=$Bin/data/pubring-test.gpg",
-                                                     "--secret-keyring=$Bin/data/secring-test.gpg"];
+                                $root->{gpg_args} = $gpg_args;
                             },
                             );
 
 ############### Restore
 
-my $restore_dir = do_restore($backup_file);
+my $restore_dir = do {
+    local @Brackup::GPG_ARGS = @$gpg_args;
+    return do_restore($backup_file);
+};
 
 ok_dirs_match($restore_dir, $root_dir);
 

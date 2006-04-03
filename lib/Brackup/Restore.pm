@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Carp qw(croak);
 use Digest::SHA1;
+use File::Temp qw(tempfile);
 
 sub new {
     my ($class, %opts) = @_;
@@ -47,10 +48,12 @@ sub restore {
         die "Failed to instantiate target ($driver_class) for restore, perhaps it doesn't support restoring yet?\n\nThe error was: $@";
     }
     $self->{_target} = $target;
+    $self->{_meta}   = $meta;
 
     while (my $it = $parser->()) {
         my $full = $self->{to} . "/" . $it->{Path};
         my $type = $it->{Type} || "f";
+        die "Unknown filetype: type=$type, file: $it->{Path}" unless $type =~ /^[ldf]$/;
 
         $self->_restore_link     ($full, $it) if $type eq "l";
         $self->_restore_directory($full, $it) if $type eq "d";
@@ -60,6 +63,40 @@ sub restore {
     $self->_exec_statinfo_updates;
 
     return 1;
+}
+
+sub _output_temp_filename {
+    my $self = shift;
+    return $self->{_output_temp_filename} ||= ( (tempfile())[1] || die );
+}
+
+sub _encrypted_temp_filename {
+    my $self = shift;
+    return $self->{_encrypted_temp_filename} ||= ( (tempfile())[1] || die );
+}
+
+sub _decrypt_data {
+    my ($self, $dataref) = @_;
+
+    # find which key we're decrypting it using, else return chunk
+    # unmodified in the not-encrypted case
+    my $rcpt = $self->{_meta}{"GPG-Recipient"} or
+        return $dataref;
+
+    my $output_temp = $self->_output_temp_filename;
+    my $enc_temp    = $self->_encrypted_temp_filename;
+
+    _write_to_file($enc_temp, $dataref);
+
+    my @list = ("gpg", @Brackup::GPG_ARGS,
+                "--output",  $output_temp,
+                "--yes", "--quiet",
+                "--decrypt", $enc_temp);
+    system(@list)
+        and die "Failed to decrypt with gpg: $!\n";
+
+    my $ref = _read_file($output_temp);
+    return $ref;
 }
 
 sub _update_statinfo {
@@ -126,20 +163,23 @@ sub _restore_file {
         my ($offset, $len, $enc_len, $dig) = split(/;/, $ch);
         my $dataref = $self->{_target}->load_chunk($dig) or
             die "Error loading chunk $dig from the restore target\n";
-        unless (length $$dataref == $enc_len) {
-            die "Backup chunk $dig isn't of expected length\n";
+
+        my $len_chunk = length $$dataref;
+        unless ($len_chunk == $enc_len) {
+            die "Backup chunk $dig isn't of expected length: got $len_chunk, expecting $enc_len\n";
         }
 
-        # TODO: decrypt if encrypted
-        print $fh $$dataref;
+        my $decrypted_ref = $self->_decrypt_data($dataref);
+        print $fh $$decrypted_ref;
     }
     close($fh) or die "Close failed";
 
     if (my $good_dig = $it->{Digest}) {
-        die "not capable of restoring from anything but sha1" unless $good_dig =~ /^sha1:(.+)/;
+        die "not capable of verifying digests of from anything but sha1"
+            unless $good_dig =~ /^sha1:(.+)/;
         $good_dig = $1;
 
-                open (my $readfh, $full) or die "Couldn't reopen file for verification";
+        open (my $readfh, $full) or die "Couldn't reopen file for verification";
         my $sha1 = Digest::SHA1->new;
         $sha1->addfile($readfh);
         my $actual_dig = $sha1->hexdigest;
@@ -179,6 +219,21 @@ sub parser {
     }
 }
 
+sub _write_to_file {
+    my ($file, $ref) = @_;
+    open (my $fh, ">$file") or die "Failed to open $file for writing: $!\n";
+    print $fh $$ref;
+    close($fh) or die;
+    die unless -s $file == length $$ref;
+    return 1;
+}
+
+sub _read_file {
+    my ($file) = @_;
+    open (my $fh, $file) or die "Failed to open $file for reading: $!\n";
+    my $data = do { local $/; <$fh>; };
+    return \$data;
+}
 
 1;
 

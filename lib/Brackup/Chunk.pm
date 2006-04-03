@@ -6,9 +6,6 @@ use Carp qw(croak);
 use Digest::SHA1 qw(sha1_hex);
 use File::Temp qw(tempfile);
 
-#gpg --recipient 5E1B3EC5 --encrypt --output=file.enc file.orig
-#gpg --output file.dec --decrypt file.enc
-
 sub new {
     my ($class, %opts) = @_;
     my $self = bless {}, $class;
