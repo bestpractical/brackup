@@ -13,3 +13,11 @@
    t/lib/ probably
 
 -- Amazon target doesn't support restoring yet.
+
+-- Amazon target should complain if you don't have an exist_cache
+   configured (otherwise it's damn slow)
+
+-- default config written out should include exist cache line for
+   Amazon too
+
+-- should do TODOs in code.  :)
