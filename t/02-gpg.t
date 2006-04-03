@@ -1,13 +1,19 @@
 # -*-perl-*-
 
 use strict;
-use Test::More tests => 12;
+use Test::More;
 
 use Brackup::Test;
 use FindBin qw($Bin);
 use File::Temp qw(tempdir tempfile);
 
 ############### Backup
+
+if (`gpg --version`) {
+    plan tests => 12;
+} else {
+    plan skip_all => 'gpg binary not found, skipping encrypted tests';
+}
 
 my $gpg_args = ["--no-default-keyring",
                 "--keyring=$Bin/data/pubring-test.gpg",

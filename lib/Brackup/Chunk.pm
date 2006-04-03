@@ -66,12 +66,13 @@ sub chunkref {
     read($fh, $data, $self->{length}) or die "Failed to read: $!\n";
 
     # non-encrypting case
-    return $dataref_with_learning->();
+    return $dataref_with_learning->() unless $gpg_rcpt;
 
     # FIXME: let users control where their temp files go?
     my ($tmpfh, $tmpfn) = tempfile();
     print $tmpfh $data or die "failed to print: $!";
     close $tmpfh or die "failed to close: $!\n";
+    die "size not right" unless -s $tmpfn == $self->{length};
 
     my ($etmpfh, $etmpfn) = tempfile();
     system($self->root->gpg_path, $self->root->gpg_args, "--recipient", $gpg_rcpt, "--encrypt", "--output=$etmpfn", "--yes", $tmpfn)
