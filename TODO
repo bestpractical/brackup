@@ -12,3 +12,4 @@
    test coverage of test modules.  move Brackup::Test to
    t/lib/ probably
 
+-- Amazon target doesn't support restoring yet.

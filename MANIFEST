@@ -12,8 +12,23 @@ lib/Brackup/DigestDatabase.pm
 lib/Brackup/File.pm
 lib/Brackup/Root.pm
 lib/Brackup/Target.pm
+lib/Brackup/Test.pm
+lib/Brackup/Restore.pm
 lib/Brackup/Target/Amazon.pm
 lib/Brackup/Target/Filesystem.pm
+t/01-backup.t
+t/00-use.t
+t/data
+t/data/my-link.txt
+t/data/test-file.txt
+t/data/my_dir/sub_dir/another-file.txt
+t/data/my_dir/sub_dir/program.sh
+t/data/huge-file.txt
+t/data/secring-test.gpg
+t/data/pubring-test.gpg
+t/01-backup.t
+t/02-gpg.t
+t/02-gpg.t
 Makefile.PL
 MANIFEST			This list of files
 META.yml                                 Module meta-data (added by MakeMaker)
