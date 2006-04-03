@@ -64,6 +64,9 @@ sub do_backup {
     ok(-e $meta_filename, "metafile exists");
 
     ok(eval { $backup->backup($meta_filename) }, "backup succeeded");
+    if ($@) {
+        warn "Died running backup: $@\n";
+    }
     ok(-s $meta_filename, "backup file has size");
     return $meta_filename;
 }

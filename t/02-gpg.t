@@ -24,7 +24,7 @@ my $backup_file = do_backup(
                                 $csec->add("path",          $root_dir);
                                 $csec->add("chunk_size",    "2k");
                                 $csec->add("digestdb_file", $digdb_fn);
-                                $csec->add("gpg_recipient",      "2149C469");
+                                $csec->add("gpg_recipient", "2149C469");
                             },
                             with_root => sub {
                                 my $root = shift;
@@ -36,7 +36,7 @@ my $backup_file = do_backup(
 
 my $restore_dir = do {
     local @Brackup::GPG_ARGS = @$gpg_args;
-    return do_restore($backup_file);
+    do_restore($backup_file);
 };
 
 ok_dirs_match($restore_dir, $root_dir);

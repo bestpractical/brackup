@@ -10,7 +10,7 @@ sub new {
     $self->{root}    = delete $opts{root};     # Brackup::Root
     $self->{target}  = delete $opts{target};   # Brackup::Target
 
-    $self->{saved_files} = [];   # list of hashrefs
+    $self->{saved_files} = [];   # list of Brackup::File objects backed up
 
     croak("Unknown options: " . join(', ', keys %opts)) if %opts;
 
@@ -34,7 +34,18 @@ sub backup {
             my $chunk = shift;  # a Brackup::Chunk object
             unless ($target->has_chunk($chunk)) {
                 $target->store_chunk($chunk) or die "Chunk storage failed.\n";
+
+                # DEBUG: verify it got written correctly
+                if ($ENV{BRACKUP_PARANOID}) {
+                    my $saved_ref = $target->load_chunk($chunk->backup_digest);
+                    my $saved_len = length $$saved_ref;
+                    unless ($saved_len == $chunk->backup_length) {
+                        warn "Saved length of $saved_len doesn't match our length of " . $chunk->backup_length . "\n";
+                        die;
+                    }
+                }
             }
+            $chunk->forget_chunkref;
         });
 
         $self->add_file($file);

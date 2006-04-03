@@ -69,8 +69,16 @@ sub store_chunk {
         File::Path::mkpath($dir) or die "Failed to mkdir: $dir: $!\n";
     }
     open (my $fh, ">$path") or die "Failed to open $path for writing: $!\n";
-    print $fh ${ $chunk->chunkref };
+    my $chunkref = $chunk->chunkref;
+    print $fh $$chunkref;
     close($fh) or die "Failed to close $path\n";
+
+    my $actual_size   = -s $path;
+    my $expected_size = length $$chunkref;
+    unless ($actual_size == $expected_size) {
+        die "Chunk was written to disk wrong:  size is $actual_size, expecting $expected_size\n";
+    }
+
     return 1;
 }
 
