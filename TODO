@@ -3,3 +3,12 @@
    kvance)
 
 -- reuse tempfiles in Chunk.pm as Restore.pm does
+
+-- restoring from existing config file.
+
+-- restoring subsets of files
+
+-- better test coverage.  currently at 84%.  should ignore
+   test coverage of test modules.  move Brackup::Test to
+   t/lib/ probably
+

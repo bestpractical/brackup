@@ -4,6 +4,7 @@ TODO
 doc/data-structures.txt
 doc/exampleconfig.txt
 doc/overview.txt
+doc/design-decisions.txt
 lib/Brackup/Backup.pm
 lib/Brackup/Chunk.pm
 lib/Brackup/Config.pm
