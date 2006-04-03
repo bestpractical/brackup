@@ -1,0 +1,3 @@
+-- proactively clean temp files, as aborts/segvs in middle can leave
+   tens of thousands of files in /tmp, filling it up.  (report from
+   kvance)

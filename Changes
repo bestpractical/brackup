@@ -1,0 +1,7 @@
+  - restore works
+
+  - lot more tests
+
+0.7
+  - first release to CPAN, didn't support restoring yet.
+    also didn't have a Changes file
