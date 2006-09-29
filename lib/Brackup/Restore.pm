@@ -89,6 +89,7 @@ sub _decrypt_data {
     _write_to_file($enc_temp, $dataref);
 
     my @list = ("gpg", @Brackup::GPG_ARGS,
+                "--trust-model=always",
                 "--output",  $output_temp,
                 "--yes", "--quiet",
                 "--decrypt", $enc_temp);

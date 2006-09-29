@@ -66,6 +66,7 @@ sub backup {
     if (my $rcpt = $self->{root}->gpg_rcpt) {
         my $encfile .= ".enc";
         system($self->{root}->gpg_path, $self->{root}->gpg_args,
+               "--trust-model=always",
                "--recipient", $rcpt, "--encrypt", "--output=$encfile", "--yes", $backup_file)
             and die "Failed to run gpg while encryping metafile: $!\n";
         $contents = _contents_of($encfile);

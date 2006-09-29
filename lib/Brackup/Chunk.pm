@@ -75,7 +75,14 @@ sub chunkref {
     die "size not right" unless -s $tmpfn == $self->{length};
 
     my ($etmpfh, $etmpfn) = tempfile();
-    system($self->root->gpg_path, $self->root->gpg_args, "--recipient", $gpg_rcpt, "--encrypt", "--output=$etmpfn", "--yes", $tmpfn)
+
+    system($self->root->gpg_path, $self->root->gpg_args,
+           "--recipient", $gpg_rcpt,
+           "--trust-model=always",
+           "--batch",
+           "--encrypt",
+           "--output=$etmpfn",
+           "--yes", $tmpfn)
         and die "Failed to run gpg: $!\n";
     open (my $enc_fh, $etmpfn) or die "Failed to open $etmpfn: $!\n";
     $data = do { local $/; <$enc_fh>; };
