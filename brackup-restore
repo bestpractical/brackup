@@ -65,13 +65,7 @@ use Getopt::Long;
 use FindBin qw($Bin);
 use lib "$Bin/lib";
 
-use Brackup::Config;
-use Brackup::File;
-use Brackup::DigestDatabase;
-use Brackup::Backup;
-use Brackup::Root;     # aka "source"
-use Brackup::Restore;
-use Brackup::Target;
+use Brackup;
 
 my ($opt_verbose, $meta_file, $opt_help, $restore_dir, $opt_all, $prefix);
 

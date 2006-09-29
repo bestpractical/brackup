@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-brackup - Flexible backup tool.  Slices, dices, encrypts, and sprays across the net.
+Brackup - Flexible backup tool.  Slices, dices, encrypts, and sprays across the net.
 
 =head1 SYNOPSIS
 
@@ -37,6 +37,10 @@ It'll probably eat your files, kick your cat, and knock up your
 mother.  You've been warned.  If you feel like trusting it with your
 data, why don't you audit it first?
 
+=head1 SEE ALSO
+
+brackup-restore
+
 =head1 AUTHOR
 
 Brad Fitzpatrick E<lt>brad@danga.comE<gt>
@@ -56,15 +60,7 @@ use Cwd;
 use FindBin qw($Bin);
 use lib "$Bin/lib";
 
-use Brackup::Config;
-use Brackup::File;
-use Brackup::DigestDatabase;
-use Brackup::Backup;
-use Brackup::Root;     # aka "source"
-use Brackup::Target;
-
-use vars qw($VERSION);
-$VERSION = '0.80';
+use Brackup;
 
 my ($src_name, $target_name, $opt_verbose, $backup_file, $opt_help);
 

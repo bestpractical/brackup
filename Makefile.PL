@@ -3,7 +3,7 @@ use strict;
 use ExtUtils::MakeMaker;
 
 WriteMakefile( NAME            => 'Brackup',
-               VERSION_FROM    => 'brackup',
+               VERSION_FROM    => 'lib/Brackup.pm',
                EXE_FILES       => [ 'brackup', 'brackup-restore' ],
                PREREQ_PM       => {
                    'DBD::SQLite'  => 0,
