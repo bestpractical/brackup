@@ -1,0 +1,122 @@
+#!/usr/bin/perl
+
+=head1 NAME
+
+brackup-restore - The brackup restore tool.
+
+=head1 SYNOPSIS
+
+ $ brackup-restore --from=foo.brackup --to=<base_directory> --all
+ $ brackup-restore --from=foo.brackup --to=<base_directory> --just=<file>
+ $ brackup-restore --from=foo.brackup --to=<base_directory> --just=<dir>
+
+=head2 OPTIONS
+
+=over 4
+
+=item --from=NAME
+
+Required.  The metafile index.  Probably named like "source-YYYYMMDD.brackup"
+
+=item --to=NAME
+
+Required.  The destination root directory for your restored files.
+
+=item --all
+
+Restore all files.
+
+=item --just="DIRECTORY"
+
+Restore just the directory named.  (and all contents thereunder)
+
+=item --just="FILE"
+
+Restore just the file named.
+
+=back
+
+=head1 WARRANTY
+
+Brackup is distributed as-is and comes without warranty of any kind.
+It'll probably eat your files, kick your cat, and knock up your
+mother.  You've been warned.  If you feel like trusting it with your
+data, why don't you audit it first?
+
+=head1 AUTHOR
+
+Brad Fitzpatrick E<lt>brad@danga.comE<gt>
+
+Copyright (c) 2006 Six Apart, Ltd. All rights reserved.
+
+This module is free software. You may use, modify, and/or redistribute this
+software under the terms of same terms as perl itself.
+
+=cut
+
+use strict;
+use warnings;
+use Getopt::Long;
+
+use FindBin qw($Bin);
+use lib "$Bin/lib";
+
+use Brackup::Config;
+use Brackup::File;
+use Brackup::DigestDatabase;
+use Brackup::Backup;
+use Brackup::Root;     # aka "source"
+use Brackup::Restore;
+use Brackup::Target;
+
+my ($opt_verbose, $meta_file, $opt_help, $restore_dir, $opt_all, $prefix);
+
+usage() unless
+    GetOptions(
+               'from=s'    => \$meta_file,
+               'to=s'      => \$restore_dir,
+               'verbose'   => \$opt_verbose,
+               'help'      => \$opt_help,
+               'all'       => \$opt_all,
+               'just'      => \$prefix,
+               );
+
+if ($opt_help) {
+    eval "use Pod::Usage;";
+    Pod::Usage::pod2usage( -verbose => 1, -exitval => 0 );
+    exit 0;
+}
+
+my $config = eval { Brackup::Config->load("$ENV{HOME}/.brackup.conf") } or
+    usage($@);
+
+usage() unless $meta_file && $restore_dir && ($prefix || $opt_all);
+usage("Given directory isn't a directory") unless -d $restore_dir;
+usage("Given restore file doesn't exist")  unless -e $meta_file;
+usage("Given restore file isn't a file")   unless -f $meta_file;
+$prefix ||= "";  # with -all, "", which means everything
+
+my $restore = Brackup::Restore->new(
+                                    to     => $restore_dir,
+                                    prefix => $prefix,
+                                    file   => $meta_file,
+                                    );
+
+if (eval { $restore->restore }){
+    warn "Restore complete." if $opt_verbose;
+    exit 0;
+} else {
+    warn "Error doing restore: $@\n";
+    exit 1;
+}
+
+
+sub usage {
+    my $why = shift || "";
+    if ($why) {
+        $why =~ s/\s+$//;
+        $why = "Error: $why\n\n";
+    }
+    die "${why}brackup-restore --from=[metafile.brackup] --to=[restore_dir] <--all|--just=[what]>\nbrackup-restore --help\n";
+
+}
