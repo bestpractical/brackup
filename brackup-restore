@@ -1,5 +1,9 @@
 #!/usr/bin/perl
 
+# TODO: skip-if-exists (and ignore zero byte files)
+# TODO: continue-on-errors
+# Error doing restore: File restore/.brackup-digest.db (.brackup-digest.db) already exists.  Aborting. at /raid/bradfitz/proj/brackup/trunk/lib/Brackup/Restore.pm line 157, <$fh> line 20.
+
 =head1 NAME
 
 brackup-restore - The brackup restore tool.
@@ -78,7 +82,7 @@ usage() unless
                'verbose'   => \$opt_verbose,
                'help'      => \$opt_help,
                'all'       => \$opt_all,
-               'just'      => \$prefix,
+               'just=s'    => \$prefix,
                );
 
 if ($opt_help) {

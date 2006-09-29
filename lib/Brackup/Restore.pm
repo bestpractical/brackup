@@ -185,7 +185,9 @@ sub _restore_file {
         my $actual_dig = $sha1->hexdigest;
 
         # TODO: support --onerror={continue,prompt}, etc, but for now we just die
-        die "Digest of restored file doesn't match" unless $actual_dig eq $good_dig;
+        unless ($actual_dig eq $good_dig || $full =~ m!\.brackup-digest\.db\b!) {
+            die "Digest of restored file ($full) doesn't match";
+        }
     }
 
     $self->_update_statinfo($full, $it);
