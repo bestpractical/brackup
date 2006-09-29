@@ -1,3 +1,13 @@
+0.91 (sep 29 2006)
+  - there's now a restore command (brackup-restore)
+
+  - amazon restore support
+
+  - use gpg --trust-model=always for new gpg that is more paranoid.
+
+  - mostly usable.  some more switches would be nice later.  real
+    1.00 release will come after few weeks/months of testing/tweaks.
+
 0.80
   - restore works
 
