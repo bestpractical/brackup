@@ -21,7 +21,6 @@ lib/Brackup/Target/Amazon.pm
 lib/Brackup/Target/Filesystem.pm
 t/01-backup.t
 t/00-use.t
-t/data
 t/data/my-link.txt
 t/data/test-file.txt
 t/data/my_dir/sub_dir/another-file.txt

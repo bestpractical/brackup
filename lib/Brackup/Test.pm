@@ -13,14 +13,7 @@ use File::Find;
 use File::stat ();
 use Cwd;
 
-use Brackup::Root;
-use Brackup::Config;
-use Brackup::Backup;
-use Brackup::Restore;
-use Brackup::DigestDatabase;
-use Brackup::Target;
-use Brackup::File;
-use Brackup::Chunk;
+use Brackup;
 
 my $has_diff = eval "use Text::Diff; 1;";
 
