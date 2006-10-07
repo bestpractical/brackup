@@ -35,22 +35,26 @@ sub backup {
 
         $file->foreach_chunk(sub {
             my $chunk = shift;  # a Brackup::Chunk object
-            unless ($target->has_chunk($chunk)) {
-                unless ($self->{dryrun}) {
-                    $target->store_chunk($chunk) or die "Chunk storage failed.\n";
-                }
-                $stats->note_stored_chunk($chunk);
 
-                # DEBUG: verify it got written correctly
-                if ($ENV{BRACKUP_PARANOID}) {
-                    my $saved_ref = $target->load_chunk($chunk->backup_digest);
-                    my $saved_len = length $$saved_ref;
-                    unless ($saved_len == $chunk->backup_length) {
-                        warn "Saved length of $saved_len doesn't match our length of " . $chunk->backup_length . "\n";
-                        die;
-                    }
+            if ($target->has_chunk($chunk)) {
+                return;
+            }
+
+            unless ($self->{dryrun}) {
+                $target->store_chunk($chunk) or die "Chunk storage failed.\n";
+            }
+            $stats->note_stored_chunk($chunk);
+
+            # DEBUG: verify it got written correctly
+            if ($ENV{BRACKUP_PARANOID}) {
+                my $saved_ref = $target->load_chunk($chunk->backup_digest);
+                my $saved_len = length $$saved_ref;
+                unless ($saved_len == $chunk->backup_length) {
+                    warn "Saved length of $saved_len doesn't match our length of " . $chunk->backup_length . "\n";
+                    die;
                 }
             }
+
             $chunk->forget_chunkref;
         });
 
