@@ -79,30 +79,97 @@ sub foreach_file {
 
     chdir $self->{dir} or die "Failed to chdir to $self->{dir}";
 
+    # run the callback on the root directory, since it isn't
+    # matched by logic below
+    $cb->(Brackup::File->new(root => $self, path => "."));
+
     find({
         no_chdir => 1,
-        wanted => sub {
-            my (@stat) = stat(_);
-            my $path = $_;
-            $path =~ s!^\./!!;
+        preprocess => sub {
+            my $dir = $File::Find::dir;
+            my @good_dentries;
+          DENTRY:
+            foreach my $dentry (@_) {
+                next if $dentry eq "." || $dentry eq "..";
 
-            # skip the digest database file.  not sure if this is smart or not.
-            # for now it'd be kinda nice to have, but it's re-creatable from
-            # the backup meta files later, so let's skip it.
-            return if $path eq $self->{digdb_file};
+                my $path = "$dir/$dentry";
+                $path =~ s!^\./!!;
 
-            foreach my $pattern (@{ $self->{ignore} }) {
-                return if $path =~ /$pattern/;
+                # skip the digest database file.  not sure if this is smart or not.
+                # for now it'd be kinda nice to have, but it's re-creatable from
+                # the backup meta files later, so let's skip it.
+                next if $path eq $self->{digdb_file};
+
+                my (@stat) = stat($path);
+                my $is_dir = -d _;
+
+                foreach my $pattern (@{ $self->{ignore} }) {
+                    next DENTRY if $path =~ /$pattern/;
+                    next DENTRY if $is_dir && "$path/" =~ /$pattern/;
+                }
+                push @good_dentries, $dentry;
+
+                # TODO: pass along the stat info
+                my $file = Brackup::File->new(root => $self, path => $path);
+                $cb->($file);
             }
-            my $file = Brackup::File->new(root => $self, path => $path);
-            $cb->($file);
+
+            # to let it recurse into the good directories we didn't
+            # already throw away:
+            return @good_dentries;
         },
+
+        # we don't use this phase, as it didn't let us discard
+        # directories early (before walking into them), so all work is
+        # moved into preprocess phase.
+        wanted => sub { },
     }, ".");
 }
 
 sub as_string {
     my $self = shift;
     return $self->{name} . "($self->{dir})";
+}
+
+sub du_stats {
+    my $self = shift;
+
+    my $show_all = $ENV{BRACKUP_DU_ALL};
+    my @dir_stack;
+    my %dir_size;
+    my $pop_dir = sub {
+        my $dir = pop @dir_stack;
+        printf("%-20d%s\n", $dir_size{$dir} || 0, $dir);
+        delete $dir_size{$dir};
+    };
+    my $start_dir = sub {
+        my $dir = shift;
+        unless ($dir eq ".") {
+            my @parts = (".", split(m!/!, $dir));
+            while (@dir_stack >= @parts) {
+                $pop_dir->();
+            }
+        }
+        push @dir_stack, $dir;
+    };
+    $self->foreach_file(sub {
+        my $file = shift;
+        my $path = $file->path;
+        if ($file->is_dir) {
+            $start_dir->($path);
+            return;
+        }
+        if ($file->is_file) {
+            my $size = $file->size;
+            my $kB   = int($size / 1024) + ($size % 1024 ? 1 : 0);
+            printf("%-20d%s\n", $kB, $path) if $show_all;
+            $dir_size{$_} += $kB foreach @dir_stack;
+        }
+    });
+
+    $pop_dir->() while @dir_stack;
+
+
 }
 
 1;

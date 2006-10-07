@@ -1,6 +1,15 @@
+  - new --du-stats to command to act like the du(1) command, but
+    based on a root in brackup.conf, and skipping ignored directories.
+    good to let you know how big a backup will be.
+
+  - walk directories smarter: jump over directories early which ignore
+    patterns show as never matching.
+
   - deal w/ encryption better:  tell chunks when the backup target
     will need data, so it can forget cached digest/backlength
     ahead of time w/o errors/warnings later.
+
+  - start of stats code (to give stats after a backup).  not done.
 
 0.91 (sep 29 2006)
   - there's now a restore command (brackup-restore)
