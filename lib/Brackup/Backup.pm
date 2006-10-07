@@ -9,6 +9,7 @@ sub new {
 
     $self->{root}    = delete $opts{root};     # Brackup::Root
     $self->{target}  = delete $opts{target};   # Brackup::Target
+    $self->{dryrun}  = delete $opts{dryrun};   # bool
 
     $self->{saved_files} = [];   # list of Brackup::File objects backed up
 
@@ -17,12 +18,14 @@ sub new {
     return $self;
 }
 
-# returns 1 on success, or dies with error
+# returns true (a Brackup::BackupStats object) on success, or dies with error
 sub backup {
     my ($self, $backup_file) = @_;
 
     my $root   = $self->{root};
     my $target = $self->{target};
+
+    my $stats  = Brackup::BackupStats->new;
 
     # store the files
     $root->foreach_file(sub {
@@ -33,7 +36,10 @@ sub backup {
         $file->foreach_chunk(sub {
             my $chunk = shift;  # a Brackup::Chunk object
             unless ($target->has_chunk($chunk)) {
-                $target->store_chunk($chunk) or die "Chunk storage failed.\n";
+                unless ($self->{dryrun}) {
+                    $target->store_chunk($chunk) or die "Chunk storage failed.\n";
+                }
+                $stats->note_stored_chunk($chunk);
 
                 # DEBUG: verify it got written correctly
                 if ($ENV{BRACKUP_PARANOID}) {
@@ -79,7 +85,7 @@ sub backup {
     my $name = $self->{root}->publicname . "-" . $self->backup_time;
     $target->store_backup_meta($name, $contents);
 
-    return 1;
+    return $stats;
 }
 
 sub _contents_of {

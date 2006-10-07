@@ -63,6 +63,7 @@ use lib "$Bin/lib";
 use Brackup;
 
 my ($src_name, $target_name, $opt_verbose, $backup_file, $opt_help);
+my $opt_dryrun;
 
 usage() unless
     GetOptions(
@@ -71,6 +72,7 @@ usage() unless
                'verbose'   => \$opt_verbose,
                'output=s'  => \$backup_file,
                'help'      => \$opt_help,
+               'dry-run'   => \$opt_dryrun,
                );
 
 if ($opt_help) {
@@ -110,11 +112,14 @@ $backup_file = "$cwd/$backup_file" unless $backup_file =~ m!^/!;
 my $backup = Brackup::Backup->new(
                                   root    => $root,
                                   target  => $target,
+                                  dryrun  => $opt_dryrun,
                                   );
 
-if (eval { $backup->backup($backup_file) }) {
+if (my $stats = eval { $backup->backup($backup_file) }) {
     warn "Backup complete." if $opt_verbose;
-
+    if ($opt_dryrun || $opt_verbose) {
+        $stats->print;
+    }
     exit 0;
 } else {
     warn "Error running backup: $@\n";

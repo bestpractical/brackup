@@ -8,6 +8,7 @@ doc/overview.txt
 doc/design-decisions.txt
 lib/Brackup.pm
 lib/Brackup/Backup.pm
+lib/Brackup/BackupStats.pm
 lib/Brackup/Chunk.pm
 lib/Brackup/Config.pm
 lib/Brackup/DigestDatabase.pm

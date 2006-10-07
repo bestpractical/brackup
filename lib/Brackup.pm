@@ -10,5 +10,6 @@ use Brackup::Backup;
 use Brackup::Root;     # aka "source"
 use Brackup::Restore;
 use Brackup::Target;
+use Brackup::BackupStats;
 
 1;

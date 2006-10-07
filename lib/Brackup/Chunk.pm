@@ -41,9 +41,14 @@ sub as_string {
     return $self->{file}->as_string . "{off=$self->{offset},len=$self->{length}}";
 }
 
+sub file {
+    my $self = shift;
+    return $self->{file};
+}
+
 sub root {
     my $self = shift;
-    return $self->{file}->root;
+    return $self->file->root;
 }
 
 sub chunkref {
