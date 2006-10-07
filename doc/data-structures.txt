@@ -21,7 +21,7 @@ Class-wise, we have:
   Backup -- a snapshot in time of all a Root's Files and Chunks.
             during the backup, the Target is consulted to see if it
             has chunks before they're re-stored.  The backup upon
-	    completion writes a YAML file as described below.
+	    completion writes a structured file as described below.
 
   DigestDatabase -- the digest database, a property of the Root, acts
                     mostly as a cache, but is pretty important when
