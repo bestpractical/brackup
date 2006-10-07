@@ -40,6 +40,8 @@ sub backup {
                 return;
             }
 
+            $chunk->will_need_data;
+
             unless ($self->{dryrun}) {
                 $target->store_chunk($chunk) or die "Chunk storage failed.\n";
             }

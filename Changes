@@ -1,3 +1,7 @@
+  - deal w/ encryption better:  tell chunks when the backup target
+    will need data, so it can forget cached digest/backlength
+    ahead of time w/o errors/warnings later.
+
 0.91 (sep 29 2006)
   - there's now a restore command (brackup-restore)
 

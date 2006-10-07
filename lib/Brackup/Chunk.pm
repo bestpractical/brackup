@@ -6,6 +6,17 @@ use Carp qw(croak);
 use Digest::SHA1 qw(sha1_hex);
 use File::Temp qw(tempfile);
 
+# fields
+# ------
+#   file            the Brackup::File object
+#   offset
+#   length
+# sometimes:
+#   digest          if calculated "type:hex"
+#   _chunkref       if calculated, scalarref
+#   backlength      if calculated
+#   will_need_data  see function of same name below for details
+
 sub new {
     my ($class, %opts) = @_;
     my $self = bless {}, $class;
@@ -103,9 +114,14 @@ sub forget_chunkref {
 
 sub _populate_lengthdigest {
     my $self = shift;
-    die "failed to get length/digest of chunk" unless
-        $self->_learn_lengthdigest_from_cache ||
-        $self->_learn_lengthdigest_from_data($self->chunkref);
+    if ($self->{will_need_data}) {
+        die "failed to get length/digest of chunk data" unless
+            $self->_learn_lengthdigest_from_data($self->chunkref);
+    } else {
+        die "failed to get length/digest of chunk" unless
+            $self->_learn_lengthdigest_from_cache ||
+            $self->_learn_lengthdigest_from_data($self->chunkref);
+    }
 }
 
 sub _learn_lengthdigest_from_cache {
@@ -134,7 +150,7 @@ sub _learn_lengthdigest_from_data {
 
     # be paranoid about this changing
     if ($old_digest && $old_digest ne $self->{digest}) {
-        die "Digest changed!\n";
+        Carp::confess("Digest changed!\n");
     }
 
     $self->digdb->set($self->cachekey, "$self->{backlength} $self->{digest}");
@@ -163,5 +179,31 @@ sub backup_digest {
     return $self->{digest};
 }
 
-1;
+# a way for the backup class to signal that this chunk doesn't exist
+# on the target and we'll more than likely be asked for its data next.
+# it could be a --dry-run, though, so we shouldn't prep the data
+# already.  however, next time we're asked for the backup_digest
+# or backup_length, they damn well match the chunkref we later give it,
+# regardless of which order the target driver asks for stuff in.  for instance,
+#
+#   ($data, $dig, $len) = ($chunk->data, $chunk->backup_digest, $chunk->backup_length)
+#
+# would work without this.  but a target driver might do:
+#
+#   ($dig, $len, $data) = ($chunk->backup_digest, $chunk->backup_length, $chunk->data)
+#
+# and get the old digest/length before the data calls then changes
+# those.  (remember that with encryption, the digest/length of the
+# encrypted chunk changes each time)
+#
+# so this is where we forget any cached data and set the 'will_need_data' flag
+# so the cached isn't used in the future.
 
+sub will_need_data {
+    my $self = shift;
+    delete $self->{digest};
+    delete $self->{backlength};
+    $self->{will_need_data} = 1;
+}
+
+1;
