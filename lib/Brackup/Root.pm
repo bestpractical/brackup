@@ -79,10 +79,6 @@ sub foreach_file {
 
     chdir $self->{dir} or die "Failed to chdir to $self->{dir}";
 
-    # run the callback on the root directory, since it isn't
-    # matched by logic below
-    $cb->(Brackup::File->new(root => $self, path => "."));
-
     find({
         no_chdir => 1,
         preprocess => sub {
@@ -108,10 +104,6 @@ sub foreach_file {
                     next DENTRY if $is_dir && "$path/" =~ /$pattern/;
                 }
                 push @good_dentries, $dentry;
-
-                # TODO: pass along the stat info
-                my $file = Brackup::File->new(root => $self, path => $path);
-                $cb->($file);
             }
 
             # to let it recurse into the good directories we didn't
@@ -119,10 +111,14 @@ sub foreach_file {
             return @good_dentries;
         },
 
-        # we don't use this phase, as it didn't let us discard
-        # directories early (before walking into them), so all work is
-        # moved into preprocess phase.
-        wanted => sub { },
+        wanted => sub {
+            my (@stat) = stat(_);
+            my $path = $_;
+            $path =~ s!^\./!!;
+            # TODO: pass along the stat info
+            my $file = Brackup::File->new(root => $self, path => $path);
+            $cb->($file);
+        },
     }, ".");
 }
 
