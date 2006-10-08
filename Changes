@@ -1,3 +1,6 @@
+  - make decryption --use-agent and --batch, and help out if env not set
+    and gpg-agent probably not running
+
   - support putting .meta files besides .chunk files on the Target
     to enable reconstructing the digest database in the future, should
     it get lost.  also start to flesh out per-chunk digests, which
