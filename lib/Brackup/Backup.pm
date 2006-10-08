@@ -76,7 +76,7 @@ sub backup {
 
     # store the metafile, encrypted, on the target
     if (my $rcpt = $self->{root}->gpg_rcpt) {
-        my $encfile .= ".enc";
+        my $encfile = $backup_file . ".enc";
         system($self->{root}->gpg_path, $self->{root}->gpg_args,
                "--trust-model=always",
                "--recipient", $rcpt, "--encrypt", "--output=$encfile", "--yes", $backup_file)

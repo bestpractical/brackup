@@ -4,6 +4,7 @@ use warnings;
 use Carp qw(croak);
 use File::Find;
 use Brackup::DigestDatabase;
+use File::Temp qw(tempfile);
 
 sub new {
     my ($class, $conf) = @_;
@@ -164,8 +165,37 @@ sub du_stats {
     });
 
     $pop_dir->() while @dir_stack;
+}
 
+# given data (scalar or scalarref), returns encrypted data
+sub encrypt {
+    my ($self, $data) = @_;
+    my $gpg_rcpt = $self->gpg_rcpt
+        or Carp::confess("Encryption not setup for this root");
 
+    $data = \$data unless ref $data;
+
+    # FIXME: let users control where their temp files go?
+    my ($tmpfh, $tmpfn) = tempfile();
+    print $tmpfh $$data
+        or die "failed to print: $!";
+    close $tmpfh
+        or die "failed to close: $!\n";
+    Carp::confess("size not right")
+        unless -s $tmpfn == length $$data;
+
+    my ($etmpfh, $etmpfn) = tempfile();
+
+    system($self->gpg_path, $self->gpg_args,
+           "--recipient", $gpg_rcpt,
+           "--trust-model=always",
+           "--batch",
+           "--encrypt",
+           "--output=$etmpfn",
+           "--yes", $tmpfn)
+        and die "Failed to run gpg: $!\n";
+    open (my $enc_fh, $etmpfn) or die "Failed to open $etmpfn: $!\n";
+    return do { local $/; <$enc_fh>; };
 }
 
 1;

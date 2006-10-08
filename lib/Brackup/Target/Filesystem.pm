@@ -29,8 +29,8 @@ sub backup_header {
     };
 }
 
-sub chunkpath {
-    my ($self, $dig) = @_;
+sub _diskpath {
+    my ($self, $dig, $ext) = @_;
     my @parts;
     my $fulldig = $dig;
     $dig =~ s/^\w+://; # remove the "hashtype:" from beginning
@@ -38,7 +38,17 @@ sub chunkpath {
         $dig =~ s/^(.{1,4})//;
         push @parts, $1;
     }
-    return $self->{path} . "/" . join("/", @parts) . "/$fulldig.chunk";
+    return $self->{path} . "/" . join("/", @parts) . "/$fulldig.$ext";
+}
+
+sub chunkpath {
+    my ($self, $dig) = @_;
+    return $self->_diskpath($dig, "chunk");
+}
+
+sub metapath {
+    my ($self, $dig) = @_;
+    return $self->_diskpath($dig, "meta");
 }
 
 sub has_chunk {
@@ -77,6 +87,13 @@ sub store_chunk {
     my $expected_size = length $$chunkref;
     unless ($actual_size == $expected_size) {
         die "Chunk was written to disk wrong:  size is $actual_size, expecting $expected_size\n";
+    }
+
+    if (my $mstr = $chunk->meta_contents) {
+        my $mpath = $self->metapath($dig);
+        open (my $fh, ">$mpath") or die "Failed to open $path for writing: $!\n";
+        print $fh $mstr;
+        close($fh) or die "Failed to close $mpath\n";
     }
 
     return 1;

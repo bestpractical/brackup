@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use Carp qw(croak);
 use Digest::SHA1 qw(sha1_hex);
-use File::Temp qw(tempfile);
 
 # fields
 # ------
@@ -13,6 +12,7 @@ use File::Temp qw(tempfile);
 #   length
 # sometimes:
 #   digest          if calculated "type:hex"
+#   _rawdigest      "type:hex" of not encrypted, not compressed.
 #   _chunkref       if calculated, scalarref
 #   backlength      if calculated
 #   will_need_data  see function of same name below for details
@@ -62,54 +62,61 @@ sub root {
     return $self->file->root;
 }
 
+# returns true if encrypted, false otherwise
+sub encrypted {
+    my $self = shift;
+    return $self->root->gpg_rcpt ? 1 : 0;
+}
+
+sub raw_digest {
+    my $self = shift;
+    return $self->{_rawdigest} if $self->{_rawdigest};
+    my $rchunk = $self->raw_chunkref;
+    return $self->{_rawdigest} = "sha1:" . sha1_hex($$rchunk);
+}
+
+sub raw_chunkref {
+    my $self = shift;
+    return $self->{_raw_chunkref} if $self->{_raw_chunkref};
+
+    my $data;
+    my $fullpath = $self->{file}->fullpath;
+    open(my $fh, $fullpath) or die "Failed to open $fullpath: $!\n";
+    seek($fh, $self->{offset}, 0) or die "Couldn't seek: $!\n";
+    my $rv = read($fh, $data, $self->{length})
+        or die "Failed to read: $!\n";
+    unless ($rv == $self->{length}) {
+        Carp::confess("Read $rv bytes, not $self->{length}");
+    }
+
+    return $self->{_raw_chunkref} = \$data;
+}
+
 sub chunkref {
     my $self = shift;
     return $self->{_chunkref} if $self->{_chunkref};
 
-    my $data;
-    my $dataref_with_learning = sub {
-        # record the encrypted/
-        $self->_learn_lengthdigest_from_data(\$data);
-        return $self->{_chunkref} = \$data;
+    my $dataref_and_cache_it = sub {
+        my $ref = shift;
+        $self->_learn_lengthdigest_from_data($ref);
+        return $self->{_chunkref} = $ref;
     };
 
-    my $root = $self->root;
-    my $gpg_rcpt = $root->gpg_rcpt;
-
-    my $fullpath = $self->{file}->fullpath;
-    open(my $fh, $fullpath) or die "Failed to open $fullpath: $!\n";
-    seek($fh, $self->{offset}, 0) or die "Couldn't seek: $!\n";
-    read($fh, $data, $self->{length}) or die "Failed to read: $!\n";
-
     # non-encrypting case
-    return $dataref_with_learning->() unless $gpg_rcpt;
+    unless ($self->encrypted) {
+        return $dataref_and_cache_it->($self->raw_chunkref);
+    }
 
-    # FIXME: let users control where their temp files go?
-    my ($tmpfh, $tmpfn) = tempfile();
-    print $tmpfh $data or die "failed to print: $!";
-    close $tmpfh or die "failed to close: $!\n";
-    die "size not right" unless -s $tmpfn == $self->{length};
-
-    my ($etmpfh, $etmpfn) = tempfile();
-
-    system($self->root->gpg_path, $self->root->gpg_args,
-           "--recipient", $gpg_rcpt,
-           "--trust-model=always",
-           "--batch",
-           "--encrypt",
-           "--output=$etmpfn",
-           "--yes", $tmpfn)
-        and die "Failed to run gpg: $!\n";
-    open (my $enc_fh, $etmpfn) or die "Failed to open $etmpfn: $!\n";
-    $data = do { local $/; <$enc_fh>; };
-
-    return $dataref_with_learning->();
+    # encrypting case.
+    my $enc = $self->root->encrypt($self->raw_chunkref);
+    return $dataref_and_cache_it->(\$enc);
 }
 
 # lose the chunkref data
 sub forget_chunkref {
     my $self = shift;
     delete $self->{_chunkref};
+    delete $self->{_raw_chunkref};
 }
 
 sub _populate_lengthdigest {
@@ -204,6 +211,40 @@ sub will_need_data {
     delete $self->{digest};
     delete $self->{backlength};
     $self->{will_need_data} = 1;
+}
+
+sub compressed {
+    my $self = shift;
+    return 0;  # FUTURE: support compressed chunks
+}
+
+sub meta_contents {
+    my $self = shift;
+    my $meta = "";
+    my $addmeta = sub {
+        my ($k, $v) = @_;
+        $meta .= "$k: $v\n";
+    };
+
+    if ($self->encrypted) {
+        $addmeta->("chunkcachekey", $self->cachekey);
+    }
+
+    if ($self->compressed) {
+        #FUTURE:
+        #$addmeta->("compression", "gz");
+    }
+
+    if ($self->encrypted || $self->compressed) {
+        $addmeta->("raw_digest", $self->raw_digest);
+    }
+
+    if ($self->encrypted) {
+        $meta = $self->root->encrypt($meta);
+    }
+
+    return $meta;
+
 }
 
 1;

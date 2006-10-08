@@ -1,3 +1,9 @@
+  - support putting .meta files besides .chunk files on the Target
+    to enable reconstructing the digest database in the future, should
+    it get lost.  also start to flesh out per-chunk digests, which
+    would enable backing up large databases (say, InnoDB tablespaces) where 
+    large chunks of the file never change.
+
   - new --du-stats to command to act like the du(1) command, but
     based on a root in brackup.conf, and skipping ignored directories.
     good to let you know how big a backup will be.
