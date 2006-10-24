@@ -5,6 +5,8 @@ use Carp qw(croak);
 use File::Find;
 use Brackup::DigestDatabase;
 use File::Temp qw(tempfile);
+use IPC::Open2;
+use Symbol;
 
 sub new {
     my ($class, $conf) = @_;
@@ -184,18 +186,28 @@ sub encrypt {
     Carp::confess("size not right")
         unless -s $tmpfn == length $$data;
 
-    my ($etmpfh, $etmpfn) = tempfile();
+    my $cout = Symbol::gensym();
+    my $cin = Symbol::gensym();
 
-    system($self->gpg_path, $self->gpg_args,
-           "--recipient", $gpg_rcpt,
-           "--trust-model=always",
-           "--batch",
-           "--encrypt",
-           "--output=$etmpfn",
-           "--yes", $tmpfn)
-        and die "Failed to run gpg: $!\n";
-    open (my $enc_fh, $etmpfn) or die "Failed to open $etmpfn: $!\n";
-    return do { local $/; <$enc_fh>; };
+    my $pid = IPC::Open2::open2($cout, $cin,
+        $self->gpg_path, $self->gpg_args,
+        "--recipient", $gpg_rcpt,
+        "--trust-model=always",
+        "--batch",
+        "--encrypt",
+        "--output=-",  # Send output to stdout
+        "--yes",
+        $tmpfn
+    );
+
+    binmode $cout;
+    
+    my $ret = do { local $/; <$cout>; };
+
+    waitpid($pid, 0);
+    die "GPG failed: $!" if $? != 0; # If gpg return status is non-zero
+
+    return $ret;
 }
 
 1;
