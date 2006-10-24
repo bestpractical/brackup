@@ -82,6 +82,7 @@ sub raw_chunkref {
     my $data;
     my $fullpath = $self->{file}->fullpath;
     open(my $fh, $fullpath) or die "Failed to open $fullpath: $!\n";
+    binmode($fh);
     seek($fh, $self->{offset}, 0) or die "Couldn't seek: $!\n";
     my $rv = read($fh, $data, $self->{length})
         or die "Failed to read: $!\n";
