@@ -53,6 +53,24 @@ sub load {
     return $self;
 }
 
+sub default_config_file_name {
+    my ($class) = @_;
+    
+    if ($ENV{HOME}) {
+        # Default for UNIX folk
+        return "$ENV{HOME}/.brackup.conf";
+    }
+    elsif ($ENV{APPDATA}) {
+        # For Windows users
+        return "$ENV{APPDATA}/brackup.conf";
+    }
+    else {
+        # Fall back on the current directory
+        return "brackup.conf";
+    }
+
+}
+
 sub write_dummy_config {
     my $file = shift;
     open (my $fh, ">$file") or return;

@@ -69,6 +69,8 @@ use Brackup;
 
 my ($opt_verbose, $meta_file, $opt_help, $restore_dir, $opt_all, $prefix);
 
+my $config_file = Brackup::Config->default_config_file_name;
+
 usage() unless
     GetOptions(
                'from=s'    => \$meta_file,
@@ -77,6 +79,7 @@ usage() unless
                'help'      => \$opt_help,
                'all'       => \$opt_all,
                'just=s'    => \$prefix,
+               'config=s'  => \$config_file,
                );
 
 if ($opt_help) {
@@ -85,7 +88,7 @@ if ($opt_help) {
     exit 0;
 }
 
-my $config = eval { Brackup::Config->load("$ENV{HOME}/.brackup.conf") } or
+my $config = eval { Brackup::Config->load($config_file) } or
     usage($@);
 
 usage() unless $meta_file && $restore_dir && ($prefix || $opt_all);
