@@ -52,7 +52,9 @@ sub is_dir {
 
 sub is_link {
     my $self = shift;
-    return S_ISLNK($self->stat->mode);
+    my $result = eval { S_ISLNK($self->stat->mode) };
+    $result = -l $self->fullpath unless defined($result);
+    return $result;
 }
 
 sub is_file {
