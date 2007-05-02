@@ -1,14 +1,19 @@
 package Brackup::Target;
 
 use strict;
+use Brackup::Dict::SQLite;
 use warnings;
 use Carp qw(croak);
 
 sub new {
-    my ($class, %opts) = @_;
+    my ($class, $confsec) = @_;
     my $self = bless {}, $class;
+    my $name = $confsec->name;
+    $name =~ s!^TARGET:!! or die;
 
-    croak("Unknown options: " . join(', ', keys %opts)) if %opts;
+    $self->{inventory_sqlite_file} = $confsec->value("inventory_db") ||
+        "$ENV{HOME}/.brackup-target-$name.invdb";
+    return $self;
 }
 
 # return hashref of key/value pairs you want returned to you during a restore
@@ -30,10 +35,30 @@ sub store_chunk {
     die "ERROR: store_chunk not implemented in sub-class $self";
 }
 
-sub store_backup_meta {
-    my ($self, $name, $file) = @_;
-    die "ERROR: store_backup_meta not implemented in sub-class $self";
+sub inventory_dict {
+    my $self = shift;
+    return $self->{_invdict} ||= Brackup::Dict::SQLite->new("target_inv", $self->{inventory_sqlite_file});
 }
+
+sub add_to_inventory {
+    my ($self, $pchunk, $schunk) = @_;
+    my $key  = $pchunk->inventory_key;
+    my $dict = $self->inventory_dict;
+    $dict->set($key => join(" ", $schunk->backup_digest, $schunk->backup_length));
+}
+
+# return stored chunk, given positioned chunk, or undef.  no
+# need to override this, unless you have a good reason.
+sub stored_chunk_from_inventory {
+    my ($self, $pchunk) = @_;
+    my $key    = $pchunk->inventory_key;
+    my $dict   = $self->inventory_dict;
+    my $diglen = $dict->get($key)
+        or return undef;
+    my ($digest, $length) = split /\s+/, $diglen;
+    return Brackup::StoredChunk->new_from_inventory($pchunk, $digest, $length);
+}
+
 
 1;
 

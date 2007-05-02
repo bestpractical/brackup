@@ -4,9 +4,10 @@ use vars qw($VERSION);
 $VERSION = '0.91';
 
 use Brackup::Config;
+use Brackup::ConfigSection;
 use Brackup::File;
-use Brackup::Chunk;
-use Brackup::DigestDatabase;
+use Brackup::PositionedChunk;
+use Brackup::StoredChunk;
 use Brackup::Backup;
 use Brackup::Root;     # aka "source"
 use Brackup::Restore;

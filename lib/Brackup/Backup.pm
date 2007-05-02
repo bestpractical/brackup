@@ -31,44 +31,57 @@ sub backup {
     $root->foreach_file(sub {
         my ($file, $progress) = @_;  # a Brackup::File and Brackup::Progress
 
-        print STDERR "  ", $file->path, "\n";
+        #print STDERR "* ", $file->path, "\n";
+        my @stored_chunks;
 
         $file->foreach_chunk(sub {
-            my $chunk = shift;  # a Brackup::Chunk object
+            my $pchunk = shift;  # a Brackup::PositionedChunk object
+            my $schunk;
 
-            if ($target->has_chunk($chunk)) {
+            #print "  * foreach chunk: ", $pchunk->as_string, "\n";
+
+            if ($schunk = $target->stored_chunk_from_inventory($pchunk)) {
+                #print "    * stored chunk already on target.\n";
+                push @stored_chunks, $schunk;;
                 return;
             }
+            #print "    * doesn't have chunk.\n";
 
-            $chunk->will_need_data;
-
+            my $handle;
             unless ($self->{dryrun}) {
-                $target->store_chunk($chunk) or die "Chunk storage failed.\n";
+                $schunk = Brackup::StoredChunk->new($pchunk);
+                $target->store_chunk($schunk)
+                    or die "Chunk storage failed.\n";
+                $target->add_to_inventory($pchunk => $schunk);
+                push @stored_chunks, $schunk;
             }
-            $stats->note_stored_chunk($chunk);
+
+            #$stats->note_stored_chunk($schunk);
 
             # DEBUG: verify it got written correctly
-            if ($ENV{BRACKUP_PARANOID}) {
-                my $saved_ref = $target->load_chunk($chunk->backup_digest);
-                my $saved_len = length $$saved_ref;
-                unless ($saved_len == $chunk->backup_length) {
-                    warn "Saved length of $saved_len doesn't match our length of " . $chunk->backup_length . "\n";
-                    die;
-                }
+            if ($ENV{BRACKUP_PARANOID} && $handle) {
+                die "FIX UP TO NEW API";
+                #my $saved_ref = $target->load_chunk($handle);
+                #my $saved_len = length $$saved_ref;
+                #unless ($saved_len == $chunk->backup_length) {
+                #    warn "Saved length of $saved_len doesn't match our length of " . $chunk->backup_length . "\n";
+                #    die;
+                #}
             }
 
-            $chunk->forget_chunkref;
+            $pchunk->forget_chunkref;
+            $schunk->forget_chunkref if $schunk;
         });
 
-        $self->add_file($file);
+        $self->add_file($file, \@stored_chunks);
     });
 
     # write the metafile
     open (my $metafh, ">$backup_file") or die "Failed to open $backup_file for writing: $!\n";
     print $metafh $self->backup_header;
     $self->foreach_saved_file(sub {
-        my $file = shift;
-        print $metafh $file->as_rfc822;
+        my ($file, $schunk_list) = @_;
+        print $metafh $file->as_rfc822($schunk_list);  # arrayref of StoredChunks
     });
     close $metafh or die;
 
@@ -129,14 +142,14 @@ sub backup_header {
 }
 
 sub add_file {
-    my ($self, $file) = @_;
-    push @{ $self->{saved_files} }, $file;
+    my ($self, $file, $handlelist) = @_;
+    push @{ $self->{saved_files} }, [ $file, $handlelist ];
 }
 
 sub foreach_saved_file {
     my ($self, $cb) = @_;
-    foreach my $file (@{ $self->{saved_files} }) {
-        $cb->($file);
+    foreach my $rec (@{ $self->{saved_files} }) {
+        $cb->(@$rec);  # Brackup::File, arrayref of Brackup::StoredChunk
     }
 }
 

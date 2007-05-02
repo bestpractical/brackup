@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Carp qw(croak);
 use File::Find;
-use Brackup::DigestDatabase;
+use Brackup::Dict::SQLite;
 use File::Temp qw(tempfile);
 use IPC::Open2;
 use Symbol;
@@ -25,7 +25,7 @@ sub new {
     $self->{gpg_args}   = [];  # TODO: let user set this.  for now, not possible
 
     $self->{digdb_file} = $conf->value('digestdb_file') || "$self->{dir}/.brackup-digest.db";
-    $self->{digdb}      = Brackup::DigestDatabase->new($self->{digdb_file});
+    $self->{digdb}      = Brackup::Dict::SQLite->new("digest_cache", $self->{digdb_file});
 
     die "No backup-root name provided." unless $self->{name};
     die "Backup-root name must be only a-z, A-Z, 0-9, and _." unless $self->{name} =~ /^\w+/;

@@ -17,6 +17,15 @@ use Brackup;
 
 my $has_diff = eval "use Text::Diff; 1;";
 
+my @to_unlink;
+my $par_pid = $$;
+END {
+    if ($$ == $par_pid) {
+        my $rv = unlink @to_unlink;
+        print "unlinked = $rv\n";
+    }
+}
+
 sub do_backup {
     my %opts = @_;
     my $with_confsec = delete $opts{'with_confsec'} || sub {};
@@ -39,8 +48,12 @@ sub do_backup {
     my $backup_dir = tempdir( CLEANUP => 1 );
     ok_dir_empty($backup_dir);
 
+    my ($inv_fh, $inv_filename) = tempfile();
+    push @to_unlink, $inv_filename;
+
     $confsec = Brackup::ConfigSection->new("TARGET:test_restore");
     $confsec->add("type" => "Filesystem");
+    $confsec->add("inventory_db" => $inv_filename);
     $confsec->add("path" => $backup_dir);
     $conf->add_section($confsec);
 
@@ -55,6 +68,7 @@ sub do_backup {
 
     my ($meta_fh, $meta_filename) = tempfile();
     ok(-e $meta_filename, "metafile exists");
+    push @to_unlink, $meta_filename;
 
     ok(eval { $backup->backup($meta_filename) }, "backup succeeded");
     if ($@) {

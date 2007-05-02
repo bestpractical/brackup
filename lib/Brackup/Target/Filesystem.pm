@@ -6,7 +6,7 @@ use File::Path;
 
 sub new {
     my ($class, $confsec) = @_;
-    my $self = bless {}, $class;
+    my $self = $class->SUPER::new($confsec);
     $self->{path} = $confsec->path_value("path");
     $self->{nocolons} = $confsec->value("no_filename_colons");
     $self->{nocolons} = ($^O eq 'MSWin32') unless defined $self->{nocolons}; # LAME: Make it work on Windows
@@ -54,9 +54,9 @@ sub metapath {
     return $self->_diskpath($dig, "meta");
 }
 
-sub has_chunk {
-    my ($self, $chunk) = @_;
-    my $dig = $chunk->backup_digest;   # "sha1:sdfsdf" format scalar
+sub has_chunk_of_handle {
+    my ($self, $handle) = @_;
+    my $dig = $handle->digest;  # "sha1:sdfsdf" format scalar
     my $path = $self->chunkpath($dig);
     return -e $path;
 }
@@ -94,13 +94,6 @@ sub store_chunk {
     }
     unless ($actual_size == $expected_size) {
         die "Chunk $path was written to disk wrong:  size is $actual_size, expecting $expected_size\n";
-    }
-
-    if (my $mstr = $chunk->meta_contents) {
-        my $mpath = $self->metapath($dig);
-        open (my $fh, ">$mpath") or die "Failed to open $path for writing: $!\n";
-        print $fh $mstr;
-        close($fh) or die "Failed to close $mpath\n";
     }
 
     return 1;

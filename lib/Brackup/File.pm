@@ -8,7 +8,7 @@ use Carp qw(croak);
 use File::stat ();
 use Fcntl qw(S_ISREG S_ISDIR S_ISLNK);
 use Digest::SHA1;
-use Brackup::Chunk;
+use Brackup::PositionedChunk;
 
 sub new {
     my ($class, %opts) = @_;
@@ -115,11 +115,11 @@ sub chunks {
         my $size   = $self->size;
         while ($offset < $size) {
             my $len = _min($chunk_size, $size - $offset);
-            my $chunk = Brackup::Chunk->new(
-                                            file   => $self,
-                                            offset => $offset,
-                                            length => $len,
-                                            );
+            my $chunk = Brackup::PositionedChunk->new(
+                                                      file   => $self,
+                                                      offset => $offset,
+                                                      length => $len,
+                                                      );
             push @list, $chunk;
             $offset += $len;
         }
@@ -169,7 +169,7 @@ sub as_string {
 }
 
 sub as_rfc822 {
-    my $self = shift;
+    my ($self, $schunk_list) = @_;
     my $ret = "";
     my $set = sub {
         my ($key, $val) = @_;
@@ -189,7 +189,7 @@ sub as_rfc822 {
             $set->("Link", $self->link_target);
         }
     }
-    $set->("Chunks", join("\n ", map { $_->to_meta } $self->chunks));
+    $set->("Chunks", join("\n ", map { $_->to_meta } @$schunk_list));
 
     unless ($self->is_link) {
         $set->("Mtime", $st->mtime);

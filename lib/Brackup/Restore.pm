@@ -58,7 +58,7 @@ sub restore {
         $self->_restore_link     ($full, $it) if $type eq "l";
         $self->_restore_directory($full, $it) if $type eq "d";
         $self->_restore_file     ($full, $it) if $type eq "f";
-        warn " * restored $it->{Path} to $full\n";
+        #warn " * restored $it->{Path} to $full\n";
     }
 
     $self->_exec_statinfo_updates;
@@ -84,7 +84,10 @@ sub _decrypt_data {
     my $rcpt = $self->{_meta}{"GPG-Recipient"} or
         return $dataref;
 
-    unless ($ENV{'GPG_AGENT_INFO'}) {
+    unless ($ENV{'GPG_AGENT_INFO'} ||
+            @Brackup::GPG_ARGS ||
+            $self->{warned_about_gpg_agent}++)
+    {
         my $err = q{#
                         # WARNING: trying to restore encrypted files,
                         # but $ENV{'GPG_AGENT_INFO'} not present.

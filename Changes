@@ -1,3 +1,6 @@
+  - merge in the refactoring branch, in which a lot of long-standing
+    pet peeves in the design were rethought/redone.
+
   - make decryption --use-agent and --batch, and help out if env not set
     and gpg-agent probably not running
 
