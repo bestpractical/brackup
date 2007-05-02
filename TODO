@@ -1,3 +1,6 @@
+-- --ignore-debian-files option (if managed by a package management
+   system (and not an unmodified conffile), don't back it up)
+
 -- proactively clean temp files, as aborts/segvs in middle can leave
    tens of thousands of files in /tmp, filling it up.  (report from
    kvance)
