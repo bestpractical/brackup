@@ -10,6 +10,7 @@ sub new {
     $self->{root}    = delete $opts{root};     # Brackup::Root
     $self->{target}  = delete $opts{target};   # Brackup::Target
     $self->{dryrun}  = delete $opts{dryrun};   # bool
+    $self->{verbose} = delete $opts{verbose};  # bool
 
     $self->{saved_files} = [];   # list of Brackup::File objects backed up
 
@@ -31,21 +32,23 @@ sub backup {
     $root->foreach_file(sub {
         my ($file, $progress) = @_;  # a Brackup::File and Brackup::Progress
 
-        #print STDERR "* ", $file->path, "\n";
+        $self->debug("* ", $file->path, "\n");
         my @stored_chunks;
+
+        $stats->note_file($file);
 
         $file->foreach_chunk(sub {
             my $pchunk = shift;  # a Brackup::PositionedChunk object
             my $schunk;
 
-            #print "  * foreach chunk: ", $pchunk->as_string, "\n";
+            $self->debug("  * foreach chunk: ", $pchunk->as_string, "\n");
 
             if ($schunk = $target->stored_chunk_from_inventory($pchunk)) {
-                #print "    * stored chunk already on target.\n";
+                $self->debug("    * stored chunk already on target.\n");
                 push @stored_chunks, $schunk;;
                 return;
             }
-            #print "    * doesn't have chunk.\n";
+            $self->debug("    * doesn't have chunk.\n");
 
             my $handle;
             unless ($self->{dryrun}) {
@@ -76,33 +79,36 @@ sub backup {
         $self->add_file($file, \@stored_chunks);
     });
 
-    # write the metafile
-    open (my $metafh, ">$backup_file") or die "Failed to open $backup_file for writing: $!\n";
-    print $metafh $self->backup_header;
-    $self->foreach_saved_file(sub {
-        my ($file, $schunk_list) = @_;
-        print $metafh $file->as_rfc822($schunk_list);  # arrayref of StoredChunks
-    });
-    close $metafh or die;
+    unless ($self->{dryrun}) {
+        # write the metafile
+        $self->debug("Writing metafile ($backup_file)");
+        open (my $metafh, ">$backup_file") or die "Failed to open $backup_file for writing: $!\n";
+        print $metafh $self->backup_header;
+        $self->foreach_saved_file(sub {
+            my ($file, $schunk_list) = @_;
+            print $metafh $file->as_rfc822($schunk_list);  # arrayref of StoredChunks
+        });
+        close $metafh or die;
+        
+        my $contents;
 
-    my $contents;
+        # store the metafile, encrypted, on the target
+        if (my $rcpt = $self->{root}->gpg_rcpt) {
+            my $encfile = $backup_file . ".enc";
+            system($self->{root}->gpg_path, $self->{root}->gpg_args,
+                   "--trust-model=always",
+                   "--recipient", $rcpt, "--encrypt", "--output=$encfile", "--yes", $backup_file)
+                and die "Failed to run gpg while encryping metafile: $!\n";
+            $contents = _contents_of($encfile);
+            unlink $encfile;
+        } else {
+            $contents = _contents_of($backup_file);
+        }
 
-    # store the metafile, encrypted, on the target
-    if (my $rcpt = $self->{root}->gpg_rcpt) {
-        my $encfile = $backup_file . ".enc";
-        system($self->{root}->gpg_path, $self->{root}->gpg_args,
-               "--trust-model=always",
-               "--recipient", $rcpt, "--encrypt", "--output=$encfile", "--yes", $backup_file)
-            and die "Failed to run gpg while encryping metafile: $!\n";
-        $contents = _contents_of($encfile);
-        unlink $encfile;
-    } else {
-        $contents = _contents_of($backup_file);
+        # store it on the target
+        my $name = $self->{root}->publicname . "-" . $self->backup_time;
+        $target->store_backup_meta($name, $contents);
     }
-
-    # store it on the target
-    my $name = $self->{root}->publicname . "-" . $self->backup_time;
-    $target->store_backup_meta($name, $contents);
 
     return $stats;
 }
@@ -151,6 +157,14 @@ sub foreach_saved_file {
     foreach my $rec (@{ $self->{saved_files} }) {
         $cb->(@$rec);  # Brackup::File, arrayref of Brackup::StoredChunk
     }
+}
+
+sub debug {
+    my ($self, @m) = @_;
+    return unless $self->{verbose};
+    my $line = join("", @m);
+    chomp $line;
+    print $line, "\n";
 }
 
 1;

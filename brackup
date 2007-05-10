@@ -76,9 +76,10 @@ usage() unless
                'output=s'  => \$backup_file,
                'help'      => \$opt_help,
                'dry-run'   => \$opt_dryrun,
-               'du-stats' => \$opt_du_stats,
+               'du-stats'  => \$opt_du_stats,
                'config=s'  => \$config_file,
                );
+usage() if @ARGV;
 
 if ($opt_help) {
     eval "use Pod::Usage;";
@@ -125,6 +126,7 @@ my $backup = Brackup::Backup->new(
                                   root    => $root,
                                   target  => $target,
                                   dryrun  => $opt_dryrun,
+                                  verbose => $opt_verbose,
                                   );
 
 if (my $stats = eval { $backup->backup($backup_file) }) {

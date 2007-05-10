@@ -1,3 +1,7 @@
+  - cleanups, strictness
+
+  - don't upload meta files when in dry-run mode
+
   - update amazon target support to work again, with the new inventory
     database support (now separated from the old digest database)
 

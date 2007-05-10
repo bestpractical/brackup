@@ -133,10 +133,10 @@ sub load_root {
 
 sub load_target {
     my ($self, $name) = @_;
-    my $conf = $self->{"TARGET:$name"} or
+    my $confsec = $self->{"TARGET:$name"} or
         die "Unknown target '$name'\n";
 
-    my $type = $conf->value("type") or
+    my $type = $confsec->value("type") or
         die "Target '$name' has no 'type'";
     die "Invalid characters in $name's 'type'"
         unless $type =~ /^\w+$/;
@@ -144,7 +144,12 @@ sub load_target {
     my $class = "Brackup::Target::$type";
     eval "use $class; 1;" or die
         "Failed to load ${name}'s driver: $@\n";
-    return "$class"->new($conf);
+    my $target = $class->new($confsec);
+    
+    if (my @unk_config = $confsec->unused_config) {
+        die "Unknown config params in TARGET:$name: @unk_config\n";
+    }
+    return $target;
 }
 
 1;

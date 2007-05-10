@@ -9,7 +9,6 @@ use fields (
             'file',     # the Brackup::File object
             'offset',   # offset within said file
             'length',   # length of data
-            'rawchunk', # a rawchunk which matches this file/offset/length, if loaded.
             '_raw_digest',
             '_raw_chunkref',
             );
