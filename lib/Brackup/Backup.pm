@@ -28,11 +28,26 @@ sub backup {
 
     my $stats  = Brackup::BackupStats->new;
 
-    # store the files
-    $root->foreach_file(sub {
-        my ($file, $progress) = @_;  # a Brackup::File and Brackup::Progress
+    my $n_kb         = 0.0; # num
+    my $n_files      = 0;   # int
+    my $n_kb_done    = 0.0; # num
+    my $n_files_done = 0;   # int
+    my @files;         # Brackup::File objs
 
-        $self->debug("* ", $file->path, "\n");
+    $root->foreach_file(sub {
+        my ($file) = @_;  # a Brackup::File
+        push @files, $file;
+        $n_files++;
+        $n_kb += $file->size / 1024;
+    });    
+
+    # store the files
+    foreach my $file (@files) {
+
+        $self->debug(sprintf("* %-60s %d/%d (%0.02f%%; remain: %0.01f MB)",
+                             $file->path, $n_files_done, $n_files, ($n_kb_done/$n_kb)*100,
+                             ($n_kb - $n_kb_done) / 1024));
+                             
         my @stored_chunks;
 
         #$stats->note_file($file);
@@ -41,14 +56,12 @@ sub backup {
             my $pchunk = shift;  # a Brackup::PositionedChunk object
             my $schunk;
 
-            $self->debug("  * foreach chunk: ", $pchunk->as_string, "\n");
-
             if ($schunk = $target->stored_chunk_from_inventory($pchunk)) {
-                $self->debug("    * stored chunk already on target.\n");
                 push @stored_chunks, $schunk;;
                 return;
             }
-            $self->debug("    * doesn't have chunk.\n");
+
+            $self->debug("  * storing chunk: ", $pchunk->as_string, "\n");
 
             my $handle;
             unless ($self->{dryrun}) {
@@ -77,7 +90,10 @@ sub backup {
         });
 
         $self->add_file($file, \@stored_chunks);
-    });
+
+        $n_files_done++;
+        $n_kb_done += $file->size / 1024;
+    }
 
     unless ($self->{dryrun}) {
         # write the metafile
