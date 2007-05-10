@@ -2,7 +2,7 @@ package Brackup::Target::Amazon;
 use strict;
 use warnings;
 use base 'Brackup::Target';
-use Net::Amazon::S3 0.31;
+use Net::Amazon::S3 0.37;
 use DBD::SQLite;
 
 # fields in object:
@@ -16,24 +16,14 @@ use DBD::SQLite;
 
 sub new {
     my ($class, $confsec) = @_;
-    my $self = bless {}, $class;
-
-    if (my $cache_file = $confsec->value("exist_cache")) {
-        $self->{dbh} = DBI->connect("dbi:SQLite:dbname=$cache_file","","", { RaiseError => 1, PrintError => 0 }) or
-            die "Failed to connect to SQLite filesystem digest cache database at $cache_file: " . DBI->errstr;
-
-        eval {
-            $self->{dbh}->do("CREATE TABLE amazon_key_exists (key TEXT PRIMARY KEY, value TEXT)");
-        };
-        die "Error: $@" if $@ && $@ !~ /table amazon_key_exists already exists/;
-    }
+    my $self = $class->SUPER::new($confsec);
 
     $self->{access_key_id}     = $confsec->value("aws_access_key_id")
         or die "No 'aws_access_key_id'";
     $self->{sec_access_key_id} = $confsec->value("aws_secret_access_key")
         or die "No 'aws_secret_access_key'";
 
-    $self->_init_common;
+    $self->_common_s3_init;
 
     my $s3      = $self->{s3};
     my $buckets = $s3->buckets or die "Failed to get bucket list";
@@ -51,7 +41,7 @@ sub new {
     return $self;
 }
 
-sub _init_common {
+sub _common_s3_init {
     my $self = shift;
     $self->{chunk_bucket}  = $self->{access_key_id} . "-chunks";
     $self->{backup_bucket} = $self->{access_key_id} . "-backups";
@@ -82,7 +72,7 @@ sub new_from_backup_header {
     my $self = bless {}, $class;
     $self->{access_key_id}     = $accesskey;
     $self->{sec_access_key_id} = $sec_accesskey;
-    $self->_init_common;
+    $self->_common_s3_init;
     return $self;
 }
 

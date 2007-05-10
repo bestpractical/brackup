@@ -1,3 +1,6 @@
+  - update amazon target support to work again, with the new inventory
+    database support (now separated from the old digest database)
+
   - merge in the refactoring branch, in which a lot of long-standing
     pet peeves in the design were rethought/redone.
 
