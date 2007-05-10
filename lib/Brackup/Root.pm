@@ -82,6 +82,8 @@ sub foreach_file {
 
     chdir $self->{dir} or die "Failed to chdir to $self->{dir}";
 
+    my %statcache; # file -> statobj
+
     find({
         no_chdir => 1,
         preprocess => sub {
@@ -99,7 +101,9 @@ sub foreach_file {
                 # the backup meta files later, so let's skip it.
                 next if $path eq $self->{digdb_file};
 
-                my (@stat) = stat($path);
+                my $statobj = File::stat::lstat($path);
+                $statcache{$path} = $statobj;
+
                 my $is_dir = -d _;
 
                 foreach my $pattern (@{ $self->{ignore} }) {
@@ -115,11 +119,14 @@ sub foreach_file {
         },
 
         wanted => sub {
-            my (@stat) = stat(_);
             my $path = $_;
             $path =~ s!^\./!!;
-            # TODO: pass along the stat info
-            my $file = Brackup::File->new(root => $self, path => $path);
+
+            my $stat_obj = delete $statcache{$path};
+            my $file = Brackup::File->new(root => $self,
+                                          path => $path,
+                                          stat => $stat_obj,
+                                          );
             $cb->($file);
         },
     }, ".");

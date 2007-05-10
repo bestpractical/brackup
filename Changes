@@ -1,3 +1,5 @@
+  - halve number of stats when walking backup root
+
   - cleanups, strictness
 
   - don't upload meta files when in dry-run mode
