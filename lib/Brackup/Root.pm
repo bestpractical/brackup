@@ -207,6 +207,8 @@ sub encrypt {
     waitpid($pid, 0);
     die "GPG failed: $!" if $? != 0; # If gpg return status is non-zero
 
+    unlink($tmpfn);
+
     return $ret;
 }
 
