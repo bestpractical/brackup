@@ -35,7 +35,7 @@ sub backup {
         $self->debug("* ", $file->path, "\n");
         my @stored_chunks;
 
-        $stats->note_file($file);
+        #$stats->note_file($file);
 
         $file->foreach_chunk(sub {
             my $pchunk = shift;  # a Brackup::PositionedChunk object
