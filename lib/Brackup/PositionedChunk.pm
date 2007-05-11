@@ -55,10 +55,23 @@ sub root {
 
 sub raw_digest {
     my $self = shift;
-    # FIXME: use digest cache
     return $self->{_raw_digest} if $self->{_raw_digest};
+
+    my $digdb = $self->root->digdb;
+    my $key   = $self->cachekey;
+    my $dig;
+
+    if ($dig = $digdb->get($key)) {
+        warn "from cache!\n";
+        return $self->{_raw_digest} = $dig;
+    }
+
     my $rchunk = $self->raw_chunkref;
-    return $self->{_raw_digest} = "sha1:" . sha1_hex($$rchunk);
+    $dig = "sha1:" . sha1_hex($$rchunk);
+
+    $digdb->set($key => $dig);
+
+    return $self->{_raw_digest} = $dig;
 }
 
 sub raw_chunkref {
@@ -99,5 +112,9 @@ sub forget_chunkref {
     delete $self->{_raw_chunkref};
 }
 
+sub cachekey {
+    my $self = shift;
+    return $self->{file}->cachekey . ";o=$self->{offset};l=$self->{length}";
+}
 
 1;

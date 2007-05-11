@@ -1,3 +1,8 @@
+  - make PositionedChunk use the digest cache (which I guess was
+    re-fleshed out in the big refactor but never used...).  so
+    iterative backups are fast again... no re-reading all files
+    in, blowing away all caches.
+
   - clean up old, dead code in Amazon target (the old inventory db which
     is now an official part of the core, and in the Target base class)
 
