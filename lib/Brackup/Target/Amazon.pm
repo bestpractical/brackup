@@ -7,7 +7,6 @@ use DBD::SQLite;
 
 # fields in object:
 #   s3  -- Net::Amazon::S3
-#   dbh -- sqlite dbi exist cache
 #   access_key_id
 #   sec_access_key_id
 #   chunk_bucket : $self->{access_key_id} . "-chunks";
@@ -80,16 +79,10 @@ sub has_chunk {
     my ($self, $chunk) = @_;
     my $dig = $chunk->backup_digest;   # "sha1:sdfsdf" format scalar
 
-    if (my $dbh = $self->{dbh}) {
-        my $ans = $dbh->selectrow_array("SELECT COUNT(*) FROM amazon_key_exists WHERE key=?", undef, $dig);
-        return 1 if $ans;
-    }
-
     my $res = eval { $self->{s3}->head_key({ bucket => $self->{chunk_bucket}, key => $dig }); };
     return 0 unless $res;
     return 0 if $@ && $@ =~ /key not found/;
     return 0 unless $res->{content_type} eq "x-danga/brackup-chunk";
-    $self->_cache_existence_of($dig);
     return 1;
 }
 
@@ -107,23 +100,30 @@ sub store_chunk {
     my $dig = $chunk->backup_digest;
     my $blen = $chunk->backup_length;
     my $len = $chunk->length;
+    my $chunkref = $chunk->chunkref;
 
-    my $rv = eval { $self->{s3}->add_key({
-        bucket        => $self->{chunk_bucket},
-        key           => $dig,
-        value         => ${ $chunk->chunkref },
-        content_type  => 'x-danga/brackup-chunk',
-    }) };
-    return 0 unless $rv;
-    $self->_cache_existence_of($dig);
-    return 1;
-}
+    my $try = sub {
+        eval {
+            $self->{s3}->add_key({
+                bucket        => $self->{chunk_bucket},
+                key           => $dig,
+                value         => $$chunkref,
+                content_type  => 'x-danga/brackup-chunk',
+            });
+        };
+    };
 
-sub _cache_existence_of {
-    my ($self, $dig) = @_;
-    if (my $dbh = $self->{dbh}) {
-        $dbh->do("INSERT INTO amazon_key_exists VALUES (?,1)", undef, $dig);
+    my $rv = $try->();
+    unless ($rv) {
+        # transient failure?
+        warn "Error uploading chunk $chunk... retrying once...\n";
+        $rv = $try->();
     }
+    unless ($rv) {
+        warn "Error uploading chunk again: " . $self->{s3}->errstr . "\n";
+        return 0;
+    }
+    return 1;
 }
 
 sub store_backup_meta {
