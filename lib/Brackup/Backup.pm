@@ -40,7 +40,7 @@ sub backup {
         push @files, $file;
         $n_files++;
         $n_kb += $file->size / 1024;
-    });    
+    });
 
     # store the files
     foreach my $file (@files) {
@@ -48,7 +48,7 @@ sub backup {
         $self->debug(sprintf("* %-60s %d/%d (%0.02f%%; remain: %0.01f MB)",
                              $file->path, $n_files_done, $n_files, ($n_kb_done/$n_kb)*100,
                              ($n_kb - $n_kb_done) / 1024));
-                             
+
         my @stored_chunks;
 
         #$stats->note_file($file);
@@ -58,7 +58,8 @@ sub backup {
             my $schunk;
 
             if ($schunk = $target->stored_chunk_from_inventory($pchunk)) {
-                push @stored_chunks, $schunk;;
+                $pchunk->forget_chunkref;
+                push @stored_chunks, $schunk;
                 return;
             }
 
@@ -106,7 +107,7 @@ sub backup {
             print $metafh $file->as_rfc822($schunk_list);  # arrayref of StoredChunks
         });
         close $metafh or die;
-        
+
         my $contents;
 
         # store the metafile, encrypted, on the target

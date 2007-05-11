@@ -1,3 +1,8 @@
+  - fix memory leak in case where chunk exists on target, but local
+    digest database was lost, and digest of chunk had to be recomputed.
+    in that case, the raw chunk was kept in memory until the end
+    (which it likely would never reach, accumulating GBs of RAM)
+
   - make PositionedChunk use the digest cache (which I guess was
     re-fleshed out in the big refactor but never used...).  so
     iterative backups are fast again... no re-reading all files

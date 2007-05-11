@@ -62,7 +62,6 @@ sub raw_digest {
     my $dig;
 
     if ($dig = $digdb->get($key)) {
-        warn "from cache!\n";
         return $self->{_raw_digest} = $dig;
     }
 
