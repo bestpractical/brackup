@@ -1,8 +1,8 @@
   - clean up old, dead code in Amazon target (the old inventory db which
     is now an official part of the core, and in the Target base class)
 
-  - retry PUTs to Amazon on failure, once, in case it was a transient error,
-    as seems to happen occasionally
+  - retry PUTs to Amazon on failure, a few times, pausing in-between,
+    in case it was a transient error, as seems to happen occasionally
 
   - halve number of stats when walking backup root
 

@@ -113,11 +113,16 @@ sub store_chunk {
         };
     };
 
-    my $rv = $try->();
-    unless ($rv) {
-        # transient failure?
-        warn "Error uploading chunk $chunk... retrying once...\n";
+    my $rv;
+    my $n_fails = 0;
+    while (!$rv && $n_fails < 5) {
         $rv = $try->();
+        last if $rv;
+
+        # transient failure?
+        $n_fails++;
+        warn "Error uploading chunk $chunk [$@]... will do retry \#$n_fails in 5 seconds ...\n";
+        sleep 5;
     }
     unless ($rv) {
         warn "Error uploading chunk again: " . $self->{s3}->errstr . "\n";
