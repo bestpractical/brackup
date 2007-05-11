@@ -34,6 +34,7 @@ sub backup {
     my $n_files_done = 0;   # int
     my @files;         # Brackup::File objs
 
+    $self->debug("Discovering files in ", $root->path, "...\n");
     $root->foreach_file(sub {
         my ($file) = @_;  # a Brackup::File
         push @files, $file;
