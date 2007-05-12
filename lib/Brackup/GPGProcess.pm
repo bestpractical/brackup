@@ -22,6 +22,7 @@ sub new {
         return bless {
             destfn    => $destfn,
             pid       => $pid,
+            running   => 1,
         }, $class;
     }
 
@@ -48,15 +49,14 @@ sub new {
     POSIX::_exit(0);
 }
 
+sub pid { $_[0]{pid} }
+
+sub running { $_[0]{running} }
+sub note_stopped { $_[0]{running} = 0; }
+
 sub chunkref {
     my ($self) = @_;
-
-    if ($self->{pid}) {
-        my $gotpid = waitpid($self->{pid}, 0);
-        die "didn't waitpid on $self->{pid}" unless
-            $gotpid == $self->{pid};
-        die "GPG child failed: exit=$?, $!" unless $? == 0;
-    }
+    die "Still running!" if $self->{running};
 
     open(my $fh, $self->{destfn})
         or die "Failed to open gpg temp file $self->{destfn}: $!";
@@ -70,6 +70,10 @@ sub chunkref {
     return \$data;
 }
 
+sub size_on_disk {
+    my $self = shift;
+    return -s $self->{destfn};
+}
 
 1;
 

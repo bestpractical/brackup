@@ -53,7 +53,7 @@ sub backup {
     my $gpg_pm;   # gpg ProcessManager
     if ($gpg_rcpt) {
         ($chunk_iterator, $gpg_iter) = $chunk_iterator->mux_into(2);
-        $gpg_pm = Brackup::GPGProcManager->new($gpg_iter);
+        $gpg_pm = Brackup::GPGProcManager->new($gpg_iter, $target);
     }
 
     my $cur_file; # current (last seen) file
