@@ -1,3 +1,5 @@
+-- leaking 3 /tmp files after each run
+
 -- make tests pass without 'noatime' mount option
 
 -- --ignore-debian-files option (if managed by a package management
@@ -5,7 +7,7 @@
 
 -- proactively clean temp files, as aborts/segvs in middle can leave
    tens of thousands of files in /tmp, filling it up.  (report from
-   kvance)
+   kvance)  (THIS MIGHT BE FIXED ALREADY)
 
 -- reuse tempfiles in Chunk.pm as Restore.pm does
 
