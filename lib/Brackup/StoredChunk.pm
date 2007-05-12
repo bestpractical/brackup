@@ -48,7 +48,9 @@ sub encrypted {
 
 sub compressed {
     my $self = shift;
-    return 0;  # FUTURE: support compressed chunks
+    # TODO/FUTURE: support compressed chunks (for non-encrypted
+    # content; gpg already compresses)
+    return 0;
 }
 
 # the original length, pre-encryption
