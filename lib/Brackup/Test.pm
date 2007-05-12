@@ -88,7 +88,8 @@ sub do_restore {
                                         file   => $backup_file,
                                         );
     ok($restore, "have restore object");
-    ok(eval { $restore->restore; }, "did the restore: $@");
+    ok(eval { $restore->restore; }, "did the restore")
+        or die "restore failed: $@";
     return $restore_dir;
 }
 
