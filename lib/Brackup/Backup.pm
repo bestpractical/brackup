@@ -104,7 +104,9 @@ sub backup {
             $schunk = Brackup::StoredChunk->new($pchunk);
 
             # encrypt it (TODO: make GPGProcessManager method do this)
-            $schunk->set_encrypted_chunkref($root->encrypt($pchunk->raw_chunkref));
+            if ($gpg_rcpt) {
+                $schunk->set_encrypted_chunkref($root->encrypt($pchunk->raw_chunkref));
+            }
 
             $target->store_chunk($schunk)
                 or die "Chunk storage failed.\n";
