@@ -47,6 +47,11 @@ sub backup {
 
     my $chunk_iterator = Brackup::ChunkIterator->new(@files);
 
+    my $gpg_iter;
+    if ($gpg_rcpt) {
+        ($chunk_iterator, $gpg_iter) = $chunk_iterator->mux_into(2);
+    }
+
     my $cur_file; # current (last seen) file
     my @stored_chunks;
 
@@ -65,6 +70,12 @@ sub backup {
         $self->debug(sprintf("* %-60s %d/%d (%0.02f%%; remain: %0.01f MB)",
                              $cur_file->path, $n_files_done, $n_files, ($n_kb_done/$n_kb)*100,
                              ($n_kb - $n_kb_done) / 1024));
+
+        if ($gpg_iter) {
+            # catch our gpg iterator up.  we want it to be ahead of us,
+            # nothing iteresting is behind us.
+            $gpg_iter->next while $gpg_iter->behind_by > 1;
+        }
     };
 
     # records are either Brackup::File (for symlinks, directories, etc), or

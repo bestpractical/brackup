@@ -30,4 +30,49 @@ sub next {
     return $file;
 }
 
+sub mux_into {
+    my ($self, $n_copies) = @_;
+    my @iters;
+    for (1..$n_copies) {
+        push @iters, Brackup::ChunkIterator::SlaveIterator->new;
+    }
+    my $on_empty = sub {
+        my $next = $self->next;
+        foreach my $peer (@iters) {
+            push @{$peer->{mag}}, $next;
+        }
+    };
+    foreach (@iters) {
+        $_->{on_empty} = $on_empty;
+    }
+    return @iters;
+}
+
+package Brackup::ChunkIterator::SlaveIterator;
+use strict;
+use warnings;
+use Carp qw(croak);
+
+sub new {
+    my $class = shift;
+    return bless {
+        'on_empty' => undef, # subref
+        'mag'      => [],
+    }, $class;
+}
+
+sub next {
+    my $self = shift;
+    # the magazine itself could be true, but contain only undef: (undef),
+    # which signals the end.
+    return shift @{$self->{mag}} if @{$self->{mag}};
+    $self->{on_empty}->();
+    return shift @{$self->{mag}};
+}
+
+sub behind_by {
+    my $self = shift;
+    return scalar @{$self->{mag}};
+}
+
 1;
