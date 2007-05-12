@@ -101,8 +101,11 @@ sub backup {
 
         my $handle;
         unless ($self->{dryrun}) {
-            #my $enc_filename = $gpg_rcpt ? $get_enc_filename->($pchunk) : undef;
-            $schunk = Brackup::StoredChunk->new($pchunk); #, $enc_filename);
+            $schunk = Brackup::StoredChunk->new($pchunk);
+
+            # encrypt it (TODO: make GPGProcessManager method do this)
+            $schunk->set_encrypted_chunkref($root->encrypt($pchunk->raw_chunkref));
+
             $target->store_chunk($schunk)
                 or die "Chunk storage failed.\n";
             $target->add_to_inventory($pchunk => $schunk);

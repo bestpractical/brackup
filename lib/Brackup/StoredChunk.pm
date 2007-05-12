@@ -99,6 +99,15 @@ sub chunkref {
     return $self->{_chunkref} = \$enc;
 }
 
+# set scalar/scalarref of encryptd chunkref
+sub set_encrypted_chunkref {
+    my ($self, $arg) = @_;
+    die "ASSERT: not enc"       unless $self->encrypted;
+    die "ASSERT: already set?" if $self->{backlength} || $self->{backdigest};
+
+    return $self->{_chunkref} = ref $arg ? $arg : \$arg;
+}
+
 # lose the chunkref data
 sub forget_chunkref {
     my $self = shift;
