@@ -3,6 +3,8 @@ use strict;
 use warnings;
 use Carp qw(croak);
 use Brackup::ChunkIterator;
+use Brackup::GPGProcManager;
+use Brackup::GPGProcess;
 
 sub new {
     my ($class, %opts) = @_;
@@ -48,8 +50,10 @@ sub backup {
     my $chunk_iterator = Brackup::ChunkIterator->new(@files);
 
     my $gpg_iter;
+    my $gpg_pm;   # gpg ProcessManager
     if ($gpg_rcpt) {
         ($chunk_iterator, $gpg_iter) = $chunk_iterator->mux_into(2);
+        $gpg_pm = Brackup::GPGProcManager->new($gpg_iter);
     }
 
     my $cur_file; # current (last seen) file
@@ -105,7 +109,7 @@ sub backup {
 
             # encrypt it (TODO: make GPGProcessManager method do this)
             if ($gpg_rcpt) {
-                $schunk->set_encrypted_chunkref($root->encrypt($pchunk->raw_chunkref));
+                $schunk->set_encrypted_chunkref($gpg_pm->enc_chunkref_of($pchunk));
             }
 
             $target->store_chunk($schunk)
