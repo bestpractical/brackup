@@ -22,7 +22,6 @@ my $par_pid = $$;
 END {
     if ($$ == $par_pid) {
         my $rv = unlink @to_unlink;
-        print "unlinked = $rv\n";
     }
 }
 
