@@ -2,6 +2,7 @@ package Brackup::Backup;
 use strict;
 use warnings;
 use Carp qw(croak);
+use Brackup::ChunkIterator;
 
 sub new {
     my ($class, %opts) = @_;
@@ -28,6 +29,8 @@ sub backup {
 
     my $stats  = Brackup::BackupStats->new;
 
+    my $gpg_rcpt = $self->{root}->gpg_rcpt;
+
     my $n_kb         = 0.0; # num
     my $n_files      = 0;   # int
     my $n_kb_done    = 0.0; # num
@@ -42,60 +45,76 @@ sub backup {
         $n_kb += $file->size / 1024;
     });
 
-    # store the files
-    foreach my $file (@files) {
+    my $chunk_iterator = Brackup::ChunkIterator->new(@files);
 
-        $self->debug(sprintf("* %-60s %d/%d (%0.02f%%; remain: %0.01f MB)",
-                             $file->path, $n_files_done, $n_files, ($n_kb_done/$n_kb)*100,
-                             ($n_kb - $n_kb_done) / 1024));
+    my $cur_file; # current (last seen) file
+    my @stored_chunks;
 
-        my @stored_chunks;
-
-        #$stats->note_file($file);
-
-        $file->foreach_chunk(sub {
-            my $pchunk = shift;  # a Brackup::PositionedChunk object
-            my $schunk;
-
-            if ($schunk = $target->stored_chunk_from_inventory($pchunk)) {
-                $pchunk->forget_chunkref;
-                push @stored_chunks, $schunk;
-                return;
-            }
-
-            $self->debug("  * storing chunk: ", $pchunk->as_string, "\n");
-
-            my $handle;
-            unless ($self->{dryrun}) {
-                $schunk = Brackup::StoredChunk->new($pchunk);
-                $target->store_chunk($schunk)
-                    or die "Chunk storage failed.\n";
-                $target->add_to_inventory($pchunk => $schunk);
-                push @stored_chunks, $schunk;
-            }
-
-            #$stats->note_stored_chunk($schunk);
-
-            # DEBUG: verify it got written correctly
-            if ($ENV{BRACKUP_PARANOID} && $handle) {
-                die "FIX UP TO NEW API";
-                #my $saved_ref = $target->load_chunk($handle);
-                #my $saved_len = length $$saved_ref;
-                #unless ($saved_len == $chunk->backup_length) {
-                #    warn "Saved length of $saved_len doesn't match our length of " . $chunk->backup_length . "\n";
-                #    die;
-                #}
-            }
-
-            $pchunk->forget_chunkref;
-            $schunk->forget_chunkref if $schunk;
-        });
-
-        $self->add_file($file, \@stored_chunks);
-
+    my $end_file = sub {
+        return unless $cur_file;
+        $self->add_file($cur_file, [ @stored_chunks ]);
         $n_files_done++;
-        $n_kb_done += $file->size / 1024;
+        $n_kb_done += $cur_file->size / 1024;
+        $cur_file = undef;
+    };
+
+    my $start_file = sub {
+        $end_file->();
+        $cur_file = shift;
+        @stored_chunks = ();
+        $self->debug(sprintf("* %-60s %d/%d (%0.02f%%; remain: %0.01f MB)",
+                             $cur_file->path, $n_files_done, $n_files, ($n_kb_done/$n_kb)*100,
+                             ($n_kb - $n_kb_done) / 1024));
+    };
+
+    # records are either Brackup::File (for symlinks, directories, etc), or
+    # PositionedChunks, in which case the file can asked of the chunk
+    while (my $rec = $chunk_iterator->next) {
+        if ($rec->isa("Brackup::File")) {
+            $start_file->($rec);
+            next;
+        }
+        my $pchunk = $rec;
+        if ($pchunk->file != $cur_file) {
+            $start_file->($pchunk->file);
+        }
+
+        my $schunk;
+        if ($schunk = $target->stored_chunk_from_inventory($pchunk)) {
+            $pchunk->forget_chunkref;
+            push @stored_chunks, $schunk;
+            next;
+        }
+
+        $self->debug("  * storing chunk: ", $pchunk->as_string, "\n");
+
+        my $handle;
+        unless ($self->{dryrun}) {
+            #my $enc_filename = $gpg_rcpt ? $get_enc_filename->($pchunk) : undef;
+            $schunk = Brackup::StoredChunk->new($pchunk); #, $enc_filename);
+            $target->store_chunk($schunk)
+                or die "Chunk storage failed.\n";
+            $target->add_to_inventory($pchunk => $schunk);
+            push @stored_chunks, $schunk;
+        }
+
+        #$stats->note_stored_chunk($schunk);
+
+        # DEBUG: verify it got written correctly
+        if ($ENV{BRACKUP_PARANOID} && $handle) {
+            die "FIX UP TO NEW API";
+            #my $saved_ref = $target->load_chunk($handle);
+            #my $saved_len = length $$saved_ref;
+            #unless ($saved_len == $chunk->backup_length) {
+            #    warn "Saved length of $saved_len doesn't match our length of " . $chunk->backup_length . "\n";
+            #    die;
+            #}
+        }
+
+        $pchunk->forget_chunkref;
+        $schunk->forget_chunkref if $schunk;
     }
+    $end_file->();
 
     unless ($self->{dryrun}) {
         # write the metafile
@@ -111,11 +130,11 @@ sub backup {
         my $contents;
 
         # store the metafile, encrypted, on the target
-        if (my $rcpt = $self->{root}->gpg_rcpt) {
+        if ($gpg_rcpt) {
             my $encfile = $backup_file . ".enc";
             system($self->{root}->gpg_path, $self->{root}->gpg_args,
                    "--trust-model=always",
-                   "--recipient", $rcpt, "--encrypt", "--output=$encfile", "--yes", $backup_file)
+                   "--recipient", $gpg_rcpt, "--encrypt", "--output=$encfile", "--yes", $backup_file)
                 and die "Failed to run gpg while encryping metafile: $!\n";
             $contents = _contents_of($encfile);
             unlink $encfile;

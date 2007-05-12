@@ -1,3 +1,5 @@
+-- make tests pass without 'noatime' mount option
+
 -- --ignore-debian-files option (if managed by a package management
    system (and not an unmodified conffile), don't back it up)
 
