@@ -35,6 +35,11 @@ sub set {
     return 1;
 }
 
+sub backing_file {
+    my $self = shift;
+    return $self->{file};
+}
+
 sub wipe {
     die "not implemented";
 }

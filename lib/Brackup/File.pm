@@ -133,10 +133,10 @@ sub full_digest {
     my $self = shift;
     return "" unless $self->is_file;
 
-    my $db    = $self->{root}->digdb;
+    my $cache = $self->{root}->digest_cache;
     my $key   = $self->cachekey;
 
-    my $dig = $db->get($key);
+    my $dig = $cache->get($key);
     return $dig if $dig;
 
     my $sha1 = Digest::SHA1->new;
@@ -146,7 +146,7 @@ sub full_digest {
     close($fh);
 
     $dig = "sha1:" . $sha1->hexdigest;
-    $db->set($key, $dig);
+    $cache->set($key, $dig);
     return $dig;
 }
 

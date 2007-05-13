@@ -119,11 +119,26 @@ sub forget_chunkref {
 # to the format used by the metafile
 sub to_meta {
     my $self = shift;
-    return join(";",
-                $self->{pchunk}->offset,
-                $self->{pchunk}->length,
-                $self->backup_length,
-                $self->backup_digest);  # TODO: add pchunk's digest.
+    my @parts = ($self->{pchunk}->offset,
+                 $self->{pchunk}->length,
+                 $self->backup_length,
+                 $self->backup_digest,
+                 );
+
+    # if the inventory database is lost, it should be possible to
+    # recover the inventory database from the *.brackup files.
+    # if a file only has on chunk, the digest(raw) -> digest(enc)
+    # can be inferred from the file's digest, then the stored
+    # chunk's digest.  but if we have multiple chunks, we need
+    # to store each chunk's raw digest as well in the chunk
+    # list.  we could do this all the time, but considering
+    # most files are small, we want to save space in the *.brackup
+    # meta file and only do it when necessary.
+    if ($self->encrypted && $self->file->chunks > 1) {
+        push @parts, $self->{pchunk}->raw_digest;
+    }
+
+    return join(";", @parts);
 }
 
 1;

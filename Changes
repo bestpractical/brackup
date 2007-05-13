@@ -1,3 +1,6 @@
+  - rename digestdb back to digestcache, now that it's purely a cache
+    again.
+
   - fix memory leak in case where chunk exists on target, but local
     digest database was lost, and digest of chunk had to be recomputed.
     in that case, the raw chunk was kept in memory until the end

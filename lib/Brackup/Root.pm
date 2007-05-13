@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Carp qw(croak);
 use File::Find;
-use Brackup::Dict::SQLite;
+use Brackup::DigestCache;
 use File::Temp qw(tempfile);
 use IPC::Open2;
 use Symbol;
@@ -12,10 +12,10 @@ sub new {
     my ($class, $conf) = @_;
     my $self = bless {}, $class;
 
-    my $name = $conf->name;
-    $name =~ s!^SOURCE:!! or die;
+    ($self->{name}) = $conf->name =~ m/^SOURCE:(.+)$/
+        or die "No backup-root name provided.";
+    die "Backup-root name must be only a-z, A-Z, 0-9, and _." unless $self->{name} =~ /^\w+/;
 
-    $self->{name}       = $name;
     $self->{dir}        = $conf->path_value('path');
     $self->{gpg_path}   = $conf->value('gpg_path') || "/usr/bin/gpg";
     $self->{gpg_rcpt}   = $conf->value('gpg_recipient');
@@ -24,11 +24,9 @@ sub new {
 
     $self->{gpg_args}   = [];  # TODO: let user set this.  for now, not possible
 
-    $self->{digdb_file} = $conf->value('digestdb_file') || "$self->{dir}/.brackup-digest.db";
-    $self->{digdb}      = Brackup::Dict::SQLite->new("digest_cache", $self->{digdb_file});
+    $self->{digcache}   = Brackup::DigestCache->new($self, $conf);
+    $self->{digcache_file} = $self->{digcache}->backing_file;  # may be empty, if digest cache doesn't use a file
 
-    die "No backup-root name provided." unless $self->{name};
-    die "Backup-root name must be only a-z, A-Z, 0-9, and _." unless $self->{name} =~ /^\w+/;
 
     return $self;
 }
@@ -48,9 +46,10 @@ sub gpg_rcpt {
     return $self->{gpg_rcpt};
 }
 
-sub digdb {
+# returns Brackup::DigestCache object
+sub digest_cache {
     my $self = shift;
-    return $self->{digdb};
+    return $self->{digcache};
 }
 
 sub chunk_size {
@@ -99,7 +98,7 @@ sub foreach_file {
                 # skip the digest database file.  not sure if this is smart or not.
                 # for now it'd be kinda nice to have, but it's re-creatable from
                 # the backup meta files later, so let's skip it.
-                next if $path eq $self->{digdb_file};
+                next if $path eq $self->{digcache_file};
 
                 my $statobj = File::stat::lstat($path);
                 $statcache{$path} = $statobj;
@@ -115,7 +114,7 @@ sub foreach_file {
 
             # to let it recurse into the good directories we didn't
             # already throw away:
-            return @good_dentries;
+            return sort @good_dentries;
         },
 
         wanted => sub {
@@ -208,7 +207,7 @@ sub encrypt {
     );
 
     binmode $cout;
-    
+
     my $ret = do { local $/; <$cout>; };
 
     waitpid($pid, 0);

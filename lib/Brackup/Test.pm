@@ -126,6 +126,7 @@ sub dir_structure {
 
     find({
         no_chdir => 1,
+        preprocess => sub { return sort @_ },
         wanted => sub {
             my $path = $_;
             my $st = File::stat::lstat($path);

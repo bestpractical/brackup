@@ -1,3 +1,20 @@
+-- the digest cache, for files smaller than the chunk size, stores
+   duplicate cache items (and we calculate the digest twice!), once
+   for the "whole file", and once for "the first chunk", which is
+   usually the same as the whole file.  this would eliminate a lot
+   of CPU/storage to optimize... make the positioned chunk, if it
+   knows its the only chunk, just ask the file for its raw digest,
+   and never store a cache row.
+
+-- fix up docs, move all to POD, in relevant classes.
+
+-- tool to clean digestcache, based on prefixes, looking for files that no longer
+   exist or have new mtimes, etc?  or keep track of "last used" date
+   field in the digestcache and just delete things that are too old?
+   but then no longer just a dictionary.  SQLite would work, but we'd ideally
+   like lots of dumber cache mechanisms.  maybe a ->clean method is optional?
+   then a memcached backend/etc doesn't have to use it.
+
 -- ionice stuff.  network nice stuff.
 
 -- leaking 3 /tmp files after each run

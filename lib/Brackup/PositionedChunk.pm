@@ -57,18 +57,18 @@ sub raw_digest {
     my $self = shift;
     return $self->{_raw_digest} if $self->{_raw_digest};
 
-    my $digdb = $self->root->digdb;
+    my $cache = $self->root->digest_cache;
     my $key   = $self->cachekey;
     my $dig;
 
-    if ($dig = $digdb->get($key)) {
+    if ($dig = $cache->get($key)) {
         return $self->{_raw_digest} = $dig;
     }
 
     my $rchunk = $self->raw_chunkref;
     $dig = "sha1:" . sha1_hex($$rchunk);
 
-    $digdb->set($key => $dig);
+    $cache->set($key => $dig);
 
     return $self->{_raw_digest} = $dig;
 }
