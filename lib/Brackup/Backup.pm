@@ -33,10 +33,15 @@ sub backup {
 
     my $gpg_rcpt = $self->{root}->gpg_rcpt;
 
-    my $n_kb         = 0.0; # num
-    my $n_files      = 0;   # int
-    my $n_kb_done    = 0.0; # num
-    my $n_kb_up      = 0.0; # num
+    my $n_kb         = 0.0; # num:  kb of all files in root
+    my $n_files      = 0;   # int:  # of files in root
+    my $n_kb_done    = 0.0; # num:  kb of files already done with (uploaded or skipped)
+
+    # if we're pre-calculating the amount of data we'll
+    # actually need to upload, store it here.
+    my $n_kb_up      = 0.0;
+    my $n_kb_up_need = 0.0; # by default, not calculated/used.
+
     my $n_files_done = 0;   # int
     my @files;         # Brackup::File objs
 
@@ -51,7 +56,6 @@ sub backup {
     $self->debug("Number of files: $n_files\n");
 
     # calc needed chunks
-    my $n_kb_up_need = 0;
     if ($ENV{CALC_NEEDED}) {
         my $fn = 0;
         foreach my $f (@files) {
@@ -68,7 +72,7 @@ sub backup {
         }
         warn "kb need to upload = $n_kb_up_need\n";
     }
-   
+
 
     my $chunk_iterator = Brackup::ChunkIterator->new(@files);
 
@@ -94,9 +98,18 @@ sub backup {
         $end_file->();
         $cur_file = shift;
         @stored_chunks = ();
+        # use either size of files in normal case, or if we pre-calculated
+        # the size-to-upload (by looking in inventory, then we'll show the
+        # more accurate percentage)
+        my $percdone = 100 * ($n_kb_up_need ?
+                              ($n_kb_up / $n_kb_up_need) :
+                              ($n_kb_done / $n_kb));
+        my $mb_remain = ($n_kb_up_need ?
+                         ($n_kb_up_need - $n_kb_up) :
+                         ($n_kb - $n_kb_done)) / 1024;
         $self->debug(sprintf("* %-60s %d/%d (%0.02f%%; remain: %0.01f MB)",
-                             $cur_file->path, $n_files_done, $n_files, ($n_kb_done/$n_kb)*100,
-                             ($n_kb - $n_kb_done) / 1024));
+                             $cur_file->path, $n_files_done, $n_files, $percdone,
+                             $mb_remain));
 
         if ($gpg_iter) {
             # catch our gpg iterator up.  we want it to be ahead of us,
@@ -138,6 +151,7 @@ sub backup {
             $target->store_chunk($schunk)
                 or die "Chunk storage failed.\n";
             $target->add_to_inventory($pchunk => $schunk);
+            $n_kb_up += $pchunk->length / 1024;
             push @stored_chunks, $schunk;
         }
 
