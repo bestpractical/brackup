@@ -36,6 +36,7 @@ sub backup {
     my $n_kb         = 0.0; # num
     my $n_files      = 0;   # int
     my $n_kb_done    = 0.0; # num
+    my $n_kb_up      = 0.0; # num
     my $n_files_done = 0;   # int
     my @files;         # Brackup::File objs
 
@@ -46,6 +47,28 @@ sub backup {
         $n_files++;
         $n_kb += $file->size / 1024;
     });
+
+    $self->debug("Number of files: $n_files\n");
+
+    # calc needed chunks
+    my $n_kb_up_need = 0;
+    if ($ENV{CALC_NEEDED}) {
+        my $fn = 0;
+        foreach my $f (@files) {
+            $fn++;
+            if ($fn % 100 == 0) { warn "$fn / $n_files ...\n"; }
+            foreach my $pc ($f->chunks) {
+                if ($target->stored_chunk_from_inventory($pc)) {
+                    $pc->forget_chunkref;
+                    next;
+                }
+                $n_kb_up_need += $pc->length / 1024;
+                $pc->forget_chunkref;
+            }
+        }
+        warn "kb need to upload = $n_kb_up_need\n";
+    }
+   
 
     my $chunk_iterator = Brackup::ChunkIterator->new(@files);
 
@@ -107,7 +130,7 @@ sub backup {
         unless ($self->{dryrun}) {
             $schunk = Brackup::StoredChunk->new($pchunk);
 
-            # encrypt it (TODO: make GPGProcessManager method do this)
+            # encrypt it
             if ($gpg_rcpt) {
                 $schunk->set_encrypted_chunkref($gpg_pm->enc_chunkref_of($pchunk));
             }
