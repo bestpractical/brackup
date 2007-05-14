@@ -153,6 +153,13 @@ sub backup {
                 $schunk->set_encrypted_chunkref($gpg_pm->enc_chunkref_of($pchunk));
             }
 
+            # if only this worked... (LWP protocol handler seems to
+            # get confused by its syscalls getting interrupted?)
+            #local $SIG{CHLD} = sub {
+            #    print "some child finished!\n";
+            #    $gpg_pm->start_some_processes;
+            #};
+
             $target->store_chunk($schunk)
                 or die "Chunk storage failed.\n";
             $target->add_to_inventory($pchunk => $schunk);
