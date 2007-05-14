@@ -144,14 +144,24 @@ sub _calc_full_digest {
     my $dig = $cache->get($key);
     return $dig if $dig;
 
-    my $sha1 = Digest::SHA1->new;
-    my $path = $self->fullpath;
-    open (my $fh, $path) or die "Couldn't open $path: $!\n";
-    binmode($fh);
-    $sha1->addfile($fh);
-    close($fh);
+    # legacy migration thing... we used to more often store
+    # the chunk digests, not the file digests.  so try that
+    # first...
+    if ($self->chunks == 1) {
+        my ($chunk) = $self->chunks;
+        $dig = $cache->get($chunk->cachekey);
+    }
 
-    $dig = "sha1:" . $sha1->hexdigest;
+    unless ($dig) {
+        my $sha1 = Digest::SHA1->new;
+        my $path = $self->fullpath;
+        open (my $fh, $path) or die "Couldn't open $path: $!\n";
+        binmode($fh);
+        $sha1->addfile($fh);
+        close($fh);
+
+        $dig = "sha1:" . $sha1->hexdigest;
+    }
 
     $cache->set($key => $dig);
     return $dig;
