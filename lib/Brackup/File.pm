@@ -131,6 +131,11 @@ sub chunks {
 
 sub full_digest {
     my $self = shift;
+    return $self->{_full_digest} ||= $self->_calc_full_digest;
+}
+
+sub _calc_full_digest {
+    my $self = shift;
     return "" unless $self->is_file;
 
     my $cache = $self->{root}->digest_cache;
@@ -142,11 +147,13 @@ sub full_digest {
     my $sha1 = Digest::SHA1->new;
     my $path = $self->fullpath;
     open (my $fh, $path) or die "Couldn't open $path: $!\n";
+    binmode($fh);
     $sha1->addfile($fh);
     close($fh);
 
     $dig = "sha1:" . $sha1->hexdigest;
-    $cache->set($key, $dig);
+
+    $cache->set($key => $dig);
     return $dig;
 }
 
