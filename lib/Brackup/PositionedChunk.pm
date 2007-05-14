@@ -55,7 +55,20 @@ sub root {
 
 sub raw_digest {
     my $self = shift;
-    return $self->{_raw_digest} if $self->{_raw_digest};
+    return $self->{_raw_digest} ||= $self->_calc_raw_digest;
+}
+
+sub _calc_raw_digest {
+    my $self = shift;
+
+    my $n_chunks = $self->{file}->chunks
+        or die "zero chunks?";
+    if ($n_chunks == 1) {
+        # don't calculate this chunk's digest.. it's the same as our
+        # file's digest, since this chunk spans the entire file.
+        die "ASSERT" unless $self->length == $self->{file}->size;
+        return $self->{file}->full_digest;
+    }
 
     my $cache = $self->root->digest_cache;
     my $key   = $self->cachekey;
