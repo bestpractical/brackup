@@ -3,7 +3,6 @@ use strict;
 use warnings;
 use base 'Brackup::Target';
 use Net::Amazon::S3 0.37;
-use DBD::SQLite;
 
 # fields in object:
 #   s3  -- Net::Amazon::S3
