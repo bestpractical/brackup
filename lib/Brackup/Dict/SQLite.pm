@@ -9,6 +9,7 @@ sub new {
     my $self = bless {
         table => $table,
         file  => $file,
+        data  => {},
     }, $class;
 
     my $dbh = $self->{dbh} = DBI->connect("dbi:SQLite:dbname=$file","","", { RaiseError => 1, PrintError => 0 }) or
@@ -19,19 +20,28 @@ sub new {
     };
     die "Error: $@" if $@ && $@ !~ /table \w+ already exists/;
 
+    # SQLite sucks at doing anything quickly (likes hundred thousand
+    # selects back-to-back), so we just suck the whole damn thing into
+    # a perl hash.  cute, huh?  then it doesn't have to
+    # open/read/seek/seek/seek/read/close for each select later.
+    my $sth = $self->{dbh}->prepare("SELECT key, value FROM $self->{table}");
+    $sth->execute;
+    while (my ($k, $v) = $sth->fetchrow_array) {
+        $self->{data}{$k} = $v;
+    }
+
     return $self;
 }
 
 sub get {
     my ($self, $key) = @_;
-    my $val = $self->{dbh}->selectrow_array("SELECT value FROM $self->{table} WHERE key=?",
-                                            undef, $key);
-    return $val;
+    return $self->{data}{$key};
 }
 
 sub set {
     my ($self, $key, $val) = @_;
     $self->{dbh}->do("REPLACE INTO $self->{table} VALUES (?,?)", undef, $key, $val);
+    $self->{data}{$key} = $val;
     return 1;
 }
 
