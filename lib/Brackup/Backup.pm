@@ -85,6 +85,7 @@ sub backup {
 
     my $cur_file; # current (last seen) file
     my @stored_chunks;
+    my $file_has_shown_status = 0;
 
     my $end_file = sub {
         return unless $cur_file;
@@ -93,11 +94,7 @@ sub backup {
         $n_kb_done += $cur_file->size / 1024;
         $cur_file = undef;
     };
-
-    my $start_file = sub {
-        $end_file->();
-        $cur_file = shift;
-        @stored_chunks = ();
+    my $show_status = sub {
         # use either size of files in normal case, or if we pre-calculated
         # the size-to-upload (by looking in inventory, then we'll show the
         # more accurate percentage)
@@ -107,15 +104,22 @@ sub backup {
         my $mb_remain = ($n_kb_up_need ?
                          ($n_kb_up_need - $n_kb_up) :
                          ($n_kb - $n_kb_done)) / 1024;
+
         $self->debug(sprintf("* %-60s %d/%d (%0.02f%%; remain: %0.01f MB)",
                              $cur_file->path, $n_files_done, $n_files, $percdone,
                              $mb_remain));
-
+    };
+    my $start_file = sub {
+        $end_file->();
+        $cur_file = shift;
+        @stored_chunks = ();
+        $show_status->() if $cur_file->is_dir;
         if ($gpg_iter) {
             # catch our gpg iterator up.  we want it to be ahead of us,
             # nothing iteresting is behind us.
             $gpg_iter->next while $gpg_iter->behind_by > 1;
         }
+        $file_has_shown_status = 0;
     };
 
     # records are either Brackup::File (for symlinks, directories, etc), or
@@ -137,6 +141,7 @@ sub backup {
             next;
         }
 
+        $show_status->() unless $file_has_shown_status++;
         $self->debug("  * storing chunk: ", $pchunk->as_string, "\n");
 
         my $handle;
