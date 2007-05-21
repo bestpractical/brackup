@@ -28,6 +28,10 @@ config section in your ~/.brackup.conf
 Option.  Defaults to "source-YYYYMMDD.brackup".  This is the "metafile" index
 you'll need to restore.
 
+=item --verbose|-v
+
+Show status during backup.
+
 =back
 
 =head1 WARRANTY
@@ -62,8 +66,9 @@ use lib "$Bin/lib";
 
 use Brackup;
 
-my ($src_name, $target_name, $opt_verbose, $backup_file, $opt_help);
+my ($src_name, $target_name, $backup_file, $opt_help);
 my $opt_dryrun;
+my $opt_verbose;
 my $opt_du_stats;
 
 my $config_file = Brackup::Config->default_config_file_name;
