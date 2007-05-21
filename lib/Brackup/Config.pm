@@ -94,6 +94,7 @@ sub write_dummy_config {
 
 #[SOURCE:bradhome]
 #path = /raid/bradfitz/
+#noatime = 1
 #chunk_size = 64MB
 #ignore = ^\.thumbnails/
 #ignore = ^\.kde/share/thumbnails/

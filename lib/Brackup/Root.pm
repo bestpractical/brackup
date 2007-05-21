@@ -27,7 +27,7 @@ sub new {
     $self->{digcache}   = Brackup::DigestCache->new($self, $conf);
     $self->{digcache_file} = $self->{digcache}->backing_file;  # may be empty, if digest cache doesn't use a file
 
-
+    $self->{noatime}    = $conf->value('noatime');
     return $self;
 }
 
@@ -74,6 +74,10 @@ sub ignore {
 
 sub path {
     return $_[0]{dir};
+}
+
+sub noatime {
+    return $_[0]{noatime};
 }
 
 sub foreach_file {

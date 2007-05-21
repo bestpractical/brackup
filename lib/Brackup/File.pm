@@ -210,7 +210,7 @@ sub as_rfc822 {
 
     unless ($self->is_link) {
         $set->("Mtime", $st->mtime);
-        $set->("Atime", $st->atime);
+        $set->("Atime", $st->atime) unless $self->root->noatime;
         $set->("Mode", sprintf('%#o', $st->mode & 0777));
     }
 

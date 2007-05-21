@@ -1,3 +1,6 @@
+  - support 'noatime = 1' option on a source root, because atimes are
+    often useless, so waste of space in metafile.
+
   - rename digestdb back to digestcache, now that it's purely a cache
     again.
 
