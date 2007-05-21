@@ -132,7 +132,7 @@ sub dir_structure {
             my $st = File::stat::lstat($path);
 
             my $meta = {};
-            $meta->{size} = $st->size;
+            $meta->{size} = $st->size unless -d $path;
             $meta->{is_file} = 1 if -f $path;
             $meta->{is_link} = 1 if -l $path;
             if ($meta->{is_link}) {

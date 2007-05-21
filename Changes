@@ -1,3 +1,11 @@
+1.00 (may 21, 2007)
+
+  RELEASE NOTE: The author/maintainer of Brackup is finally happy now,
+    and has 40 GB of data stored on Amazon, encrypted.  You can
+    trust this now.  And the file formats aren't changing (or aren't
+    changing without being compatible with old *.brackup/Amazon
+    formats...)
+
   - track in meta header the default (most often occuring) modes for
     files and directories, then don't list those for each file/dir
     with those mode.  saves on disk space on *.brackup files
