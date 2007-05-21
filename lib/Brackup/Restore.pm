@@ -55,6 +55,10 @@ sub restore {
         my $type = $it->{Type} || "f";
         die "Unknown filetype: type=$type, file: $it->{Path}" unless $type =~ /^[ldf]$/;
 
+        # restore default modes from header
+        $it->{Mode} ||= $meta->{DefaultFileMode} if $type eq "f";
+        $it->{Mode} ||= $meta->{DefaultDirMode}  if $type eq "d";
+
         $self->_restore_link     ($full, $it) if $type eq "l";
         $self->_restore_directory($full, $it) if $type eq "d";
         $self->_restore_file     ($full, $it) if $type eq "f";

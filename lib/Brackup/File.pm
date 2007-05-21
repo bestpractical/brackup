@@ -185,8 +185,13 @@ sub as_string {
     return "[" . $self->{root}->as_string . "] t=$type $self->{path}";
 }
 
+sub mode {
+    my $self = shift;
+    return sprintf('%#o', $self->stat->mode & 0777);
+}
+
 sub as_rfc822 {
-    my ($self, $schunk_list) = @_;
+    my ($self, $schunk_list, $backup) = @_;
     my $ret = "";
     my $set = sub {
         my ($key, $val) = @_;
@@ -196,12 +201,13 @@ sub as_rfc822 {
     my $st = $self->stat;
 
     $set->("Path", $self->{path});
+    my $type = $self->type;
     if ($self->is_file) {
         my $size = $self->size;
         $set->("Size", $size);
         $set->("Digest", $self->full_digest) if $size;
     } else {
-        $set->("Type", $self->type);
+        $set->("Type", $type);
         if  ($self->is_link) {
             $set->("Link", $self->link_target);
         }
@@ -211,7 +217,12 @@ sub as_rfc822 {
     unless ($self->is_link) {
         $set->("Mtime", $st->mtime);
         $set->("Atime", $st->atime) unless $self->root->noatime;
-        $set->("Mode", sprintf('%#o', $st->mode & 0777));
+
+        my $mode = $self->mode;
+        unless (($type eq "d" && $mode eq $backup->default_directory_mode) ||
+                ($type eq "f" && $mode eq $backup->default_file_mode)) {
+            $set->("Mode", $mode);
+        }
     }
 
     return $ret . "\n";

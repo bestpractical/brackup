@@ -15,6 +15,8 @@ sub new {
     $self->{dryrun}  = delete $opts{dryrun};   # bool
     $self->{verbose} = delete $opts{verbose};  # bool
 
+    $self->{modecounts} = {}; # type -> mode(octal) -> count
+
     $self->{saved_files} = [];   # list of Brackup::File objects backed up
 
     croak("Unknown options: " . join(', ', keys %opts)) if %opts;
@@ -192,7 +194,7 @@ sub backup {
         print $metafh $self->backup_header;
         $self->foreach_saved_file(sub {
             my ($file, $schunk_list) = @_;
-            print $metafh $file->as_rfc822($schunk_list);  # arrayref of StoredChunks
+            print $metafh $file->as_rfc822($schunk_list, $self);  # arrayref of StoredChunks
         });
         close $metafh or die;
 
@@ -226,6 +228,22 @@ sub _contents_of {
     return do { local $/; <$fh>; };
 }
 
+sub default_file_mode {
+    my $self = shift;
+    return $self->{_def_file_mode} ||= $self->_default_mode('f');
+}
+
+sub default_directory_mode {
+    my $self = shift;
+    return $self->{_def_dir_mode} ||= $self->_default_mode('d');
+}
+
+sub _default_mode {
+    my ($self, $type) = @_;
+    my $map = $self->{modecounts}{$type} || {};
+    return (sort { $map->{$b} <=> $map->{$a} } keys %$map)[0];
+}
+
 sub backup_time {
     my $self = shift;
     return $self->{backup_time} ||= time();
@@ -247,6 +265,8 @@ sub backup_header {
     }
     $ret .= "RootName: " . $self->{root}->name . "\n";
     $ret .= "RootPath: " . $self->{root}->path . "\n";
+    $ret .= "DefaultFileMode: " . $self->default_file_mode . "\n";
+    $ret .= "DefaultDirMode: " . $self->default_directory_mode . "\n";
     if (my $rcpt = $self->{root}->gpg_rcpt) {
         $ret .= "GPG-Recipient: $rcpt\n";
     }
@@ -256,6 +276,7 @@ sub backup_header {
 
 sub add_file {
     my ($self, $file, $handlelist) = @_;
+    $self->{modecounts}{$file->type}{$file->mode}++;
     push @{ $self->{saved_files} }, [ $file, $handlelist ];
 }
 

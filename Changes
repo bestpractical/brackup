@@ -1,3 +1,7 @@
+  - track in meta header the default (most often occuring) modes for
+    files and directories, then don't list those for each file/dir
+    with those mode.  saves on disk space on *.brackup files
+
   - support 'noatime = 1' option on a source root, because atimes are
     often useless, so waste of space in metafile.
 
