@@ -43,3 +43,4 @@ t/data/pubring-test.gpg
 t/data/secring-test.gpg
 t/data/test-file.txt
 TODO
+META.yml                                 Module meta-data (added by MakeMaker)
