@@ -1,8 +1,8 @@
 package Brackup::Target;
 
 use strict;
-use Brackup::Dict::SQLite;
 use warnings;
+use Brackup::InventoryDatabase;
 use Carp qw(croak);
 
 sub new {
@@ -11,8 +11,9 @@ sub new {
     my $name = $confsec->name;
     $name =~ s!^TARGET:!! or die;
 
-    $self->{inventory_sqlite_file} = $confsec->value("inventory_db") ||
-        "$ENV{HOME}/.brackup-target-$name.invdb";
+    $self->{inv_db} =
+        Brackup::InventoryDatabase->new($confsec->value("inventory_db") ||
+                                        "$ENV{HOME}/.brackup-target-$name.invdb");
     return $self;
 }
 
@@ -35,16 +36,16 @@ sub store_chunk {
     die "ERROR: store_chunk not implemented in sub-class $self";
 }
 
-sub inventory_dict {
+sub inventory_db {
     my $self = shift;
-    return $self->{_invdict} ||= Brackup::Dict::SQLite->new("target_inv", $self->{inventory_sqlite_file});
+    return $self->{inv_db};
 }
 
 sub add_to_inventory {
     my ($self, $pchunk, $schunk) = @_;
     my $key  = $pchunk->inventory_key;
-    my $dict = $self->inventory_dict;
-    $dict->set($key => join(" ", $schunk->backup_digest, $schunk->backup_length));
+    my $db = $self->inventory_db;
+    $db->set($key => join(" ", $schunk->backup_digest, $schunk->backup_length));
 }
 
 # return stored chunk, given positioned chunk, or undef.  no
@@ -52,8 +53,8 @@ sub add_to_inventory {
 sub stored_chunk_from_inventory {
     my ($self, $pchunk) = @_;
     my $key    = $pchunk->inventory_key;
-    my $dict   = $self->inventory_dict;
-    my $diglen = $dict->get($key)
+    my $db     = $self->inventory_db;
+    my $diglen = $db->get($key)
         or return undef;
     my ($digest, $length) = split /\s+/, $diglen;
     return Brackup::StoredChunk->new_from_inventory($pchunk, $digest, $length);

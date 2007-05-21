@@ -76,13 +76,19 @@ it, the schema is:
 
 =head2 Keys & Values stored in the cache
 
-B<Files digests:>  (see L<Brackup::File>)
+B<Files digests keys>  (see L<Brackup::File>)
 
  [rootname]path/to/file.txt:<ctime>,<mtime>,<size>,<inodenum>
 
-B<Chunk digests:>  (see L<Brackup::PositionedChunk>)
+B<Chunk digests keys>  (see L<Brackup::PositionedChunk>)
 
  [rootname]path/to/file.txt:<ctime>,<mtime>,<size>,<inodenum>;o=<offset>;l=<length>
+
+B<Values>
+
+In either case, the values are the digest of the chunk/file, in form:
+
+   sha1:e23c4b5f685e046e7cc50e30e378ab11391e528e
 
 =head1 SEE ALSO
 

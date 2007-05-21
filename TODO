@@ -7,6 +7,12 @@
    like lots of dumber cache mechanisms.  maybe a ->clean method is optional?
    then a memcached backend/etc doesn't have to use it.
 
+-- Tools to rebuild your inventory database from the target's enumeration
+   of its chunks and the target's *.brackup metafiles isn't yet done, but
+   would be pretty easy.  
+
+-- find/clean orphan chunks on a target from metafiles
+
 -- ionice stuff.  network nice stuff.
 
 -- leaking 3 /tmp files after each run

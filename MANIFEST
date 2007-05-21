@@ -19,6 +19,7 @@ lib/Brackup/DigestCache.pm
 lib/Brackup/File.pm
 lib/Brackup/GPGProcess.pm
 lib/Brackup/GPGProcManager.pm
+lib/Brackup/InventoryDatabase.pm
 lib/Brackup/PositionedChunk.pm
 lib/Brackup/Restore.pm
 lib/Brackup/Root.pm
@@ -41,4 +42,3 @@ t/data/pubring-test.gpg
 t/data/secring-test.gpg
 t/data/test-file.txt
 TODO
-META.yml                                 Module meta-data (added by MakeMaker)
