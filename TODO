@@ -16,26 +16,12 @@
 -- --ignore-debian-files option (if managed by a package management
    system (and not an unmodified conffile), don't back it up)
 
--- proactively clean temp files, as aborts/segvs in middle can leave
-   tens of thousands of files in /tmp, filling it up.  (report from
-   kvance)  (THIS MIGHT BE FIXED ALREADY)
-
 -- reuse tempfiles in Chunk.pm as Restore.pm does
 
 -- restoring from existing config file.
 
--- restoring subsets of files
-
 -- better test coverage.  currently at 84%.  should ignore
    test coverage of test modules.  move Brackup::Test to
    t/lib/ probably
-
--- Amazon target doesn't support restoring yet.
-
--- Amazon target should complain if you don't have an exist_cache
-   configured (otherwise it's damn slow)
-
--- default config written out should include exist cache line for
-   Amazon too
 
 -- should do TODOs in code.  :)
