@@ -20,6 +20,7 @@ lib/Brackup/File.pm
 lib/Brackup/GPGProcess.pm
 lib/Brackup/GPGProcManager.pm
 lib/Brackup/InventoryDatabase.pm
+lib/Brackup/Manual/Overview.pod
 lib/Brackup/PositionedChunk.pm
 lib/Brackup/Restore.pm
 lib/Brackup/Root.pm

@@ -231,3 +231,51 @@ sub encrypt {
 
 1;
 
+__END__
+
+=head1 NAME
+
+Brackup::Root - describes the source directory (and options) for a backup
+
+=head1 EXAMPLE
+
+In your ~/.brackup.conf file:
+
+  [SOURCE:bradhome]
+  path = /home/bradfitz/
+  gpg_recipient = 5E1B3EC5
+  chunk_size = 64MB
+  ignore = ^\.thumbnails/
+  ignore = ^\.kde/share/thumbnails/
+  ignore = ^\.ee/(minis|icons|previews)/
+  ignore = ^build/
+  noatime = 1
+
+=head1 CONFIG OPTIONS
+
+=over
+
+=item B<path>
+
+The directory to backup (recursively)
+
+=item B<gpg_receipient>
+
+The public key signature to encrypt data with.  See L<Brackup::Manual::Overview/"Using encryption">.
+
+=item B<chunk_size>
+
+In units of bytes, kB, MB, etc.  The max size of a chunk to be stored
+on the target.  Files over this size are cut up into chunks of this
+size or smaller.  The default is 64 MB if not specified.
+
+=item B<ignore>
+
+Perl5 regular expression of files not to backup.  You may have multiple ignore lines.
+
+=item B<noatime>
+
+If true, don't backup access times.  They're kinda useless anyway, and
+just make the *.brackup metafiles larger.
+
+=back

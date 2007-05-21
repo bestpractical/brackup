@@ -60,6 +60,36 @@ sub stored_chunk_from_inventory {
     return Brackup::StoredChunk->new_from_inventory($pchunk, $digest, $length);
 }
 
-
 1;
 
+__END__
+
+=head1 NAME
+
+Brackup::Target - describes the destination for a backup
+
+=head1 EXAMPLE
+
+In your ~/.brackup.conf file:
+
+  [TARGET:amazon]
+  type = Amazon
+  aws_access_key_id  = ...
+  aws_secret_access_key =  ....
+
+=head1 GENERAL CONFIG OPTIONS
+
+=over
+
+=item B<type>
+
+The driver for this target type.  The type B<Foo> corresponds to the Perl module Brackup::Target::B<Foo>.
+
+As such, the only valid options for type, if you're just using the
+Target modules that come with the Brackup core, are:
+
+B<Amazon> -- see L<Brackup::Target::Amazon> for configuration details
+
+B<Filesystem> -- see L<Brackup::Target::Filesystem> for configuration details
+
+=back

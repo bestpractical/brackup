@@ -155,3 +155,22 @@ sub load_target {
 
 1;
 
+__END__
+
+=head1 NAME
+
+Brackup::Config - configuration parsing/etc
+
+=head1 CONFIGURATION INFO
+
+For instructions on how to configure Brackup, see:
+
+L<Brackup::Manual::Overview>
+
+L<Brackup::Root>
+
+L<Brackup::Target>
+
+
+
+

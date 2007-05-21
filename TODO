@@ -1,3 +1,5 @@
+-- FUSE script to mount a *.brackup file
+
 -- fix up docs, move all to POD, in relevant classes.
 
 -- tool to clean digestcache, based on prefixes, looking for files that no longer
@@ -12,6 +14,9 @@
    would be pretty easy.  
 
 -- find/clean orphan chunks on a target from metafiles
+
+-- (a future version of brackup-restore will let you grab the metafile from
+   the target, but that's still a TODO item)
 
 -- ionice stuff.  network nice stuff.
 

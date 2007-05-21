@@ -113,3 +113,37 @@ sub store_backup_meta {
 
 1;
 
+
+=head1 NAME
+
+Brackup::Target::Filesystem - backup to a locally mounted filesystem
+
+=head1 DESCRIPTION
+
+Back up to an NFS or Samba server, another disk array (external storage), etc.
+
+=head1 EXAMPLE
+
+In your ~/.brackup.conf file:
+
+  [TARGET:nfs_in_garage]
+  type = Filesystem
+  path = /mnt/nfs-garage/brackup/
+
+=head1 CONFIG OPTIONS
+
+=over
+
+=item B<type>
+
+Must be "B<Filesystem>".
+
+=item B<path>
+
+Path to backup to.
+
+=back
+
+=head1 SEE ALSO
+
+L<Brackup::Target>

@@ -145,3 +145,40 @@ sub store_backup_meta {
 
 1;
 
+=head1 NAME
+
+Brackup::Target::Amazon - backup to Amazon's S3 service
+
+=head1 EXAMPLE
+
+In your ~/.brackup.conf file:
+
+  [TARGET:amazon]
+  type = Amazon
+  aws_access_key_id  = ...
+  aws_secret_access_key =  ....
+
+=head1 CONFIG OPTIONS
+
+=over
+
+=item B<type>
+
+Must be "B<Amazon>".
+
+=item B<aws_access_key_id>
+
+Your Amazon Web Services access key id.
+
+=item B<aws_secret_access_key>
+
+Your Amazon Web Services secret password for the above access key.  (not your Amazon password)
+
+=back
+
+=head1 SEE ALSO
+
+L<Brackup::Target>
+
+L<Net::Amazon::S3> -- required module to use Brackup::Target::Amazon
+
