@@ -19,22 +19,22 @@ sub new {
         $dbh->do("CREATE TABLE $table (key TEXT PRIMARY KEY, value TEXT)");
     };
     die "Error: $@" if $@ && $@ !~ /table \w+ already exists/;
-
-    # SQLite sucks at doing anything quickly (likes hundred thousand
-    # selects back-to-back), so we just suck the whole damn thing into
-    # a perl hash.  cute, huh?  then it doesn't have to
-    # open/read/seek/seek/seek/read/close for each select later.
-    my $sth = $self->{dbh}->prepare("SELECT key, value FROM $self->{table}");
-    $sth->execute;
-    while (my ($k, $v) = $sth->fetchrow_array) {
-        $self->{data}{$k} = $v;
-    }
-
     return $self;
 }
 
 sub get {
     my ($self, $key) = @_;
+    unless ($self->{_loaded_all}++) {
+        # SQLite sucks at doing anything quickly (likes hundred thousand
+        # selects back-to-back), so we just suck the whole damn thing into
+        # a perl hash.  cute, huh?  then it doesn't have to
+        # open/read/seek/seek/seek/read/close for each select later.
+        my $sth = $self->{dbh}->prepare("SELECT key, value FROM $self->{table}");
+        $sth->execute;
+        while (my ($k, $v) = $sth->fetchrow_array) {
+            $self->{data}{$k} = $v;
+        }
+    }
     return $self->{data}{$key};
 }
 
