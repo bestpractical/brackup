@@ -1,3 +1,6 @@
+-- don't skip files ending in whitespace.  figure out why GPG barfs.  would
+   the metafile also barf, having a trailing \r or \n?
+
 -- FUSE script to mount a *.brackup file
 
 -- fix up docs, move all to POD, in relevant classes.
