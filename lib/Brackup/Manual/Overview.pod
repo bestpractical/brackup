@@ -1,6 +1,6 @@
-=head1 Brackup Overview
+=head1 NAME
 
-This guide explains how Brackup works, and how to use it.
+Brackup::Manual::Overview - how Brackup works, and how to use it
 
 =head1 Quick Start Guide
 
