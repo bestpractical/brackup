@@ -118,6 +118,7 @@ sub _decrypt_data {
         and die "Failed to decrypt with gpg: $!\n";
 
     my $ref = _read_file($output_temp);
+    unlink $output_temp, $enc_temp;
     return $ref;
 }
 
