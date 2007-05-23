@@ -1,3 +1,9 @@
+  - brackup-restore's verbose flag is more verbose now, showing files
+    as they're restored.
+
+  - brackup-restore can restore from an encrypted *.brackup file now,
+    firing up gpg for user to decrypt to a tempfile
+
   - brackup-target tool, to list/get brackup files from a target,
     and in the future do garbage collection on no-longer-referenced
     chunks (once a command exists to delete a brackup file from a target)

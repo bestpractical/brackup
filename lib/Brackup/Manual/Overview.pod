@@ -39,12 +39,10 @@ Let's look around at what just happened.
 First, you'll notice a file named, by default,
 "myhome-yyyymmdd.brackup" in your current directory.  Go look at it.
 It describes the state of the tree (the "root", or "source") that you
-just backed up.  B<You should keep this file>.  Although, if you
-didn't, it was also stored on the target (in this case, Amazon), so
-it's not critical, but at present you need the metafile (the .brackup
-file), locally in able to do a restore with B<brackup-restore>.  (a
-future version of brackup-restore will let you grab the metafile from
-the target, but that's still a TODO item)
+just backed up.  You might want to keep this file.  Although, if you
+don't, it's also stored on the target (in this case, Amazon), so it's
+not critical.  (You can always re-download lost .brackup files with
+L<brackup-target>)
 
 You might also notice two SQLite files at:
 
@@ -118,9 +116,9 @@ on paper.  (Worst case you can type it back in, or use OCR.)  Export with:
 
 =head1 Restores
 
-To do a restore, you'll currently need your *.brackup file handy
-(pulling the *.brackup file from the server isn't yet supported).  Then
-run:
+To do a restore, you'll need your *.brackup file handy.  If you lost
+it, you can re-download it from your backup target with
+L<brackup-target>.  Then run:
 
    brackup-restore --from=foo.brackup --to=<dir> --all
 

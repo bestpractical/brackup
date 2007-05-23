@@ -1,9 +1,12 @@
+-- in Restore.pm: 
+      # TODO: inefficient!  we don't want to download the chunk from the
+      # target multiple times.  better to cache it locally, or at least
+      # only fetch a region from the target (but that's still kinda inefficient
+      # and pushes complexity into the Target interface)
+
 -- only use tempfiles in a 0700 directory under /tmp/brackup-$USER/ or
    wherever.  or option, when using encryption, to only doing
    in-memory tempfiles, to avoid hitting disk?
-
--- (a future version of brackup-restore will let you grab the metafile from
-   the target, but that's still a TODO item)
 
 -- <lj user=grahams>: if a file which existed when Brackup was
   "discovering files" subsequently goes away while Brackup is working

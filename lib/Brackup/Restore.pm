@@ -3,21 +3,25 @@ use strict;
 use warnings;
 use Carp qw(croak);
 use Digest::SHA1;
-use Brackup::Util qw(tempfile);
+use Brackup::Util qw(tempfile slurp valid_params);
 
 sub new {
     my ($class, %opts) = @_;
     my $self = bless {}, $class;
 
-    $self->{to}     = delete $opts{to};      # directory we're restoring to
-    $self->{prefix} = delete $opts{prefix};  # directory/file filename prefix, or "" for all
-    $self->{file}   = delete $opts{file};    # filename we're restoring from
+    $self->{to}      = delete $opts{to};      # directory we're restoring to
+    $self->{prefix}  = delete $opts{prefix};  # directory/file filename prefix, or "" for all
+    $self->{file}    = delete $opts{file};    # filename we're restoring from
+    $self->{verbose} = delete $opts{verbose};
 
     $self->{_stats_to_run} = [];  # stack (push/pop) of subrefs to reset stat info on
 
     die "Destination directory doesn't exist" unless $self->{to} && -d $self->{to};
     die "Backup file doesn't exist"           unless $self->{file} && -f $self->{file};
     croak("Unknown options: " . join(', ', keys %opts)) if %opts;
+
+    $self->decrypt_file_if_needed;
+
     return $self;
 }
 
@@ -30,6 +34,20 @@ sub _driver_meta {
         $ret->{$1} = $src->{$k};
     }
     return $ret;
+}
+
+sub decrypt_file_if_needed {
+    my $self = shift;
+    my $meta = slurp($self->{file});
+    if ($meta =~ /[\x00-\x08]/) { # silly is-binary heuristic
+        my $new_file = $self->_decrypt_data(\$meta,
+                                            want_tempfile => 1,
+                                            no_batch => 1,
+                                            );
+        warn "Decrypted metafile $self->{file} to $new_file; using that to restore from...\n";
+        $self->{file} = $new_file;
+        scalar <STDIN>;
+    }
 }
 
 sub restore {
@@ -59,14 +77,15 @@ sub restore {
         $it->{Mode} ||= $meta->{DefaultFileMode} if $type eq "f";
         $it->{Mode} ||= $meta->{DefaultDirMode}  if $type eq "d";
 
+        warn " * restoring $it->{Path} to $full\n" if $self->{verbose};
         $self->_restore_link     ($full, $it) if $type eq "l";
         $self->_restore_directory($full, $it) if $type eq "d";
         $self->_restore_file     ($full, $it) if $type eq "f";
-        #warn " * restored $it->{Path} to $full\n";
     }
 
+    warn " * fixing stat info\n" if $self->{verbose};
     $self->_exec_statinfo_updates;
-
+    warn " * done\n" if $self->{verbose};
     return 1;
 }
 
@@ -81,13 +100,17 @@ sub _encrypted_temp_filename {
 }
 
 sub _decrypt_data {
-    my ($self, $dataref) = @_;
+    my $self = shift;
+    my $dataref = shift;
+    my %opts = valid_params(['no_batch', 'want_tempfile'], @_);
 
     # find which key we're decrypting it using, else return chunk
     # unmodified in the not-encrypted case
-    my $rcpt = $self->{_meta}{"GPG-Recipient"} or
-        return $dataref;
-
+    if ($self->{_meta}) {
+        my $rcpt = $self->{_meta}{"GPG-Recipient"} or
+            return $dataref;
+    }
+        
     unless ($ENV{'GPG_AGENT_INFO'} ||
             @Brackup::GPG_ARGS ||
             $self->{warned_about_gpg_agent}++)
@@ -102,14 +125,16 @@ sub _decrypt_data {
         warn $err;
     }
 
-    my $output_temp = $self->_output_temp_filename;
+    my $output_temp = $opts{want_tempfile} ?
+        (tempfile())[1]
+        : $self->_output_temp_filename;
     my $enc_temp    = $self->_encrypted_temp_filename;
 
     _write_to_file($enc_temp, $dataref);
 
     my @list = ("gpg", @Brackup::GPG_ARGS,
                 "--use-agent",
-                "--batch",
+                !$opts{no_batch} ? ("--batch") : (),
                 "--trust-model=always",
                 "--output",  $output_temp,
                 "--yes", "--quiet",
@@ -117,9 +142,9 @@ sub _decrypt_data {
     system(@list)
         and die "Failed to decrypt with gpg: $!\n";
 
-    my $ref = _read_file($output_temp);
-    unlink $output_temp, $enc_temp;
-    return $ref;
+    return $output_temp if $opts{want_tempfile};
+    my $data = Brackup::Util::slurp($output_temp);
+    return \$data;
 }
 
 sub _update_statinfo {
@@ -175,7 +200,7 @@ sub _restore_link {
 sub _restore_file {
     my ($self, $full, $it) = @_;
 
-    if (-e $full) {
+    if (-e $full && -s $full) {
         # TODO: add --conflict={skip,overwrite} option, defaulting to nothing: which dies
         die "File $full ($it->{Path}) already exists.  Aborting.";
     }
@@ -238,11 +263,13 @@ sub _restore_file {
 sub parser {
     my $self = shift;
     open (my $fh, $self->{file}) or die "Failed to open metafile: $!";
+    my $linenum = 0;
     return sub {
         my $ret = {};
         my $last;  # scalarref to last item
         my $line;  #
         while (defined ($line = <$fh>)) {
+            $linenum++;
             if ($line =~ /^([\w\-]+):\s*(.+)/) {
                 $ret->{$1} = $2;
                 $last = \$ret->{$1};
@@ -256,7 +283,9 @@ sub parser {
                 $$last .= " $1";
                 next;
             }
-            die "Unexpected line in metafile: $line";
+
+            $line =~ s/[:^print:]/?/g;
+            die "Unexpected line in metafile $self->{file}, line $linenum: $line";
         }
         return undef;
     }
@@ -271,11 +300,10 @@ sub _write_to_file {
     return 1;
 }
 
-sub _read_file {
-    my ($file) = @_;
-    open (my $fh, $file) or die "Failed to open $file for reading: $!\n";
-    my $data = do { local $/; <$fh>; };
-    return \$data;
+sub DESTROY {
+    my $self = shift;
+    unlink(grep { $_ } ($self->{_output_temp_filename},
+                        $self->{_encrypted_temp_filename}));
 }
 
 1;
