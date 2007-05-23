@@ -49,11 +49,6 @@ sub chunkpath {
     return $self->_diskpath($dig, "chunk");
 }
 
-sub metapath {
-    my ($self, $dig) = @_;
-    return $self->_diskpath($dig, "meta");
-}
-
 sub has_chunk_of_handle {
     my ($self, $handle) = @_;
     my $dig = $handle->digest;  # "sha1:sdfsdf" format scalar
