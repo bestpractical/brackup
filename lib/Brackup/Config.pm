@@ -17,6 +17,8 @@ sub add_section {
 
 sub load {
     my ($class, $file) = @_;
+    $file ||= Brackup::Config->default_config_file_name;
+
     my $self = bless {}, $class;
 
     open (my $fh, $file) or do {
