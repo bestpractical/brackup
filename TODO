@@ -1,3 +1,10 @@
+-- only use tempfiles in a 0700 directory under /tmp/brackup-$USER/ or
+   wherever.  or option, when using encryption, to only doing
+   in-memory tempfiles, to avoid hitting disk?
+
+-- (a future version of brackup-restore will let you grab the metafile from
+   the target, but that's still a TODO item)
+
 -- <lj user=grahams>: if a file which existed when Brackup was
   "discovering files" subsequently goes away while Brackup is working
   it's magic (like a vim .swp file) Brackup tosses an error and bails:
@@ -7,12 +14,13 @@
 -- don't skip files ending in whitespace.  figure out why GPG barfs.  would
    the metafile also barf, having a trailing \r or \n?
 
+-- "brackup-target <target> gc": find/clean orphan chunks on a target
+   from metafiles
+
 -- figure out how files with intenal \r or \n in filename get written
    to metafile.  need to be escaped?
 
 -- FUSE script to mount a *.brackup file
-
--- fix up docs, move all to POD, in relevant classes.
 
 -- tool to clean digestcache, based on prefixes, looking for files that no longer
    exist or have new mtimes, etc?  or keep track of "last used" date
@@ -25,14 +33,9 @@
    of its chunks and the target's *.brackup metafiles isn't yet done, but
    would be pretty easy.  
 
--- find/clean orphan chunks on a target from metafiles
-
--- (a future version of brackup-restore will let you grab the metafile from
-   the target, but that's still a TODO item)
-
 -- ionice stuff.  network nice stuff.
 
--- leaking 3 /tmp files after each run
+-- leaking 3 /tmp files after each run?x
 
 -- make tests pass without 'noatime' mount option
 

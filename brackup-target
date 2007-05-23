@@ -111,7 +111,14 @@ sub CMD_get_backup {
 
 sub CMD_get_backups {
     foreach my $si ($target->backups) {
-        debug("Fetching " . $si->filename);
+        my $size = $si->size;
+        my $name = $si->filename;
+        no warnings 'uninitialized';
+        if (-s "$name.brackup" == $size || -s "$name.brackup.orig" == $size) {
+            debug("Skipping $name; already have it");
+            next;
+        }
+        debug("Fetching $name");
         $target->get_backup($si->filename);
     }
 }

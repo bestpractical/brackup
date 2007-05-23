@@ -1,3 +1,11 @@
+  - brackup-target tool, to list/get brackup files from a target,
+    and in the future do garbage collection on no-longer-referenced
+    chunks (once a command exists to delete a brackup file from a target)
+
+  - stop leaking some temp files during restores
+
+  - doc fixes/additions
+
 1.02 (may 22, 2007)
 
   - support for merging little files together into big chunks
