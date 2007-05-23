@@ -1,3 +1,5 @@
+1.02 (may 22, 2007)
+
   - support for merging little files together into big chunks
     on the backup target.  aka "tail packing".  requires no changes
     to target drivers.  this should speed backups, as less network
