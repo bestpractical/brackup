@@ -173,7 +173,16 @@ sub backup {
 
             # see if we should pack it into a bigger blob
             my $chunk_size = $schunk->backup_length;
-            if ($merge_under && $chunk_size < $merge_under) {
+
+            # see if we should merge this chunk (in this case, file) together with
+            # other small files we encountered earlier, into a "composite chunk",
+            # to be stored on the target in one go.
+
+            # Note: no technical reason for only merging small files (is_entire_file),
+            # and not the tails of larger files.  just don't like the idea of files being
+            # both split up (for big head) and also merged together (for little end).
+            # would rather just have 1 type of magic per file.  (split it or join it)
+            if ($merge_under && $chunk_size < $merge_under && $pchunk->is_entire_file) {
                 if ($comp_chunk && ! $comp_chunk->can_fit($chunk_size)) {
                     $self->debug("Finalizing composite chunk $comp_chunk...");
                     $comp_chunk->finalize;

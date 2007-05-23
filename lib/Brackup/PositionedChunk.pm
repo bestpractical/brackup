@@ -129,4 +129,9 @@ sub cachekey {
     return $self->{file}->cachekey . ";o=$self->{offset};l=$self->{length}";
 }
 
+sub is_entire_file {
+    my $self = shift;
+    return $self->{file}->chunks == 1;
+}
+
 1;
