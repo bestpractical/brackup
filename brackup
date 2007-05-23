@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-Brackup - Flexible backup tool.  Slices, dices, encrypts, and sprays across the net.
+brackup - Flexible backup tool.  Slices, dices, encrypts, and sprays across the net.
 
 =head1 SYNOPSIS
 
@@ -36,10 +36,8 @@ Show status during backup.
 
 =head1 WARRANTY
 
-Brackup is distributed as-is and comes without warranty of any kind.
-It'll probably eat your files, kick your cat, and knock up your
-mother.  You've been warned.  If you feel like trusting it with your
-data, why don't you audit it first?
+Brackup is distributed as-is and comes without warranty of any kind,
+expressed or implied.  We aren't responsible for your data loss.
 
 =head1 SEE ALSO
 
@@ -49,7 +47,7 @@ brackup-restore
 
 Brad Fitzpatrick E<lt>brad@danga.comE<gt>
 
-Copyright (c) 2006 Six Apart, Ltd. All rights reserved.
+Copyright (c) 2006-2007 Six Apart, Ltd. All rights reserved.
 
 This module is free software. You may use, modify, and/or redistribute this
 software under the terms of same terms as perl itself.
