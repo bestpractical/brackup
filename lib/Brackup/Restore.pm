@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Carp qw(croak);
 use Digest::SHA1;
-use File::Temp qw(tempfile);
+use Brackup::Util qw(tempfile);
 
 sub new {
     my ($class, %opts) = @_;

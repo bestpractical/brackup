@@ -4,7 +4,7 @@ use warnings;
 use Carp qw(croak);
 use File::Find;
 use Brackup::DigestCache;
-use File::Temp qw(tempfile);
+use Brackup::Util qw(tempfile);
 use IPC::Open2;
 use Symbol;
 
@@ -203,7 +203,6 @@ sub encrypt {
 
     $data = \$data unless ref $data;
 
-    # FIXME: let users control where their temp files go?
     my ($tmpfh, $tmpfn) = tempfile();
     print $tmpfh $$data
         or die "failed to print: $!";

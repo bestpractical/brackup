@@ -1,13 +1,12 @@
 package Brackup::GPGProcess;
 use strict;
 use warnings;
-use File::Temp qw(tempfile);
+use Brackup::Util qw(tempfile);
 use POSIX qw(_exit);
 
 sub new {
     my ($class, $pchunk) = @_;
 
-    # FIXME: let users control where their temp files go?
     my ($destfh, $destfn) = tempfile();
 
     my $no_fork = 0;  # if true (perhaps on Windows?), then don't fork... do all inline.

@@ -5,7 +5,7 @@ use Test::More tests => 15;
 
 use Brackup::Test;
 use FindBin qw($Bin);
-use File::Temp qw(tempdir tempfile);
+use Brackup::Util qw(tempfile);
 
 ############### Backup
 
