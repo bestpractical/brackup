@@ -1,3 +1,5 @@
+1.03 (may 23, 2007)
+
   - brackup-restore's verbose flag is more verbose now, showing files
     as they're restored.
 
