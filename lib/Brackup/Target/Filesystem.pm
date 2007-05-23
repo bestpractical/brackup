@@ -122,14 +122,33 @@ sub backups {
 
     my @ret = ();
     while (my $fn = readdir($dh)) {
-        next unless $fn =~ /\.brackup$/;
-        my $stat = File::stat::stat("$dir/$fn");
+        next unless $fn =~ s/\.brackup$//;
+        my $stat = File::stat::stat("$dir/$fn.brackup");
         push @ret, Brackup::TargetBackupStatInfo->new($self, $fn,
                                                       time => $stat->mtime,
                                                       size => $stat->size);
     }
     closedir($dh);
     return @ret;
+}
+
+# downloads the given backup name to the current directory (with
+# *.brackup extension)
+sub get_backup {
+    my ($self, $name) = @_;
+    my $dir  = $self->_metafile_dir;
+    my $file = "$dir/$name.brackup";
+    die "File doesn't exist: $file" unless -e $file;
+    open(my $in,  $file)            or die "Failed to open $file: $!\n";
+    open(my $out, ">$name.brackup") or die "Failed to open $name.brackup: $!\n";
+    my $buf;
+    my $rv;
+    while ($rv = sysread($in, $buf, 128*1024)) {
+        my $outv = syswrite($out, $buf);
+        die "copy error" unless $outv == $rv;
+    }
+    die "copy error" unless defined $rv;
+    return 1;
 }
 
 1;

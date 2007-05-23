@@ -67,6 +67,13 @@ sub backups {
     die "ERROR: backups method not implemented in sub-class $self";
 }
 
+# downloads the given backup name to the current directory (with
+# *.brackup extension)
+sub get_backup {
+    my ($self, $name) = @_;
+    die "ERROR: get_backup method not implemented in sub-class $self";
+}
+
 1;
 
 __END__
