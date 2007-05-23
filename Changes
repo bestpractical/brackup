@@ -2,7 +2,7 @@
     and in the future do garbage collection on no-longer-referenced
     chunks (once a command exists to delete a brackup file from a target)
 
-  - stop leaking some temp files during restores
+  - stop leaking temp files
 
   - doc fixes/additions
 

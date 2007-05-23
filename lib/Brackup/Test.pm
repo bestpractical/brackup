@@ -22,26 +22,7 @@ my $par_pid = $$;
 END {
     if ($$ == $par_pid) {
         my $rv = unlink @to_unlink;
-        temp_audit();
     }
-}
-
-my $start_temps;
-sub num_temps {
-    opendir(my $dh, "/tmp") or return 0;
-    my @items = readdir($dh);
-    return scalar @items;
-}
-sub temp_audit {
-    my $now = num_temps();
-    $start_temps ||= $now;
-    unless ($now == $start_temps) {
-        print "# temp files changed: $start_temps -> $now\n";
-    }
-}
-
-BEGIN {
-    temp_audit();
 }
 
 sub do_backup {
@@ -50,7 +31,6 @@ sub do_backup {
     my $with_root    = delete $opts{'with_root'}    || sub {};
     die if %opts;
 
-    temp_audit();
     my $initer = shift;
 
     my $conf = Brackup::Config->new;
@@ -95,14 +75,12 @@ sub do_backup {
     }
     ok(-s $meta_filename, "backup file has size");
 
-    temp_audit();
     return wantarray ? ($meta_filename, $backup) : $meta_filename;
 }
 
 sub do_restore {
     my $backup_file = shift;
     my $restore_dir = tempdir( CLEANUP => 1 );
-    temp_audit();
     ok_dir_empty($restore_dir);
 
     my $restore = Brackup::Restore->new(
@@ -113,7 +91,6 @@ sub do_restore {
     ok($restore, "have restore object");
     ok(eval { $restore->restore; }, "did the restore")
         or die "restore failed: $@";
-    temp_audit();
     return $restore_dir;
 }
 
