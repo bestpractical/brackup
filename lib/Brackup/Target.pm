@@ -45,7 +45,7 @@ sub add_to_inventory {
     my ($self, $pchunk, $schunk) = @_;
     my $key  = $pchunk->inventory_key;
     my $db = $self->inventory_db;
-    $db->set($key => join(" ", $schunk->backup_digest, $schunk->backup_length));
+    $db->set($key => $schunk->inventory_value);
 }
 
 # return stored chunk, given positioned chunk, or undef.  no
@@ -54,10 +54,9 @@ sub stored_chunk_from_inventory {
     my ($self, $pchunk) = @_;
     my $key    = $pchunk->inventory_key;
     my $db     = $self->inventory_db;
-    my $diglen = $db->get($key)
+    my $invval = $db->get($key)
         or return undef;
-    my ($digest, $length) = split /\s+/, $diglen;
-    return Brackup::StoredChunk->new_from_inventory($pchunk, $digest, $length);
+    return Brackup::StoredChunk->new_from_inventory_value($pchunk, $invval);
 }
 
 1;

@@ -187,8 +187,26 @@ sub _restore_file {
             die "Error loading chunk $dig from the restore target\n";
 
         my $len_chunk = length $$dataref;
-        unless ($len_chunk == $enc_len) {
-            die "Backup chunk $dig isn't of expected length: got $len_chunk, expecting $enc_len\n";
+
+        # using just a range of the file
+        # TODO: inefficient!  we don't want to download the chunk from the
+        # target multiple times.  better to cache it locally, or at least
+        # only fetch a region from the target (but that's still kinda inefficient
+        # and pushes complexity into the Target interface)
+        if ($enc_len =~ /^(\d+)-(\d+)$/) {
+            my ($from, $to) = ($1, $2);
+            # file range.  gotta be at least as big as bigger number
+            unless ($len_chunk >= $to) {
+                die "Backup chunk $dig isn't at least as big as range: got $len_chunk, needing $to\n";
+            }
+            my $region = substr($$dataref, $from, $to-$from);
+            $dataref = \$region;
+        } else {
+            # using the whole chunk, so make sure fetched size matches
+            # expected size
+            unless ($len_chunk == $enc_len) {
+                die "Backup chunk $dig isn't of expected length: got $len_chunk, expecting $enc_len\n";
+            }
         }
 
         my $decrypted_ref = $self->_decrypt_data($dataref);

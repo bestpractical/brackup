@@ -19,8 +19,14 @@ sub new {
     $self->{dir}        = $conf->path_value('path');
     $self->{gpg_path}   = $conf->value('gpg_path') || "/usr/bin/gpg";
     $self->{gpg_rcpt}   = $conf->value('gpg_recipient');
-    $self->{chunk_size} = $conf->byte_value('chunk_size'),
+    $self->{chunk_size} = $conf->byte_value('chunk_size');
     $self->{ignore}     = [];
+
+    $self->{merge_files_under}  = $conf->byte_value('merge_files_under');
+    $self->{max_composite_size} = $conf->byte_value('max_composite_chunk_size') || 2**20;
+
+    die "'max_composite_chunk_size' must be greater than 'merge_files_under'\n" unless
+        $self->{max_composite_size} > $self->{merge_files_under};
 
     $self->{gpg_args}   = [];  # TODO: let user set this.  for now, not possible
 
@@ -30,6 +36,9 @@ sub new {
     $self->{noatime}    = $conf->value('noatime');
     return $self;
 }
+
+sub merge_files_under  { $_[0]{merge_files_under}  }
+sub max_composite_size { $_[0]{max_composite_size} }
 
 sub gpg_path {
     my $self = shift;
@@ -277,5 +286,21 @@ Perl5 regular expression of files not to backup.  You may have multiple ignore l
 
 If true, don't backup access times.  They're kinda useless anyway, and
 just make the *.brackup metafiles larger.
+
+=item B<merge_files_under>
+
+In units of bytes, kB, MB, etc.  If files are under this size.  By
+default this feature is off (value 0), purely because it's new, but 1
+kB is a recommended size, and will probably be the default in the
+future.  Set it to 0 to explicitly disable.
+
+=item B<max_composite_chunk_size>
+
+In units of bytes, kB, MB, etc.  The maximum size of a composite
+chunk, holding lots of little files.  If this is too big, you'll waste
+more space with future iterative backups updating files locked into
+this chunk with unchanged chunks.
+
+Recommended, and default value, is 1 MB.
 
 =back

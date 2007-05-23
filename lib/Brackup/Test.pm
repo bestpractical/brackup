@@ -74,7 +74,7 @@ sub do_backup {
         warn "Died running backup: $@\n";
     }
     ok(-s $meta_filename, "backup file has size");
-    return $meta_filename;
+    return wantarray ? ($meta_filename, $backup) : $meta_filename;
 }
 
 sub do_restore {

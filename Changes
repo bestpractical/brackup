@@ -1,3 +1,11 @@
+  - support for merging little files together into big chunks
+    on the backup target.  aka "tail packing".  requires no changes
+    to target drivers.  this should speed backups, as less network
+    round-trips.  will also be cheaper, once Amazon starts charging
+    per number of HTTP requests in June.
+
+  - improved docs
+
 1.01 (may 21, 2007)
 
   - lot of new/updated docs

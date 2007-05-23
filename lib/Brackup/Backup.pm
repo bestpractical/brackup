@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Carp qw(croak);
 use Brackup::ChunkIterator;
+use Brackup::CompositeChunk;
 use Brackup::GPGProcManager;
 use Brackup::GPGProcess;
 
@@ -124,6 +125,9 @@ sub backup {
         $file_has_shown_status = 0;
     };
 
+    my $merge_under = $root->merge_files_under;
+    my $comp_chunk  = undef;
+    
     # records are either Brackup::File (for symlinks, directories, etc), or
     # PositionedChunks, in which case the file can asked of the chunk
     while (my $rec = $chunk_iterator->next) {
@@ -136,8 +140,21 @@ sub backup {
             $start_file->($pchunk->file);
         }
 
+        # have we already stored this chunk before?  (iterative backup)
         my $schunk;
         if ($schunk = $target->stored_chunk_from_inventory($pchunk)) {
+            $pchunk->forget_chunkref;
+            push @stored_chunks, $schunk;
+            next;
+        }
+
+        # weird case... have we stored this same pchunk digest in the
+        # current comp_chunk we're building?  these aren't caught by
+        # the above inventory check, because chunks in a composite
+        # chunk aren't added to the inventory until after the the composite
+        # chunk has fully grown (because it's not until it's fully grown
+        # that we know the handle for it, its digest)
+        if ($comp_chunk && ($schunk = $comp_chunk->stored_chunk_from_dup_internal_raw($pchunk))) {
             $pchunk->forget_chunkref;
             push @stored_chunks, $schunk;
             next;
@@ -146,13 +163,29 @@ sub backup {
         $show_status->() unless $file_has_shown_status++;
         $self->debug("  * storing chunk: ", $pchunk->as_string, "\n");
 
-        my $handle;
         unless ($self->{dryrun}) {
             $schunk = Brackup::StoredChunk->new($pchunk);
 
             # encrypt it
             if ($gpg_rcpt) {
                 $schunk->set_encrypted_chunkref($gpg_pm->enc_chunkref_of($pchunk));
+            }
+
+            # see if we should pack it into a bigger blob
+            my $chunk_size = $schunk->backup_length;
+            if ($merge_under && $chunk_size < $merge_under) {
+                if ($comp_chunk && ! $comp_chunk->can_fit($chunk_size)) {
+                    $self->debug("Finalizing composite chunk $comp_chunk...");
+                    $comp_chunk->finalize;
+                    $comp_chunk = undef;
+                }
+                $comp_chunk ||= Brackup::CompositeChunk->new($root, $target);
+                $comp_chunk->append_little_chunk($schunk);
+            } else {
+                # store it regularly, as its own chunk on the target
+                $target->store_chunk($schunk)
+                    or die "Chunk storage failed.\n";
+                $target->add_to_inventory($pchunk => $schunk);
             }
 
             # if only this worked... (LWP protocol handler seems to
@@ -162,9 +195,7 @@ sub backup {
             #    $gpg_pm->start_some_processes;
             #};
 
-            $target->store_chunk($schunk)
-                or die "Chunk storage failed.\n";
-            $target->add_to_inventory($pchunk => $schunk);
+
             $n_kb_up += $pchunk->length / 1024;
             push @stored_chunks, $schunk;
         }
@@ -172,7 +203,7 @@ sub backup {
         #$stats->note_stored_chunk($schunk);
 
         # DEBUG: verify it got written correctly
-        if ($ENV{BRACKUP_PARANOID} && $handle) {
+        if ($ENV{BRACKUP_PARANOID}) {
             die "FIX UP TO NEW API";
             #my $saved_ref = $target->load_chunk($handle);
             #my $saved_len = length $$saved_ref;
@@ -186,6 +217,7 @@ sub backup {
         $schunk->forget_chunkref if $schunk;
     }
     $end_file->();
+    $comp_chunk->finalize if $comp_chunk;
 
     unless ($self->{dryrun}) {
         # write the metafile

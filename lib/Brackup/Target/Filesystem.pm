@@ -73,7 +73,6 @@ sub store_chunk {
     my ($self, $chunk) = @_;
     my $dig = $chunk->backup_digest;
     my $blen = $chunk->backup_length;
-    my $len = $chunk->length;
 
     my $path = $self->chunkpath($dig);
     my $dir = $path;

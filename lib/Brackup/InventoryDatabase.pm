@@ -118,17 +118,33 @@ it, the schema is:
 
 B<Keys>
 
-The key is the digest of the "raw" (pre-compression/encryption) file/chunk, and the value is
-the digest of the file/chunk post-compression/encryption, along with its length.
+The key is the digest of the "raw" (pre-compression/encryption)
+file/chunk (with GPG recipient, if using encryption), and the value is
+the digest of the chunk stored on the target, which contains the raw
+chunk.  The chunk stored on the target may contain other chunks, may
+be compressed, encrypted, etc.
+
+ <raw_digest>               --> <stored_digest> <stored_length>
+ <raw_digest>;to=<gpg_rcpt> --> <stored_digest> <stored_length>
 
 For example:
 
-  sha1:e23c4b5f685e046e7cc50e30e378ab11391e528e =>
+  sha1:e23c4b5f685e046e7cc50e30e378ab11391e528e;to=6BAFF35F =>
      sha1:d7257184899c9e6c4e26506f1c46f8b6562d9ee7 71223
 
-Means that the chunk with sha1 contents "e23c4...", after being
-compressed/encrypted, is stored on the target with digest
-"d72571848...", with length 71,223 bytes.
+Means that the chunk with sha1 contents "e23c4...", intended to be
+en/de-crypted for 6BAFF35F, can be got by asking the target for the
+chunk with digest "d72571848...", with length 71,223 bytes.
+
+When using the Brackup feature which combines small files into larger
+blobs, the inventory database instead stores values like:
+
+  <raw_digest>[;to=<gpg_rcpt>] -->
+     <stored_digest> <stored_length> <from_offset>-<to_offset>
+
+Which is the same thing, but after fetching the composite chunk using
+the stored digest provided, only the range provided from C<from_offset> to 
+C<to_offset> should be used.
 
 =head1 SEE ALSO
 
