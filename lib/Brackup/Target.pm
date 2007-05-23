@@ -3,6 +3,7 @@ package Brackup::Target;
 use strict;
 use warnings;
 use Brackup::InventoryDatabase;
+use Brackup::TargetBackupStatInfo;
 use Carp qw(croak);
 
 sub new {

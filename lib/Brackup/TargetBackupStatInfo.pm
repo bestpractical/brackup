@@ -1,18 +1,18 @@
-
 package Brackup::TargetBackupStatInfo;
 
 use strict;
 use warnings;
+use Carp qw(croak);
 
 sub new {
-    my ($class, $target, $fn, %opts) = shift;
-
+    my ($class, $target, $fn, %opts) = @_;
     my $self = {
         target => $target,
         filename => $fn,
-        time => $opts{time},
-        size => $opts{size},
+        time => delete $opts{time},
+        size => delete $opts{size},
     };
+    croak "unknown options: " . join(", ", keys %opts) if %opts;
 
     return bless $self, $class;
 }
