@@ -93,9 +93,13 @@ sub store_chunk {
     return 1;
 }
 
+sub _metafile_dir {
+    return $_[0]->{path}."/backups/";
+}
+
 sub store_backup_meta {
     my ($self, $name, $file) = @_;
-    my $dir = "$self->{path}/backups/";
+    my $dir = $self->_metafile_dir;
     unless (-d $dir) {
         mkdir $dir or die "Failed to mkdir $dir: $!\n";
     }
@@ -103,6 +107,23 @@ sub store_backup_meta {
     print $fh $file;
     close $fh or die;
     return 1;
+}
+
+sub backups {
+    my ($self) = @_;
+
+    my $dir = $self->_metafile_dir;
+    return () unless (-d $dir);
+    return () unless opendir(my $dh, $dir);
+    my @ret = ();
+    while (my $fn = readdir($dh)) {
+        my $fullfn = "$dir/$fn";
+        my ($dev, $inode, $mode, $nlink, $uid, $gid, $rdev, $size, $atime, $mtime, $ctime) = stat($fullfn);
+        next unless defined($size);
+        push @ret, Brackup::TargetBackupStatInfo->new($self, $fn, time => $mtime, size => $size);
+    }
+    closedir($dh);
+    return @ret;
 }
 
 1;
