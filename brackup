@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-brackup - Flexible backup tool.  Slices, dices, encrypts, and sprays across the net.
+brackup - do a backup using Brackup
 
 =head1 SYNOPSIS
 

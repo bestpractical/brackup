@@ -10,7 +10,7 @@ WriteMakefile( NAME            => 'Brackup',
                    'Digest::SHA1' => 0,
                    'DBI'          => 0,
                },
-               ABSTRACT_FROM => 'brackup',
+               ABSTRACT_FROM => 'lib/Brackup.pm',
                AUTHOR     => 'Brad Fitzpatrick <brad@danga.com>',
                );
 
