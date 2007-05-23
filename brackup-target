@@ -1,0 +1,99 @@
+#!/usr/bin/perl
+
+=head1 NAME
+
+brackup-target - Manage your backup targets
+
+=head1 SYNOPSIS
+
+ $ brackup-target [opts] <target_name> list_backups
+ $ brackup-target [opts] <target_name> get_backup <backup_file>
+ $ brackup-target [opts] <target_name> get_backups
+
+=head2 OPTIONS
+
+=over 4
+
+=item --dest=DIR
+
+Destination to write files to.  Defaults to current working directory.
+
+=item --verbose|-v
+
+Be verbose with status.
+
+=back
+
+=head1 WARRANTY
+
+Brackup is distributed as-is and comes without warranty of any kind,
+expressed or implied.  We aren't responsible for your data loss.
+
+=head1 SEE ALSO
+
+brackup-restore
+
+=head1 AUTHOR
+
+Brad Fitzpatrick E<lt>brad@danga.comE<gt>
+
+Copyright (c) 2006-2007 Six Apart, Ltd. All rights reserved.
+
+This module is free software. You may use, modify, and/or redistribute this
+software under the terms of same terms as perl itself.
+
+=cut
+
+use strict;
+use warnings;
+use Getopt::Long;
+
+use Cwd;
+use FindBin qw($Bin);
+use lib "$Bin/lib";
+
+use Brackup;
+
+my $config_file;
+my $destdir;
+my $opt_help;
+my $opt_verbose;
+usage() unless
+    GetOptions(
+               'verbose'  => \$opt_verbose,
+               'dest=s'   => \$destdir,
+               'config=s' => \$config_file,
+               'help'     => \$opt_help,
+               );
+
+if ($destdir) {
+    chdir $destdir or die "Failed to chdir to $destdir: $!\n";
+}
+
+if ($opt_help) {
+    eval "use Pod::Usage;";
+    Pod::Usage::pod2usage( -verbose => 1, -exitval => 0 );
+    exit 0;
+}
+
+my $config = eval { Brackup::Config->load($config_file) } or
+    usage($@);
+
+my $target_name = shift
+    or usage();
+
+my $target = eval { $config->load_target($target_name); } or
+    usage($@);
+
+print "target = $target\n";
+
+
+
+sub usage {
+    my $why = shift || "";
+    if ($why) {
+        $why =~ s/\s+$//;
+        $why = "Error: $why\n\n";
+    }
+    die "${why}brackup-target <target> <cmd> [...]\nbrackup-target --help\n";
+}
