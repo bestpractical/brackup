@@ -59,6 +59,13 @@ sub stored_chunk_from_inventory {
     return Brackup::StoredChunk->new_from_inventory_value($pchunk, $invval);
 }
 
+# return a list of TargetBackupStatInfo objects representing the
+# stored backup metafiles on this target.
+sub backups {
+    my ($self) = @_;
+    die "ERROR: backups method not implemented in sub-class $self";
+}
+
 1;
 
 __END__
