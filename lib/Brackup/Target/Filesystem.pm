@@ -3,6 +3,8 @@ use strict;
 use warnings;
 use base 'Brackup::Target';
 use File::Path;
+use File::stat ();
+
 
 sub new {
     my ($class, $confsec) = @_;
@@ -113,14 +115,18 @@ sub backups {
     my ($self) = @_;
 
     my $dir = $self->_metafile_dir;
-    return () unless (-d $dir);
-    return () unless opendir(my $dh, $dir);
+    return () unless -d $dir;
+
+    opendir(my $dh, $dir) or
+        die "Failed to open $dir: $!\n";
+
     my @ret = ();
     while (my $fn = readdir($dh)) {
-        my $fullfn = "$dir/$fn";
-        my ($dev, $inode, $mode, $nlink, $uid, $gid, $rdev, $size, $atime, $mtime, $ctime) = stat($fullfn);
-        next unless defined($size);
-        push @ret, Brackup::TargetBackupStatInfo->new($self, $fn, time => $mtime, size => $size);
+        next unless $fn =~ /\.brackup$/;
+        my $stat = File::stat::stat("$dir/$fn");
+        push @ret, Brackup::TargetBackupStatInfo->new($self, $fn,
+                                                      time => $stat->mtime,
+                                                      size => $stat->size);
     }
     closedir($dh);
     return @ret;

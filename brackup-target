@@ -9,6 +9,8 @@ brackup-target - Manage your backup targets
  $ brackup-target [opts] <target_name> list_backups
  $ brackup-target [opts] <target_name> get_backup <backup_file>
  $ brackup-target [opts] <target_name> get_backups
+ $ brackup-target [opts] <target_name> delete_backup <backup_file>
+ $ brackup-target [opts] <target_name> gc   # run garbage collector
 
 =head2 OPTIONS
 
@@ -79,14 +81,29 @@ if ($opt_help) {
 my $config = eval { Brackup::Config->load($config_file) } or
     usage($@);
 
-my $target_name = shift
-    or usage();
+my $target_name = shift or usage();
+my $cmd_name    = shift or usage();
 
 my $target = eval { $config->load_target($target_name); } or
     usage($@);
 
-print "target = $target\n";
+my $code = __PACKAGE__->can("CMD_$cmd_name") or
+    usage("Unknown/unimplemented command.");
 
+exit($code->() ? 0 : 1);
+
+
+sub CMD_list_backups {
+    use Data::Dumper;
+    foreach my $si ($target->backups) {
+        printf("%-35s %-20s %10d\n",
+               $si->filename,
+               $si->time,
+               $si->size);
+    }
+    return 1;
+}
+   
 
 
 sub usage {
