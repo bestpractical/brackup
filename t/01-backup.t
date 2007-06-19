@@ -10,10 +10,9 @@ use Brackup::Util qw(tempfile);
 ############### Backup
 
 my ($digdb_fh, $digdb_fn) = tempfile();
-
+close($digdb_fh);
 my $root_dir = "$Bin/data";
 ok(-d $root_dir, "test data to backup exists");
-
 my $backup_file = do_backup(
                             with_confsec => sub {
                                 my $csec = shift;

@@ -48,7 +48,9 @@ sub do_backup {
     ok_dir_empty($backup_dir);
 
     my ($inv_fh, $inv_filename) = tempfile();
+    close($inv_fh);
     push @to_unlink, $inv_filename;
+
 
     $confsec = Brackup::ConfigSection->new("TARGET:test_restore");
     $confsec->add("type" => "Filesystem");

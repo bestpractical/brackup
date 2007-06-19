@@ -20,7 +20,7 @@ my $gpg_args = ["--no-default-keyring",
                 "--secret-keyring=$Bin/data/secring-test.gpg"];
 
 my ($digdb_fh, $digdb_fn) = tempfile();
-
+close($digdb_fh);
 my $root_dir = "$Bin/data";
 ok(-d $root_dir, "test data to backup exists");
 

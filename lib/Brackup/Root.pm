@@ -17,7 +17,7 @@ sub new {
     die "Backup-root name must be only a-z, A-Z, 0-9, and _." unless $self->{name} =~ /^\w+/;
 
     $self->{dir}        = $conf->path_value('path');
-    $self->{gpg_path}   = $conf->value('gpg_path') || "/usr/bin/gpg";
+    $self->{gpg_path}   = $conf->value('gpg_path') || "gpg";
     $self->{gpg_rcpt}   = $conf->value('gpg_recipient');
     $self->{chunk_size} = $conf->byte_value('chunk_size');
     $self->{ignore}     = [];
