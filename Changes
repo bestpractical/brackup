@@ -1,3 +1,5 @@
+1.04 (july 30, 2007)
+
   - Amazon list_backups and delete backups (and delete for filesystem
     target too), from Alessandro Ranellucci <aar@cpan.org>
 
