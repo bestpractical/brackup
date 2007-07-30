@@ -142,6 +142,42 @@ sub store_backup_meta {
     return $rv;
 }
 
+sub backups {
+    my $self = shift;
+
+    my @ret;
+    my $backups = $self->{s3}->list_bucket_all({ bucket => $self->{backup_bucket} });
+    foreach my $backup (@{ $backups->{keys} }) {
+        push @ret, Brackup::TargetBackupStatInfo->new($self, $backup->{key},
+                                                      time => $backup->{last_modified},
+                                                      size => $backup->{size});
+    }
+    return @ret;
+}
+
+sub get_backup {
+    my $self = shift;
+    my $name = shift;
+	
+    my $bucket = $self->{s3}->bucket($self->{backup_bucket});
+    my $val = $bucket->get_key($name)
+        or return 0;
+	
+    open(my $out, ">$name.brackup") or die "Failed to open $name.brackup: $!\n";
+    my $outv = syswrite($out, $val->{value});
+    die "download/write error" unless $outv == do { use bytes; length $val->{value} };
+    close $out;
+    return 1;
+}
+
+sub delete_backup {
+    my $self = shift;
+    my $name = shift;
+	
+    my $bucket = $self->{s3}->bucket($self->{backup_bucket});
+    return $bucket->delete_key($name);
+}
+
 1;
 
 =head1 NAME

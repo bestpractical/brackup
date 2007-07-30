@@ -151,6 +151,16 @@ sub get_backup {
     return 1;
 }
 
+sub delete_backup {
+    my $self = shift;
+    my $name = shift;
+
+    my $file = sprintf '%s/%s.brackup', $self->_metafile_dir, $name;
+    die "File doesn't exist: $file" unless -e $file;
+    unlink $file;
+    return 1;
+}
+
 1;
 
 

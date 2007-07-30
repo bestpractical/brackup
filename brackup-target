@@ -106,7 +106,8 @@ sub CMD_list_backups {
 sub CMD_get_backup {
     my $name = shift @ARGV or
         die "get_backup requires a filename to download";
-    $target->get_backup($name);
+    $target->get_backup($name)
+		or die "Failed to retrieve backup $name\n";
 }
 
 sub CMD_get_backups {
@@ -121,6 +122,13 @@ sub CMD_get_backups {
         debug("Fetching $name");
         $target->get_backup($si->filename);
     }
+}
+
+sub CMD_delete_backup {
+    my $name = shift @ARGV or
+        die "delete_backup requires a filename to download";
+    $target->delete_backup($name)
+		or die "Failed to delete backup $name\n";
 }
 
 sub debug {

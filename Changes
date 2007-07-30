@@ -1,3 +1,6 @@
+  - Amazon list_backups and delete backups (and delete for filesystem
+    target too), from Alessandro Ranellucci <aar@cpan.org>
+
   - make tests pass on OS X (Jesse Vincent)
 
 1.03 (may 23, 2007)
