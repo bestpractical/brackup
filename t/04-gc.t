@@ -27,7 +27,7 @@ my ($backup_file, $backup, $target) = do_backup(
 my $orphan_chunks_count = int(rand 10);
 for (1..$orphan_chunks_count) {
     my $chunk = Brackup::StoredChunk->new;
-    $chunk->{_chunkref} = \"foobar $_";
+    $chunk->{_chunkref} = \ "foobar $_";
     $target->store_chunk($chunk);
 }
 

@@ -23,6 +23,7 @@ lib/Brackup/GPGProcess.pm
 lib/Brackup/GPGProcManager.pm
 lib/Brackup/InventoryDatabase.pm
 lib/Brackup/Manual/Overview.pod
+lib/Brackup/Metafile.pm
 lib/Brackup/PositionedChunk.pm
 lib/Brackup/Restore.pm
 lib/Brackup/Root.pm
@@ -41,6 +42,7 @@ t/00-use.t
 t/01-backup.t
 t/02-gpg.t
 t/03-combine-little-files.t
+t/04-gc.t
 t/data/000-dup1.txt
 t/data/000-dup2.txt
 t/data/huge-file.txt
