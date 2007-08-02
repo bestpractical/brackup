@@ -126,6 +126,23 @@ For more options, see:
 
    brackup-restore --help
 
+=head1 Number of backups to keep
+
+To free space on your target you can remove old backups. There are two steps
+to do this:
+
+   brackup-target <target> prune
+   brackup-target <target> gc
+
+The first command will look for backup metafiles in your target and remove the
+oldest ones according to the I<keep_backups> option you specified in the config
+file. Thus, if you have, say, 15 backups stored and I<keep_backups> is set to 10
+then I<prune> will remove the oldest 5 backups.
+
+The second command will remove from your target the orphaned chunks that are no 
+more referenced by any metafile. This will free some space while preserving chunks
+that are still referenced by recent backups.
+
 =head1 SEE ALSO
 
 L<Brackup>

@@ -53,7 +53,7 @@ sub decrypt_file_if_needed {
 sub restore {
     my ($self) = @_;
     my $parser = $self->parser;
-    my $meta = $parser->();
+    my $meta = $parser->readline;
     my $driver_class = $meta->{BackupDriver};
     die "No driver specified" unless $driver_class;
 
@@ -68,7 +68,7 @@ sub restore {
     $self->{_target} = $target;
     $self->{_meta}   = $meta;
 
-    while (my $it = $parser->()) {
+    while (my $it = $parser->readline) {
         my $full = $self->{to} . "/" . $it->{Path};
         my $type = $it->{Type} || "f";
         die "Unknown filetype: type=$type, file: $it->{Path}" unless $type =~ /^[ldf]$/;
@@ -262,33 +262,7 @@ sub _restore_file {
 # returns iterator subref which returns hashrefs or undef on EOF
 sub parser {
     my $self = shift;
-    open (my $fh, $self->{file}) or die "Failed to open metafile: $!";
-    my $linenum = 0;
-    return sub {
-        my $ret = {};
-        my $last;  # scalarref to last item
-        my $line;  #
-        while (defined ($line = <$fh>)) {
-            $linenum++;
-            if ($line =~ /^([\w\-]+):\s*(.+)/) {
-                $ret->{$1} = $2;
-                $last = \$ret->{$1};
-                next;
-            }
-            if ($line eq "\n") {
-                return $ret;
-            }
-            if ($line =~ /^\s+(.+)/) {
-                die "Can't continue line without start" unless $last;
-                $$last .= " $1";
-                next;
-            }
-
-            $line =~ s/[:^print:]/?/g;
-            die "Unexpected line in metafile $self->{file}, line $linenum: $line";
-        }
-        return undef;
-    }
+    return Brackup::Metafile->open($self->{file});
 }
 
 sub _write_to_file {

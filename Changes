@@ -1,3 +1,6 @@
+  - 'prune' and 'gc' commands commands for both Amazon
+     and Filesystem targets.  from Alessandro Ranellucci <aar@cpan.org>.
+
 1.04 (july 30, 2007)
 
   - Amazon list_backups and delete backups (and delete for filesystem

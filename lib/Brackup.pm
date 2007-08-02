@@ -6,6 +6,7 @@ $VERSION = '1.04';
 use Brackup::Config;
 use Brackup::ConfigSection;
 use Brackup::File;
+use Brackup::Metafile;
 use Brackup::PositionedChunk;
 use Brackup::StoredChunk;
 use Brackup::Backup;

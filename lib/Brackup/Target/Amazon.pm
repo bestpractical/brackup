@@ -129,6 +129,20 @@ sub store_chunk {
     return 1;
 }
 
+sub delete_chunk {
+    my ($self, $dig) = @_;
+    my $bucket = $self->{s3}->bucket($self->{chunk_bucket});
+    return $bucket->delete_key($dig);
+}
+
+# returns a list of names of all chunks
+sub chunks {
+    my $self = shift;
+    
+    my $chunks = $self->{s3}->list_bucket_all({ bucket => $self->{chunk_bucket} });
+    return map { $_->{key} } @{ $chunks->{keys} };
+}
+
 sub store_backup_meta {
     my ($self, $name, $file) = @_;
 
@@ -157,13 +171,14 @@ sub backups {
 
 sub get_backup {
     my $self = shift;
-    my $name = shift;
+    my ($name, $output_file) = @_;
 	
     my $bucket = $self->{s3}->bucket($self->{backup_bucket});
     my $val = $bucket->get_key($name)
         or return 0;
 	
-    open(my $out, ">$name.brackup") or die "Failed to open $name.brackup: $!\n";
+	$output_file ||= "$name.brackup";
+    open(my $out, ">$output_file") or die "Failed to open $output_file: $!\n";
     my $outv = syswrite($out, $val->{value});
     die "download/write error" unless $outv == do { use bytes; length $val->{value} };
     close $out;

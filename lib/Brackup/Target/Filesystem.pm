@@ -2,6 +2,8 @@ package Brackup::Target::Filesystem;
 use strict;
 use warnings;
 use base 'Brackup::Target';
+use File::Basename;
+use File::Find ();
 use File::Path;
 use File::stat ();
 
@@ -95,6 +97,28 @@ sub store_chunk {
     return 1;
 }
 
+sub delete_chunk {
+    my ($self, $dig) = @_;
+    my $path = $self->chunkpath($dig);
+    unlink $path;
+}
+
+
+# returns a list of names of all chunks
+sub chunks {
+    my $self = shift;
+    
+    my @chunks = ();
+    my $found_chunk = sub {
+        m/\.chunk$/ or return;
+        my $chunk_name = basename($_);
+        $chunk_name =~ s/\.chunk$//;
+        push @chunks, $chunk_name;
+    };
+    File::Find::find({ wanted => $found_chunk, no_chdir => 1}, $self->{path});
+    return @chunks;
+}
+
 sub _metafile_dir {
     return $_[0]->{path}."/backups/";
 }
@@ -133,14 +157,15 @@ sub backups {
 }
 
 # downloads the given backup name to the current directory (with
-# *.brackup extension)
+# *.brackup extension) or to the specified location
 sub get_backup {
-    my ($self, $name) = @_;
+    my ($self, $name, $output_file) = @_;
     my $dir  = $self->_metafile_dir;
     my $file = "$dir/$name.brackup";
     die "File doesn't exist: $file" unless -e $file;
     open(my $in,  $file)            or die "Failed to open $file: $!\n";
-    open(my $out, ">$name.brackup") or die "Failed to open $name.brackup: $!\n";
+	$output_file ||= "$name.brackup";
+    open(my $out, ">$output_file") or die "Failed to open $output_file: $!\n";
     my $buf;
     my $rv;
     while ($rv = sysread($in, $buf, 128*1024)) {

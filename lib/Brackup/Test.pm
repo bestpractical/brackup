@@ -77,7 +77,7 @@ sub do_backup {
     }
     ok(-s $meta_filename, "backup file has size");
 
-    return wantarray ? ($meta_filename, $backup) : $meta_filename;
+    return wantarray ? ($meta_filename, $backup, $target) : $meta_filename;
 }
 
 sub do_restore {

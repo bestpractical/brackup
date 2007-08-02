@@ -83,11 +83,13 @@ sub write_dummy_config {
 #[TARGET:raidbackups]
 #type = Filesystem
 #path = /raid/backup/brackup
+#keep_backups = 10
 
 #[TARGET:amazon]
 #type = Amazon
 #aws_access_key_id  = XXXXXXXXXX
 #aws_secret_access_key =  XXXXXXXXXXXX
+#keep_backups = 10
 
 #[SOURCE:proj]
 #path = /raid/bradfitz/proj/

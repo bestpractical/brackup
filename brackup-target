@@ -10,7 +10,8 @@ brackup-target - Manage your backup targets
  $ brackup-target [opts] <target_name> get_backup <backup_file>
  $ brackup-target [opts] <target_name> get_backups
  $ brackup-target [opts] <target_name> delete_backup <backup_file>
- $ brackup-target [opts] <target_name> gc   # run garbage collector
+ $ brackup-target [opts] <target_name> prune   # remove old backups
+ $ brackup-target [opts] <target_name> gc      # run garbage collector
 
 =head2 OPTIONS
 
@@ -23,6 +24,15 @@ Destination to write files to.  Defaults to current working directory.
 =item --verbose|-v
 
 Be verbose with status.
+
+=item --dry-run
+
+Do not actually execute write operations.
+
+=item --keep-backups
+
+To be used in combination with the I<prune> command. This overrides the 
+I<keep_backups> option specified in the configuration file.
 
 =back
 
@@ -60,11 +70,15 @@ my $config_file;
 my $destdir;
 my $opt_help;
 my $opt_verbose;
+my $opt_keep_backups;
+my $opt_dryrun;
 usage() unless
     GetOptions(
                'verbose'  => \$opt_verbose,
                'dest=s'   => \$destdir,
                'config=s' => \$config_file,
+               'keep-backups=i' => \$opt_keep_backups,
+               'dry-run'   => \$opt_dryrun,
                'help'     => \$opt_help,
                );
 
@@ -129,6 +143,17 @@ sub CMD_delete_backup {
         die "delete_backup requires a filename to download";
     $target->delete_backup($name)
 		or die "Failed to delete backup $name\n";
+}
+
+sub CMD_prune {
+    my $removed_count = $target->prune( keep_backups => $opt_keep_backups,
+                                        dryrun => $opt_dryrun);
+    debug("$removed_count backups removed from target");
+}
+
+sub CMD_gc {
+    my $removed_chunks = $target->gc(dryrun => $opt_dryrun);
+    debug("$removed_chunks chunks removed from target");
 }
 
 sub debug {
