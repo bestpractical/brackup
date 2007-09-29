@@ -14,6 +14,8 @@ sub new {
     $self->{file}    = delete $opts{file};    # filename we're restoring from
     $self->{verbose} = delete $opts{verbose};
 
+    $self->{prefix} =~ s!/$!! if $self->{prefix};
+
     $self->{_stats_to_run} = [];  # stack (push/pop) of subrefs to reset stat info on
 
     die "Destination directory doesn't exist" unless $self->{to} && -d $self->{to};
@@ -69,6 +71,10 @@ sub restore {
     $self->{_meta}   = $meta;
 
     while (my $it = $parser->readline) {
+        if ($self->{prefix}) {
+            next unless $it->{Path} =~ s/^\Q$self->{prefix}\E(?:\/|$)//;
+        }
+
         my $full = $self->{to} . "/" . $it->{Path};
         my $type = $it->{Type} || "f";
         die "Unknown filetype: type=$type, file: $it->{Path}" unless $type =~ /^[ldf]$/;

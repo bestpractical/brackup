@@ -1,3 +1,5 @@
+  - actually respect the --just flag on restore 
+
 1.05 (august 2, 2007)
 
   - 'prune' and 'gc' commands commands for both Amazon
