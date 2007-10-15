@@ -27,13 +27,26 @@ sub new {
 
     # child:  encrypt and exit(0)...
     my $enc = $pchunk->root->encrypt($pchunk->raw_chunkref);
+    my $enc_len = length($enc);
+
     binmode($destfh);
     print $destfh $enc
         or die "failed to print: $!";
     close $destfh
         or die "failed to close: $!";
-    die "size not right"
-        unless -s $destfn == length $enc;
+
+    my $wrote_size = -s $destfn;
+    unless (defined $wrote_size && $wrote_size == $enc_len) {
+        unless (-e $destfn) {
+            # if the file's gone, that likely means the parent process
+            # already terminated and unlinked our temp file, in
+            # which case we should just exit (with error code), rather
+            # than spewing error messages to stderr.
+            POSIX::_exit(1);
+        }
+        $wrote_size = "<undef>" unless defined $wrote_size;
+        die "size not right (expected $enc_len; got $wrote_size)";
+    }
 
     if ($no_fork) {
         return bless {
