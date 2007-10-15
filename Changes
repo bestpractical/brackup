@@ -1,3 +1,7 @@
+  - quieter (no) error messages on death/control-C from gpg child
+    processes who were previously confused by their parent processes
+    going away and cleaning up their shared temp files.
+
   - actually respect the --just flag on restore 
 
 1.05 (august 2, 2007)
