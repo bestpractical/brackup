@@ -1,3 +1,14 @@
+  - new on-disk layout for the Filesystem target.  fully backwards
+    compatible with the old layout.  also, if max-link count (max
+    files in a directory) is hit, this new version will carefully
+    rearrange the minimum files necessary to the new layout to
+    make room, all automatically.  the new format is xx/xx/*,
+    rather than xxxx/xxxx/xxxx/xxxx/* which was stupid and overkill.
+    stupid because that's 65k of files in the root, twice ext3's
+    limit, and overkill because leaves were always just 1 file.
+    thanks to Max Kanat-Alexander for pointing this out, and
+    part of the patch to use new layout pattern.
+
   - quieter (no) error messages on death/control-C from gpg child
     processes who were previously confused by their parent processes
     going away and cleaning up their shared temp files.
