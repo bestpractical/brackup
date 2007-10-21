@@ -1,3 +1,5 @@
+1.06 (october 20, 2007)
+
   - new on-disk layout for the Filesystem target.  fully backwards
     compatible with the old layout.  also, if max-link count (max
     files in a directory) is hit, this new version will carefully
@@ -13,7 +15,7 @@
     processes who were previously confused by their parent processes
     going away and cleaning up their shared temp files.
 
-  - actually respect the --just flag on restore 
+  - actually respect the --just flag on restore
 
 1.05 (august 2, 2007)
 
