@@ -15,6 +15,16 @@ sub new {
     $self->{nocolons} = $confsec->value("no_filename_colons");
     $self->{nocolons} = ($^O eq 'MSWin32') unless defined $self->{nocolons}; # LAME: Make it work on Windows
 
+    # see if we're operating in a pre-1.06 environment
+    if (opendir(my $dh, $self->{path})) {
+        $self->{_no_four_hex_dirs_in_root} = 1;
+        while (my $file = readdir($dh)) {
+            if ($file =~ /^[0-9a-f]{4}$/) {
+                $self->{_no_four_hex_dirs_in_root} = 0;
+            }
+        }
+    }
+
     if ($ENV{BRACKUP_REARRANGE_FS_TARGET}) {
         $self->_upgrade_layout;
     }
@@ -197,9 +207,13 @@ sub chunkpath {
     my ($self, $dig) = @_;
 
     # if the old (version <= 1.05) chunk still exists,
-    # just use that.
-    my $old = $self->_old_diskpath($dig);
-    return $old if -e $old;
+    # just use that, unless we know (from initial scan)
+    # that such paths can't exist, thus avoiding a
+    # bunch of stats()
+    unless ($self->{_no_four_hex_dirs_in_root}) {
+        my $old = $self->_old_diskpath($dig);
+        return $old if -e $old;
+    }
 
     # else, use the new (version >= 1.06) location, which
     # is much more sensible

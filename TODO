@@ -1,8 +1,3 @@
--- in Target/Filesystem.pm: on init, scan root directory to see if
-   any 4-hex-digit directories exist.  if not, set a flag and then
-   in chunkpath method, avoid the old_disk_path lookup and extra
-   stat.  easy win.
-
 -- in Restore.pm: 
       # TODO: inefficient!  we don't want to download the chunk from the
       # target multiple times.  better to cache it locally, or at least
