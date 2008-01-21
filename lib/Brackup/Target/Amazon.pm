@@ -2,13 +2,14 @@ package Brackup::Target::Amazon;
 use strict;
 use warnings;
 use base 'Brackup::Target';
-use Net::Amazon::S3 0.37;
+use Net::Amazon::S3 0.41;
 
 # fields in object:
 #   s3  -- Net::Amazon::S3
 #   access_key_id
 #   sec_access_key_id
 #   prefix
+#   location
 #   chunk_bucket : $self->{prefix} . "-chunks";
 #   backup_bucket : $self->{prefix} . "-backups";
 #
@@ -22,6 +23,7 @@ sub new {
     $self->{sec_access_key_id} = $confsec->value("aws_secret_access_key")
         or die "No 'aws_secret_access_key'";
     $self->{prefix} = $confsec->value("aws_prefix") || $self->{access_key_id};
+    $self->{location} = $confsec->value("aws_location") || undef;
 
     $self->_common_s3_init;
 
@@ -29,12 +31,12 @@ sub new {
     my $buckets = $s3->buckets or die "Failed to get bucket list";
 
     unless (grep { $_->{bucket} eq $self->{chunk_bucket} } @{ $buckets->{buckets} }) {
-        $s3->add_bucket({ bucket => $self->{chunk_bucket} })
+        $s3->add_bucket({ bucket => $self->{chunk_bucket}, location_constraint => $self->{location} })
             or die "Chunk bucket creation failed\n";
     }
 
     unless (grep { $_->{bucket} eq $self->{backup_bucket} } @{ $buckets->{buckets} }) {
-        $s3->add_bucket({ bucket => $self->{backup_bucket} })
+        $s3->add_bucket({ bucket => $self->{backup_bucket}, location_constraint => $self->{location} })
             or die "Backup bucket creation failed\n";
     }
 
@@ -236,6 +238,16 @@ I<(Mandatory.)> Your Amazon Web Services secret password for the above access ke
 If you want to setup multiple backup targets on a single Amazon account you can
 use different prefixes. This string is used to name the S3 buckets created by
 Brackup. If not specified it defaults to the AWS access key id.
+
+=item B<aws_location>
+
+Sets the location constraint of the new buckets. If left unspecified, the
+default S3 datacenter location will be used. Otherwise, you can set it
+to 'EU' for an AWS European data center - note that costs are different.
+This has only effect when your backup environment is initialized in S3 (i.e.
+when buckets are created). If you want to move an existing backup environment
+to another datacenter location, you have to delete its buckets before or create
+a new one by specifing a different I<aws_prefix>.
 
 =back
 

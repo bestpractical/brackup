@@ -1,3 +1,7 @@
+  - added the aws_location option to set the datacenter location for
+    S3 targets. from Alessandro Ranellucci <aar@cpan.org>.
+    The Amazon S3 target now depends on version 0.41 of Net::Amazon::S3.
+
   - fixed tempfile creation in gc (orphaned files were left in the 
     working directory). from Alessandro Ranellucci <aar@cpan.org>.
 
