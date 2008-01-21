@@ -8,8 +8,9 @@ use Net::Amazon::S3 0.37;
 #   s3  -- Net::Amazon::S3
 #   access_key_id
 #   sec_access_key_id
-#   chunk_bucket : $self->{access_key_id} . "-chunks";
-#   backup_bucket : $self->{access_key_id} . "-backups";
+#   prefix
+#   chunk_bucket : $self->{prefix} . "-chunks";
+#   backup_bucket : $self->{prefix} . "-backups";
 #
 
 sub new {
@@ -20,6 +21,7 @@ sub new {
         or die "No 'aws_access_key_id'";
     $self->{sec_access_key_id} = $confsec->value("aws_secret_access_key")
         or die "No 'aws_secret_access_key'";
+    $self->{prefix} = $confsec->value("aws_prefix") || $self->{access_key_id};
 
     $self->_common_s3_init;
 
@@ -41,8 +43,8 @@ sub new {
 
 sub _common_s3_init {
     my $self = shift;
-    $self->{chunk_bucket}  = $self->{access_key_id} . "-chunks";
-    $self->{backup_bucket} = $self->{access_key_id} . "-backups";
+    $self->{chunk_bucket}  = $self->{prefix} . "-chunks";
+    $self->{backup_bucket} = $self->{prefix} . "-backups";
     $self->{s3}            = Net::Amazon::S3->new({
         aws_access_key_id     => $self->{access_key_id},
         aws_secret_access_key => $self->{sec_access_key_id},
@@ -66,10 +68,12 @@ sub new_from_backup_header {
         or die "Need your Amazon access key.\n";
     my $sec_accesskey = ($ENV{'AWS_SEC_KEY'} || _prompt("Your Amazon AWS secret access key? "))
         or die "Need your Amazon secret access key.\n";
+    my $prefix = ($ENV{'AWS_PREFIX'} || _prompt("Your Amazon AWS prefix? (Leave empty if none) "));
 
     my $self = bless {}, $class;
     $self->{access_key_id}     = $accesskey;
     $self->{sec_access_key_id} = $sec_accesskey;
+    $self->{prefix}            = $prefix || $self->{access_key_id};
     $self->_common_s3_init;
     return $self;
 }
@@ -207,22 +211,31 @@ In your ~/.brackup.conf file:
   type = Amazon
   aws_access_key_id  = ...
   aws_secret_access_key =  ....
+  aws_prefix =  ....
 
 =head1 CONFIG OPTIONS
+
+All options may be omitted unless specified.
 
 =over
 
 =item B<type>
 
-Must be "B<Amazon>".
+I<(Mandatory.)> Must be "B<Amazon>".
 
 =item B<aws_access_key_id>
 
-Your Amazon Web Services access key id.
+I<(Mandatory.)> Your Amazon Web Services access key id.
 
 =item B<aws_secret_access_key>
 
-Your Amazon Web Services secret password for the above access key.  (not your Amazon password)
+I<(Mandatory.)> Your Amazon Web Services secret password for the above access key.  (not your Amazon password)
+
+=item B<aws_prefix>
+
+If you want to setup multiple backup targets on a single Amazon account you can
+use different prefixes. This string is used to name the S3 buckets created by
+Brackup. If not specified it defaults to the AWS access key id.
 
 =back
 

@@ -1,3 +1,6 @@
+  - added the aws_prefix option to configure multiple backup targets
+    on a single Amazon account. from Alessandro Ranellucci <aar@cpan.org>.
+
 1.06 (october 20, 2007)
 
   - new on-disk layout for the Filesystem target.  fully backwards
