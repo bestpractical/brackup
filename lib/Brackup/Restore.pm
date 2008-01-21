@@ -65,7 +65,7 @@ sub restore {
         "Failed to load driver ($driver_class) to restore from: $@\n";
     my $target = eval {"$driver_class"->new_from_backup_header($driver_meta); };
     if ($@) {
-        die "Failed to instantiate target ($driver_class) for restore, perhaps it doesn't support restoring yet?\n\nThe error was: $@";
+        die "Failed to instantiate target ($driver_class) for restore. Perhaps it doesn't support restoring yet?\n\nThe error was: $@";
     }
     $self->{_target} = $target;
     $self->{_meta}   = $meta;
@@ -276,7 +276,7 @@ sub _write_to_file {
     open (my $fh, ">$file") or die "Failed to open $file for writing: $!\n";
     print $fh $$ref;
     close($fh) or die;
-    die unless -s $file == length $$ref;
+    die "Restored file is not of the correct size" unless -s $file == length $$ref;
     return 1;
 }
 
