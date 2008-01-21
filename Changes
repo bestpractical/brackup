@@ -1,3 +1,6 @@
+  - fixed tempfile creation in gc (orphaned files were left in the 
+    working directory). from Alessandro Ranellucci <aar@cpan.org>.
+
   - added the aws_prefix option to configure multiple backup targets
     on a single Amazon account. from Alessandro Ranellucci <aar@cpan.org>.
 

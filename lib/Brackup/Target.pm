@@ -129,7 +129,7 @@ sub gc {
     # get all chunks and then loop through metafiles to detect
     # referenced ones
     my %chunks = map {$_ => 1} $self->chunks;
-    my $tempfile = tempfile();
+    my $tempfile = +(tempfile())[1];
     BACKUP: foreach my $backup ($self->backups) {
         $self->get_backup($backup->filename, $tempfile);
         my $parser = Brackup::Metafile->open($tempfile);
