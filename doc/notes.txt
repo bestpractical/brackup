@@ -8,7 +8,7 @@ Chunk has:
 
   -- enc digest (many)
 
-Chunk description in .bracup file:
+Chunk description in .brackup file:
   Chunks:  offset;raw_length;stored_length;typed_digest
 
 Proposal to change:

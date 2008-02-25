@@ -267,7 +267,7 @@ In your ~/.brackup.conf file:
 
 The directory to backup (recursively)
 
-=item B<gpg_receipient>
+=item B<gpg_recipient>
 
 The public key signature to encrypt data with.  See L<Brackup::Manual::Overview/"Using encryption">.
 

@@ -1,4 +1,4 @@
-Chunk description in .bracup file:
+Chunk description in .brackup file:
   Chunks:  offset;raw_length;stored_length;typed_digest
 Proposal to change:
   Chunks:  offset;raw_length;stored_length;typed_digest(stored);typed_digest(raw);flags

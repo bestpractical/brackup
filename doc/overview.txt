@@ -25,7 +25,7 @@ Files stored on Amazon/Google are of form:
 -- [sha1ofencryptedchunk].chunk -- content being <= ,say, 20MB chunk of encrypted data.
 
 Then every night different hosts/laptops recurse directory trees,
-consult a stat() cache (on,say, inode number, mtime, size, whatever)
+consult a stat() cache (on, say, inode number, mtime, size, whatever)
 and do SHA1 calculations on changed files, lookup rest from cache, and
 build the metafile, upload any new chunks, encrypt the metafile,
 upload the metafile.

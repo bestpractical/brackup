@@ -189,7 +189,7 @@ sub _old_diskpath {
 # 256 * 256 directories, then files.  would need 2 billion
 # files before leaves have 32k+ files, but at that point
 # users are probably using better filesystems if they
-# have 2+ inodes.
+# have 2+ billion inodes.
 sub _new_diskpath {
     my ($self, $dig) = @_;
     my @parts;
