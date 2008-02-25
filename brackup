@@ -133,7 +133,7 @@ my $backup = Brackup::Backup->new(
                                   );
 
 if (my $stats = eval { $backup->backup($backup_file) }) {
-    warn "Backup complete." if $opt_verbose;
+    warn "Backup complete.\n" if $opt_verbose;
     if ($opt_dryrun || $opt_verbose) {
         $stats->print;
     }
