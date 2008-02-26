@@ -68,7 +68,13 @@ Keys:
  Path:    relative path
  Size:    unencrypted size
  Digest:  unencrypted digest (see TypedDigest format above)
- Type:    "l" for symlink, "d" for directory, else regular file if blank
+ Type:    "f" or blank for regular file
+          "l" for symlink
+          "d" for directory
+          "p" for named pipe/fifo
+          "c" for character special (not yet implemented)
+          "b" for block special (not yet implemented)
+          "s" for socket (not implemented as it doesn't make sense)
  Link:    the symlink's target
  Chunks:  whitespace-separated "offset;length;enclength;encdigest"
 

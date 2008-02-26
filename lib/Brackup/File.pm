@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use Carp qw(croak);
 use File::stat ();
-use Fcntl qw(S_ISREG S_ISDIR S_ISLNK);
+use Fcntl qw(S_ISREG S_ISDIR S_ISLNK S_ISFIFO);
 use Digest::SHA1;
 use Brackup::PositionedChunk;
 
@@ -62,17 +62,18 @@ sub is_file {
     return S_ISREG($self->stat->mode);
 }
 
-sub supported_type {
+sub is_fifo {
     my $self = shift;
-    return $self->type ne "";
+    return S_ISFIFO($self->stat->mode);
 }
 
-# returns "f", "l", or "d" like find's -type
+# Returns file type like find's -type
 sub type {
     my $self = shift;
     return "f" if $self->is_file;
     return "d" if $self->is_dir;
     return "l" if $self->is_link;
+    return "p" if $self->is_fifo;
     return "";
 }
 
@@ -208,7 +209,7 @@ sub as_rfc822 {
         $set->("Digest", $self->full_digest) if $size;
     } else {
         $set->("Type", $type);
-        if  ($self->is_link) {
+        if ($self->is_link) {
             $set->("Link", $self->link_target);
         }
     }

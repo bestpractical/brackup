@@ -4,6 +4,7 @@ use warnings;
 use Carp qw(croak);
 use Digest::SHA1;
 use Brackup::Util qw(tempfile slurp valid_params);
+use POSIX qw(mkfifo);
 
 sub new {
     my ($class, %opts) = @_;
@@ -77,7 +78,7 @@ sub restore {
 
         my $full = $self->{to} . "/" . $it->{Path};
         my $type = $it->{Type} || "f";
-        die "Unknown filetype: type=$type, file: $it->{Path}" unless $type =~ /^[ldf]$/;
+        die "Unknown filetype: type=$type, file: $it->{Path}" unless $type =~ /^[ldfp]$/;
 
         # restore default modes from header
         $it->{Mode} ||= $meta->{DefaultFileMode} if $type eq "f";
@@ -86,6 +87,7 @@ sub restore {
         warn " * restoring $it->{Path} to $full\n" if $self->{verbose};
         $self->_restore_link     ($full, $it) if $type eq "l";
         $self->_restore_directory($full, $it) if $type eq "d";
+        $self->_restore_fifo     ($full, $it) if $type eq "p";
         $self->_restore_file     ($full, $it) if $type eq "f";
     }
 
@@ -201,6 +203,18 @@ sub _restore_link {
     }
     symlink $it->{Link}, $full
         or die "Failed to link";
+}
+
+sub _restore_fifo {
+    my ($self, $full, $it) = @_;
+
+    if (-e $full) {
+        die "Named pipe/fifo $full ($it->{Path}) already exists.  Aborting.";
+    }
+
+    mkfifo($full, $it->{Mode}) or die "mkfifo failed: $!";
+
+    $self->_update_statinfo($full, $it);
 }
 
 sub _restore_file {
