@@ -40,6 +40,7 @@ sub new_from_backup_header {
     my $self = bless {}, $class;
     $self->{path} = $header->{"BackupPath"} or
         die "No BackupPath specified in the backup metafile.\n";
+    $self->{nocolons} = $header->{"NoColons"} or 0;
     unless (-d $self->{path}) {
         die "Restore path $self->{path} doesn't exist.\n";
     }
@@ -55,6 +56,7 @@ sub backup_header {
     my $self = shift;
     return {
         "BackupPath" => $self->{path},
+        "NoColons" => $self->{nocolons}?"1":"0",
     };
 }
 
