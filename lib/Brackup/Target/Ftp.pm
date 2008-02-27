@@ -76,7 +76,7 @@ sub _size {
 
     my $size = $self->{ftp}->size($path);
     unless (defined($size)) {
-        die "Chunk output file $path does not exist.";
+        die "Getting size for $path filed: " . $self->{ftp}->message;
     }
 
     return $size;
@@ -200,8 +200,9 @@ sub backups {
         my $fn = basename($_);
         next unless $fn =~ s/\.brackup$//;
 
-        my $size = $self->_size($_);
-        my $mtime = $self->{ftp}->mdtm($_);
+        my $path = $self->metapath($_);
+        my $size = $self->_size($path);
+        my $mtime = $self->{ftp}->mdtm($path);
         unless (defined $mtime) {
             die "Getting mtime of $_ failed: " . $self->{ftp}->message;
         }
