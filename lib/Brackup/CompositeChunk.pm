@@ -73,7 +73,6 @@ sub stored_chunk_from_dup_internal_raw {
         next unless $schunk->pchunk->inventory_key eq $ikey;
         # match!  found a duplicate within ourselves
         return $schunk->clone_but_for_pchunk($pchunk);
-        
     }
     return undef;
 }

@@ -12,12 +12,12 @@ sub new {
     my $self = bless {}, $class;
     my $name = $confsec->name;
     $name =~ s!^TARGET:!! or die;
-    
+
     $self->{keep_backups} = $confsec->value("keep_backups");
     $self->{inv_db} =
         Brackup::InventoryDatabase->new($confsec->value("inventory_db") ||
                                         "$ENV{HOME}/.brackup-target-$name.invdb");
-	
+
     return $self;
 }
 
@@ -98,12 +98,12 @@ sub delete_backup {
 # removes old metafiles from this target
 sub prune {
     my ($self, %opt) = @_;
-    
+
     my $keep_backups = $self->{keep_backups} || $opt{keep_backups}
         or die "ERROR: keep_backups option not set\n";
     die "ERROR: keep_backups option must be at least 1\n"
         unless $keep_backups > 0;
-    
+
     # select backups to delete
     my (%backups, @backups_to_delete) = ();
     foreach my $backup_name (map {$_->filename} $self->backups) {
@@ -115,7 +115,7 @@ sub prune {
         my @b = reverse sort @{ $backups{$source} };
         push @backups_to_delete, splice(@b, ($keep_backups > $#b+1) ? $#b+1 : $keep_backups);
     }
-    
+
     unless ($opt{dryrun}) {
          $self->delete_backup($_) for @backups_to_delete;
     }
@@ -125,7 +125,7 @@ sub prune {
 # removes orphaned chunks in the target
 sub gc {
     my ($self, %opt) = @_;
-    
+
     # get all chunks and then loop through metafiles to detect
     # referenced ones
     my %chunks = map {$_ => 1} $self->chunks;
@@ -141,7 +141,7 @@ sub gc {
         }
     }
     my @orphaned_chunks = keys %chunks;
-    
+
     # remove orphaned chunks
     unless ($opt{dryrun}) {
          $self->delete_chunk($_) for @orphaned_chunks;

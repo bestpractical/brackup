@@ -118,7 +118,7 @@ sub _decrypt_data {
         my $rcpt = $self->{_meta}{"GPG-Recipient"} or
             return $dataref;
     }
-        
+
     unless ($ENV{'GPG_AGENT_INFO'} ||
             @Brackup::GPG_ARGS ||
             $self->{warned_about_gpg_agent}++)

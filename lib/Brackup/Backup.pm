@@ -127,7 +127,7 @@ sub backup {
 
     my $merge_under = $root->merge_files_under;
     my $comp_chunk  = undef;
-    
+
     # records are either Brackup::File (for symlinks, directories, etc), or
     # PositionedChunks, in which case the file can asked of the chunk
     while (my $rec = $chunk_iterator->next) {

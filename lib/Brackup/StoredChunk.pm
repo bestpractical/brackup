@@ -30,7 +30,7 @@ sub new_from_inventory_value {
     my ($class, $pchunk, $invval) = @_;
 
     my ($dig, $len, $range) = split /\s+/, $invval;
-    
+
     my $sc = bless {
         pchunk     => $pchunk,
         backdigest => $dig,

@@ -143,7 +143,7 @@ blobs, the inventory database instead stores values like:
      <stored_digest> <stored_length> <from_offset>-<to_offset>
 
 Which is the same thing, but after fetching the composite chunk using
-the stored digest provided, only the range provided from C<from_offset> to 
+the stored digest provided, only the range provided from C<from_offset> to
 C<to_offset> should be used.
 
 =head1 SEE ALSO

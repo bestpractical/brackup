@@ -144,7 +144,7 @@ sub delete_chunk {
 # returns a list of names of all chunks
 sub chunks {
     my $self = shift;
-    
+
     my $chunks = $self->{s3}->list_bucket_all({ bucket => $self->{chunk_bucket} });
     return map { $_->{key} } @{ $chunks->{keys} };
 }
@@ -178,11 +178,11 @@ sub backups {
 sub get_backup {
     my $self = shift;
     my ($name, $output_file) = @_;
-	
+
     my $bucket = $self->{s3}->bucket($self->{backup_bucket});
     my $val = $bucket->get_key($name)
         or return 0;
-	
+
 	$output_file ||= "$name.brackup";
     open(my $out, ">$output_file") or die "Failed to open $output_file: $!\n";
     my $outv = syswrite($out, $val->{value});
@@ -194,7 +194,7 @@ sub get_backup {
 sub delete_backup {
     my $self = shift;
     my $name = shift;
-	
+
     my $bucket = $self->{s3}->bucket($self->{backup_bucket});
     return $bucket->delete_key($name);
 }

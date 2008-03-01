@@ -64,7 +64,7 @@ sub backup_header {
 # (that is, two levels of directories, each 4 hex digits long, or 65536
 # files per directory, which is 2x what ext3 can store, leading to errors.
 # in 1.06 and above, xx/xx/xxxxxx is used.  that is, two levels of 2 hex
-# digits.  this function 
+# digits.  this function
 sub _upgrade_layout {
     my $self = shift;
     my $clean_limit = shift; # optional; if set, max top-level dirs to clean
@@ -92,7 +92,7 @@ sub _upgrade_layout {
 
     # for each 4-digit directory, sorted by number of four-digit directories
     # that exist for their leading 2-digit prefix (to most quickly free up
-    # a link in root, in 2 iterations), 
+    # a link in root, in 2 iterations),
     # see if the "01/" directory exists (the leading two bytes).
     # if not,
     #    move it to some random other 'xxxx' directory,

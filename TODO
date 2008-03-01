@@ -1,4 +1,4 @@
--- in Restore.pm: 
+-- in Restore.pm:
       # TODO: inefficient!  we don't want to download the chunk from the
       # target multiple times.  better to cache it locally, or at least
       # only fetch a region from the target (but that's still kinda inefficient
@@ -34,7 +34,7 @@
 
 -- Tools to rebuild your inventory database from the target's enumeration
    of its chunks and the target's *.brackup metafiles isn't yet done, but
-   would be pretty easy.  
+   would be pretty easy.
 
 -- ionice stuff.  network nice stuff.
 

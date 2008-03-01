@@ -4,7 +4,7 @@
     S3 targets. from Alessandro Ranellucci <aar@cpan.org>.
     The Amazon S3 target now depends on version 0.41 of Net::Amazon::S3.
 
-  - fixed tempfile creation in gc (orphaned files were left in the 
+  - fixed tempfile creation in gc (orphaned files were left in the
     working directory). from Alessandro Ranellucci <aar@cpan.org>.
 
   - added the aws_prefix option to configure multiple backup targets
@@ -123,7 +123,7 @@
   - support putting .meta files besides .chunk files on the Target
     to enable reconstructing the digest database in the future, should
     it get lost.  also start to flesh out per-chunk digests, which
-    would enable backing up large databases (say, InnoDB tablespaces) where 
+    would enable backing up large databases (say, InnoDB tablespaces) where
     large chunks of the file never change.
 
   - new --du-stats to command to act like the du(1) command, but

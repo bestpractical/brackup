@@ -31,7 +31,7 @@ Do not actually execute write operations.
 
 =item --keep-backups
 
-To be used in combination with the I<prune> command. This overrides the 
+To be used in combination with the I<prune> command. This overrides the
 I<keep_backups> option specified in the configuration file.
 
 =back

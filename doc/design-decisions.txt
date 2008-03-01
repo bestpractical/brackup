@@ -1,6 +1,6 @@
 -- you should be able to restore without setting up a config file.
    if you lost data, that'd be annoying.  restoring from a config
-   file will be supported in the future, but it's not yet.  
+   file will be supported in the future, but it's not yet.
 
 -- backups must be automatable, never requiring user input. hence public
    key encryption.
