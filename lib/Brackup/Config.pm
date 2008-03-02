@@ -4,6 +4,7 @@ use strict;
 use Brackup::ConfigSection;
 use warnings;
 use Carp qw(croak);
+use Fcntl qw(O_WRONLY O_CREAT O_EXCL);
 
 sub new {
     my ($class) = @_;
@@ -76,7 +77,7 @@ sub default_config_file_name {
 
 sub write_dummy_config {
     my $file = shift;
-    open (my $fh, ">$file") or return;
+    sysopen (my $fh, $file, O_WRONLY | O_CREAT | O_EXCL, 0600) or return;
     print $fh <<ENDCONF;
 # This is an example config
 
