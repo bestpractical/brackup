@@ -39,10 +39,8 @@ sub new_from_backup_header {
 
 sub _common_new {
     my ($self) = @_;
-
-    $self->{ftp} = Net::FTP->new($self->{ftp_host}) or die $@;
-    $self->{ftp}->login($self->{ftp_user}, $self->{ftp_password});
-    $self->{ftp}->binary();
+    $self->{retry_wait} = int($ENV{FTP_RETRY_WAIT} || 10);
+    $self->_connect();
 }
 
 sub backup_header {
@@ -60,26 +58,60 @@ sub nocolons {
     return 1;
 }
 
-sub _ls {
-    my ($self, $path) = @_;
+sub _connect {
+    my ($self) = @_;
 
-    my $result = $self->{ftp}->ls($self->metapath());
-    unless (defined($result)) {
-        die "Listing failed for $path: " . $self->{ftp}->message;
+    $self->{ftp} = Net::FTP->new($self->{ftp_host}) or die $@;
+    $self->{ftp}->login($self->{ftp_user}, $self->{ftp_password});
+    $self->{ftp}->binary();
+}
+
+sub _autoretry {
+    my ($self, $code) = @_;
+    my $result = $code->();
+
+    if (!defined($result) && !$self->{ftp}->connected) {
+        warn "Error in FTP: " . $self->{ftp}->message . "\n";
+        sleep $self->{retry_wait};
+        warn "Trying to reconnect ...\n";
+        $self->_connect();
+        $result = $code->();
     }
 
     return $result;
 }
 
+sub _ls {
+    my ($self, $path) = @_;
+    my $result = $self->_autoretry(sub {
+        return $self->{ftp}->ls($self->metapath());
+    });
+    unless (defined($result)) {
+        die "Listing failed for $path: " . $self->{ftp}->message;
+    }
+    return $result;
+}
+
 sub _size {
     my ($self, $path) = @_;
-
-    my $size = $self->{ftp}->size($path);
+    my $size = $self->_autoretry(sub {
+        return $self->{ftp}->size($path);
+    });
     unless (defined($size)) {
         die "Getting size for $path filed: " . $self->{ftp}->message;
     }
-
     return $size;
+}
+
+sub _mdtm {
+    my ($self, $path) = @_;
+    my $mtime = $self->_autoretry(sub {
+        return $self->{ftp}->mdtm($path);
+    });
+    unless (defined $mtime) {
+        die "Getting mtime of $_ failed: " . $self->{ftp}->message;
+    }
+    return $mtime;
 }
 
 sub _put {
@@ -87,33 +119,39 @@ sub _put {
     my $dir = dirname($path);
 
     # Make sure directory exists.
-    $self->{ftp}->mkdir($dir, 1)
-        or die "Creating directory $dir failed: " . $self->{ftp}->message;
+    $self->_autoretry(sub {
+        return $self->{ftp}->mkdir($dir, 1)
+    }) or die "Creating directory $dir failed: " . $self->{ftp}->message;
 
-    open(my $fh, '<', \$content) or die $!;
-    binmode($fh);
-    $self->{ftp}->put($fh, $path)
-        or die "Writing file $path failed: " . $self->{ftp}->message;
-    close($fh) or die "Failed to close";
+    $self->_autoretry(sub {
+        open(my $fh, '<', \$content) or die $!;
+        binmode($fh);
+        my $result = $self->{ftp}->put($fh, $path);
+        close($fh) or die "Failed to close";
+        return $result;
+    }) or die "Writing file $path failed: " . $self->{ftp}->message;
 }
 
 sub _get {
     my ($self, $path) = @_;
     my $content;
 
-    open(my $fh, '>', \$content) or die $!;
-    binmode($fh);
-    $self->{ftp}->get($path, $fh)
-        or die "Reading file $path failed: " . $self->{ftp}->message;
-    close($fh) or die "Failed to close";
+    $self->_autoretry(sub {
+        open(my $fh, '>', \$content) or die $!;
+        binmode($fh);
+        my $result = $self->{ftp}->get($path, $fh);
+        close($fh) or die "Failed to close";
+        return $result;
+    }) or die "Reading file $path failed: " . $self->{ftp}->message;
 
     return \$content;
 }
 
 sub _delete {
     my ($self, $path) = @_;
-    $self->{ftp}->delete($path)
-        or die "Removing file $path failed: " . $self->{ftp}->message;
+    $self->_autoretry(sub {
+        return $self->{ftp}->delete($path);
+    }) or die "Removing file $path failed: " . $self->{ftp}->message;
 }
 
 sub _recurse {
@@ -198,16 +236,15 @@ sub backups {
     my @ret = ();
     foreach (@$list) {
         my $fn = basename($_);
-        next unless $fn =~ s/\.brackup$//;
+        next unless $fn =~ m/\.brackup$/;
 
-        my $path = $self->metapath($_);
+        (my $bn = $fn) =~ s/\.brackup$//;
+
+        my $path = $self->metapath($fn);
         my $size = $self->_size($path);
-        my $mtime = $self->{ftp}->mdtm($path);
-        unless (defined $mtime) {
-            die "Getting mtime of $_ failed: " . $self->{ftp}->message;
-        }
+        my $mtime = $self->_mdtm($path);
 
-        push @ret, Brackup::TargetBackupStatInfo->new($self, $fn,
+        push @ret, Brackup::TargetBackupStatInfo->new($self, $bn,
                                                       time => $mtime,
                                                       size => $size);
     }
@@ -223,11 +260,13 @@ sub get_backup {
 
 	$output_file ||= "$name.brackup";
 
-    open(my $out, '>', $output_file)
-        or die "Failed to open $output_file: $!\n";
-    $self->{ftp}->get($path, $out)
-        or die "Reading file $path failed: " . $self->{ftp}->message;
-    close($out) or die $!;
+    $self->_autoretry(sub {
+        open(my $out, '>', $output_file)
+            or die "Failed to open $output_file: $!\n";
+        my $result = $self->{ftp}->get($path, $out);
+        close($out) or die $!;
+        return $result;
+    }) or die "Reading file $path failed: " . $self->{ftp}->message;
 
     return 1;
 }
