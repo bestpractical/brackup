@@ -1,3 +1,6 @@
+  - Added a first whack at a FUSE filesystem for mounting a backup
+    as a real filesystem.
+
   - Added FTP target.
 
   - added the aws_location option to set the datacenter location for
