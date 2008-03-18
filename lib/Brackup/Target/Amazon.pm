@@ -12,6 +12,7 @@ use Net::Amazon::S3 0.41;
 #   location
 #   chunk_bucket : $self->{prefix} . "-chunks";
 #   backup_bucket : $self->{prefix} . "-backups";
+#   backup_prefix : added to the front of backup names when stored
 #
 
 sub new {
@@ -24,6 +25,7 @@ sub new {
         or die "No 'aws_secret_access_key'";
     $self->{prefix} = $confsec->value("aws_prefix") || $self->{access_key_id};
     $self->{location} = $confsec->value("aws_location") || undef;
+    $self->{backup_prefix} = $confsec->value("backup_prefix") || undef;
 
     $self->_common_s3_init;
 
@@ -152,6 +154,8 @@ sub chunks {
 sub store_backup_meta {
     my ($self, $name, $file) = @_;
 
+    $name = $self->{backup_prefix}."-".$name if defined $self->{backup_prefix};
+
     my $rv = eval { $self->{s3}->add_key({
         bucket        => $self->{backup_bucket},
         key           => $name,
@@ -214,6 +218,7 @@ In your ~/.brackup.conf file:
   aws_access_key_id  = ...
   aws_secret_access_key =  ....
   aws_prefix =  ....
+  backup_prefix =  ....
 
 =head1 CONFIG OPTIONS
 
@@ -248,6 +253,14 @@ This has only effect when your backup environment is initialized in S3 (i.e.
 when buckets are created). If you want to move an existing backup environment
 to another datacenter location, you have to delete its buckets before or create
 a new one by specifing a different I<aws_prefix>.
+
+=item B<backup_prefix>
+
+When storing the backup metadata to S3, the string specified here will be
+prefixed onto the backup name. This is useful if you are collecting
+backups from several hosts into a single Amazon S3 account but need to
+be able to differentiate them; set your prefix to be the hostname
+of each system, for example.
 
 =back
 

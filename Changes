@@ -1,3 +1,8 @@
+  - Add a new option to the Amazon S3 target to force a prefix to be 
+    added to the names of any saved backups.
+    It might be worth moving this up into Brackup itself at some point,
+    since it's probably useful for other network-based targets.
+
   - Fix Restore.pm to use binmode for operating systems that care about
     such things.
 
