@@ -1,3 +1,6 @@
+  - Fix Restore.pm to use binmode for operating systems that care about
+    such things.
+
   - Added a first whack at a FUSE filesystem for mounting a backup
     as a real filesystem.
 

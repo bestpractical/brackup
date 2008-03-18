@@ -226,6 +226,7 @@ sub _restore_file {
     }
 
     open (my $fh, ">$full") or die "Failed to open $full for writing";
+    binmode($fh);
     my @chunks = grep { $_ } split(/\s+/, $it->{Chunks} || "");
     foreach my $ch (@chunks) {
         my ($offset, $len, $enc_len, $dig) = split(/;/, $ch);
@@ -266,6 +267,7 @@ sub _restore_file {
         $good_dig = $1;
 
         open (my $readfh, $full) or die "Couldn't reopen file for verification";
+        binmode($readfh);
         my $sha1 = Digest::SHA1->new;
         $sha1->addfile($readfh);
         my $actual_dig = $sha1->hexdigest;
