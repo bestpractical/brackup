@@ -1,3 +1,9 @@
+  - bradfitz: optional smart mp3 chunking. (start of file-aware chunking
+    strategies)  with smart mp3 chunking, the ID3 tags are kept in separate
+    chunks, so future re-tagging of your music won't force iterative backups
+    to re-upload all the music bytes again... just the updated
+    metadata (tiny)
+
   - Add a new option to the Amazon S3 target to force a prefix to be 
     added to the names of any saved backups.
     It might be worth moving this up into Brackup itself at some point,

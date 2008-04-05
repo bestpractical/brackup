@@ -10,6 +10,7 @@ use Fcntl qw(S_ISREG S_ISDIR S_ISLNK S_ISFIFO);
 use Digest::SHA1;
 use Brackup::PositionedChunk;
 use Brackup::Chunker::Default;
+use Brackup::Chunker::MP3;
 
 sub new {
     my ($class, %opts) = @_;
@@ -109,6 +110,9 @@ sub foreach_chunk {
 # the changed metadata.
 sub file_chunker {
     my $self = shift;
+    if ($self->{path} =~ /\.mp3$/i && $self->{root}->smart_mp3_chunking) {
+        return "Brackup::Chunker::MP3";
+    }
     return "Brackup::Chunker::Default";
 }
 

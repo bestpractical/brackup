@@ -40,7 +40,16 @@ sub byte_value {
     return $1               if $val =~ /^(\d+)b?$/i;
     return $1 * 1024        if $val =~ /^(\d+)kb?$/i;
     return $1 * 1024 * 1024 if $val =~ /^(\d+)mb?$/i;
-    die "Unrecognized size format: '$val'\n";
+    die "Unrecognized size format for $key: '$val'\n";
+}
+
+sub bool_value {
+    my ($self, $key) = @_;
+    my $val = $self->value($key);
+    return 0 if ! $val;
+    return 1 if $val =~ /^(1|true|yes|on)$/i;
+    return 0 if $val =~ /^(0|false|no|off)$/i;
+    die "Unrecognized boolean value for $key: '$val'\n";
 }
 
 sub value {

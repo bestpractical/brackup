@@ -14,6 +14,7 @@ lib/Brackup/Backup.pm
 lib/Brackup/BackupStats.pm
 lib/Brackup/ChunkIterator.pm
 lib/Brackup/Chunker/Default.pm
+lib/Brackup/Chunker/MP3.pm
 lib/Brackup/CompositeChunk.pm
 lib/Brackup/Config.pm
 lib/Brackup/ConfigSection.pm

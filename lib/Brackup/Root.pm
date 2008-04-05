@@ -22,6 +22,8 @@ sub new {
     $self->{chunk_size} = $conf->byte_value('chunk_size');
     $self->{ignore}     = [];
 
+    $self->{smart_mp3_chunking} = $conf->bool_value('smart_mp3_chunking');
+
     $self->{merge_files_under}  = $conf->byte_value('merge_files_under');
     $self->{max_composite_size} = $conf->byte_value('max_composite_chunk_size') || 2**20;
 
@@ -39,6 +41,7 @@ sub new {
 
 sub merge_files_under  { $_[0]{merge_files_under}  }
 sub max_composite_size { $_[0]{max_composite_size} }
+sub smart_mp3_chunking { $_[0]{smart_mp3_chunking} }
 
 sub gpg_path {
     my $self = shift;
@@ -301,5 +304,12 @@ more space with future iterative backups updating files locked into
 this chunk with unchanged chunks.
 
 Recommended, and default value, is 1 MB.
+
+=item B<smart_mp3_chunking>
+
+Boolean parameter.  Set to one of {on,yes,true,1} to make mp3 files
+chunked along their metadata boundaries.  If a file has both ID3v1 and
+ID3v2 chunks, the file will be cut into three parts: two little ones
+for the ID3 tags, and one big one for the music bytes.
 
 =back
