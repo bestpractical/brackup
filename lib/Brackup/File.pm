@@ -9,6 +9,7 @@ use File::stat ();
 use Fcntl qw(S_ISREG S_ISDIR S_ISLNK S_ISFIFO);
 use Digest::SHA1;
 use Brackup::PositionedChunk;
+use Brackup::Chunker::Default;
 
 sub new {
     my ($class, %opts) = @_;
@@ -98,36 +99,36 @@ sub foreach_chunk {
     }
 }
 
-sub _min {
-    return (sort { $a <=> $b } @_)[0];
+# Returns the appropriate FileChunker class for the provided file's
+# type.  In most cases this FileChunker will be very dumb, just making
+# equal-sized chunks for, say, 5MB, but in specialized cases (like mp3
+# files), the chunks will be one (or two) small ones for the ID3v1/v2
+# chunks, and one big chunk for the audio bytes (which might be cut
+# into its own small chunks).  This way the mp3 metadata can be
+# changed without needing to back up the entire file again ... just
+# the changed metadata.
+sub file_chunker {
+    my $self = shift;
+    return "Brackup::Chunker::Default";
 }
 
 sub chunks {
     my $self = shift;
+    # memoized:
     return @{ $self->{chunks} } if $self->{chunks};
 
-    my $root = $self->{root};
-    my $chunk_size = $root->chunk_size;
-
     # non-files don't have chunks
-    my @list;
-    if ($self->is_file) {
-        my $offset = 0;
-        my $size   = $self->size;
-        while ($offset < $size) {
-            my $len = _min($chunk_size, $size - $offset);
-            my $chunk = Brackup::PositionedChunk->new(
-                                                      file   => $self,
-                                                      offset => $offset,
-                                                      length => $len,
-                                                      );
-            push @list, $chunk;
-            $offset += $len;
-        }
+    if (!$self->is_file) {
+        $self->{chunks} = [];
+        return ();
     }
 
-    $self->{chunks} = \@list;
-    return @list;
+    # Get the appropriate FileChunker for this file type,
+    # then pass ourselves to it to get our chunks.
+    my @chunk_list = $self->file_chunker->chunks($self);
+
+    $self->{chunks} = \@chunk_list;
+    return @chunk_list;
 }
 
 sub full_digest {
