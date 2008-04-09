@@ -8,6 +8,7 @@ use vars qw(@ISA @EXPORT_OK);
 @EXPORT_OK = qw(tempfile tempdir slurp valid_params);
 
 use File::Path qw();
+use Carp;
 
 my $mainpid = $$;
 my $_temp_directory;
