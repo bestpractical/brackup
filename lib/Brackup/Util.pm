@@ -7,29 +7,39 @@ use vars qw(@ISA @EXPORT_OK);
 @ISA = ('Exporter');
 @EXPORT_OK = qw(tempfile tempdir slurp valid_params);
 
+use File::Path qw();
+
 my $mainpid = $$;
-my @TEMP_FILES = ();  # ([filename, caller], ...)
+my $_temp_directory;
 
 END {
     # will happen after File::Temp's cleanup
-    if ($$ == $mainpid) {
-        foreach my $rec (@TEMP_FILES) {
-            next unless -e $rec->[0];
-            unlink($rec->[0]);
-        }
+    if ($$ == $mainpid and $_temp_directory) {
+        File::Path::rmtree($_temp_directory, 0, 1);
     }
 }
 use File::Temp ();
 
+sub _get_temp_directory {
+    # Create temporary directory if we need one. By default, all temporary
+    # files will be placed in it.
+    unless (defined($_temp_directory)) {
+        $_temp_directory = File::Temp::tempdir(CLEANUP => 1);
+    }
+
+    return $_temp_directory;
+}
+
 sub tempfile {
-    my (@ret) = File::Temp::tempfile();
-    my $from = join(" ", (caller())[0..2]);
-    push @TEMP_FILES, [$ret[1], $from];
+    my (@ret) = File::Temp::tempfile(DIR => _get_temp_directory());
     return wantarray ? @ret : $ret[0];
 }
 
+# Utils::tempdir() accepts the same options as File::Temp::tempdir.
 sub tempdir {
-    return File::Temp::tempdir(@_);
+    my %options = @_;
+    $options{DIR} ||= _get_temp_directory();
+    return File::Temp::tempdir(%options);
 }
 
 sub slurp {
