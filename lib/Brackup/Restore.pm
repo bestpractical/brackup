@@ -15,7 +15,7 @@ sub new {
     $self->{file}    = delete $opts{file};    # filename we're restoring from
     $self->{verbose} = delete $opts{verbose};
 
-    $self->{prefix} =~ s!/$!! if $self->{prefix};
+    $self->{prefix} =~ s/\/$// if $self->{prefix};
 
     $self->{_stats_to_run} = [];  # stack (push/pop) of subrefs to reset stat info on
 
