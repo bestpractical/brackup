@@ -68,6 +68,7 @@ my ($src_name, $target_name, $backup_file, $opt_help);
 my $opt_dryrun;
 my $opt_verbose;
 my $opt_du_stats;
+my $opt_zenityprogress;
 
 my $config_file = Brackup::Config->default_config_file_name;
 
@@ -76,6 +77,7 @@ usage() unless
                'from=s'    => \$src_name,
                'to=s'      => \$target_name,
                'verbose'   => \$opt_verbose,
+               'zenity-progress' => \$opt_zenityprogress,
                'output=s'  => \$backup_file,
                'help'      => \$opt_help,
                'dry-run'   => \$opt_dryrun,
@@ -88,6 +90,10 @@ if ($opt_help) {
     eval "use Pod::Usage;";
     Pod::Usage::pod2usage( -verbose => 1, -exitval => 0 );
     exit 0;
+}
+
+if ($opt_verbose && $opt_zenityprogress) {
+    die "Can't use --verbose and --zenity-progress at the same time";
 }
 
 my $config = eval { Brackup::Config->load($config_file) } or
@@ -126,10 +132,11 @@ $backup_file =~ s!^~/!$ENV{HOME}/! if $ENV{HOME};
 $backup_file = "$cwd/$backup_file" unless $backup_file =~ m!^/!;
 
 my $backup = Brackup::Backup->new(
-                                  root    => $root,
-                                  target  => $target,
-                                  dryrun  => $opt_dryrun,
-                                  verbose => $opt_verbose,
+                                  root           => $root,
+                                  target         => $target,
+                                  dryrun         => $opt_dryrun,
+                                  verbose        => $opt_verbose,
+                                  zenityprogress => $opt_zenityprogress,
                                   );
 
 if (my $stats = eval { $backup->backup($backup_file) }) {

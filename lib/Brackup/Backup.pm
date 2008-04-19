@@ -15,6 +15,7 @@ sub new {
     $self->{target}  = delete $opts{target};   # Brackup::Target
     $self->{dryrun}  = delete $opts{dryrun};   # bool
     $self->{verbose} = delete $opts{verbose};  # bool
+    $self->{zenityprogress} = delete $opts{zenityprogress};  # bool
 
     $self->{modecounts} = {}; # type -> mode(octal) -> count
 
@@ -49,6 +50,7 @@ sub backup {
     my @files;         # Brackup::File objs
 
     $self->debug("Discovering files in ", $root->path, "...\n");
+    $self->report_progress(0, "Discovering files in " . $root->path . "...");
     $root->foreach_file(sub {
         my ($file) = @_;  # a Brackup::File
         push @files, $file;
@@ -111,6 +113,8 @@ sub backup {
         $self->debug(sprintf("* %-60s %d/%d (%0.02f%%; remain: %0.01f MB)",
                              $cur_file->path, $n_files_done, $n_files, $percdone,
                              $mb_remain));
+
+        $self->report_progress($percdone);
     };
     my $start_file = sub {
         $end_file->();
@@ -162,6 +166,7 @@ sub backup {
 
         $show_status->() unless $file_has_shown_status++;
         $self->debug("  * storing chunk: ", $pchunk->as_string, "\n");
+        $self->report_progress(undef, $pchunk->file->path . " (" . $pchunk->offset . "," . $pchunk->length . ")");
 
         unless ($self->{dryrun}) {
             $schunk = Brackup::StoredChunk->new($pchunk);
@@ -231,6 +236,7 @@ sub backup {
     unless ($self->{dryrun}) {
         # write the metafile
         $self->debug("Writing metafile ($backup_file)");
+        $self->report_progress(100, "Saving metafile " . $backup_file);
         open (my $metafh, ">$backup_file") or die "Failed to open $backup_file for writing: $!\n";
         print $metafh $self->backup_header;
         $self->foreach_saved_file(sub {
@@ -259,6 +265,7 @@ sub backup {
         my $name = $self->{root}->publicname . "-" . $self->backup_time;
         $target->store_backup_meta($name, $contents);
     }
+    $self->report_progress(100, "Backup complete.");
 
     return $stats;
 }
@@ -334,6 +341,18 @@ sub debug {
     my $line = join("", @m);
     chomp $line;
     print $line, "\n";
+}
+
+sub report_progress {
+    my ($self, $percent, $message) = @_;
+
+    if ($self->{zenityprogress}) {
+        if (defined($message) && length($message) > 100) {
+            $message = substr($message, 0, 100)."...";
+        }
+        print STDOUT "#", $message, "\n" if defined $message;
+        print STDOUT $percent, "\n" if defined $percent;
+    }
 }
 
 1;
