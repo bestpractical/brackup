@@ -91,15 +91,6 @@ sub cachekey {
     return "[" . $self->{root}->name . "]" . $self->{path} . ":" . join(",", $st->ctime, $st->mtime, $st->size, $st->ino);
 }
 
-# iterate over chunks sized by the root's configuration
-sub foreach_chunk {
-    my ($self, $cb) = @_;
-
-    foreach my $chunk ($self->chunks) {
-        $cb->($chunk);
-    }
-}
-
 # Returns the appropriate FileChunker class for the provided file's
 # type.  In most cases this FileChunker will be very dumb, just making
 # equal-sized chunks for, say, 5MB, but in specialized cases (like mp3
