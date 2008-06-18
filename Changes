@@ -1,3 +1,5 @@
+  - actually strip non-ASCII characters (gary.richardson@gmail.com)
+
   - smarts to filesystem target, noticed when using sshfs (slow filesystem).
     does .partial files now, is smart about not overwriting existing chunk
     that's there, etc.
