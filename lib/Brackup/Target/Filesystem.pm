@@ -232,12 +232,31 @@ sub load_chunk {
     return \$chunk;
 }
 
+sub has_chunk {
+    my ($self, $chunk) = @_;
+    my $dig = $chunk->backup_digest;
+    my $blen = $chunk->backup_length;
+    my $path = $self->chunkpath($dig);
+    my $exist_size = -s $path;
+    if ($exist_size && $exist_size == $blen) {
+        return 1;
+    }
+    return 0;
+}
+
 sub store_chunk {
     my ($self, $chunk) = @_;
     my $dig = $chunk->backup_digest;
     my $blen = $chunk->backup_length;
 
     my $path = $self->chunkpath($dig);
+
+    # is it already there?  then do nothing.
+    my $exist_size = -s $path;
+    if ($exist_size && $exist_size == $blen) {
+        return 1;
+    }
+
     my $dir = dirname($path);
 
     unless (-d $dir) {
@@ -260,11 +279,15 @@ sub store_chunk {
         }
     }
 
-    open (my $fh, '>', $path) or die "Failed to open $path for writing: $!\n";
+    my $partial = "$path.partial";
+    open (my $fh, '>', $partial) or die "Failed to open $partial for writing: $!\n";
     binmode($fh);
     my $chunkref = $chunk->chunkref;
     print $fh $$chunkref;
     close($fh) or die "Failed to close $path\n";
+
+    unlink $path;
+    rename $partial, $path or die "Failed to rename $partial to $path: $!\n";
 
     my $actual_size   = -s $path;
     my $expected_size = length $$chunkref;

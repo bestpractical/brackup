@@ -12,7 +12,13 @@ sub chunks {
     die "Required module MP3::Info not found.  Needed by the MP3 file chunker.\n"
         unless $HAVE_MP3_INFO;
 
-    my ($music_offset, $music_size) = main_music_range($file->path);
+    my $file_path = $file->path;
+
+    # file might've been renamed or deleted in the meantime:
+    warn "File went away: $file_path ; ignoring it.\n" unless -e $file_path;
+    return () unless -e $file_path;
+
+    my ($music_offset, $music_size) = main_music_range($file_path);
     my $size       = $file->size;
 
     # add the ID3v2 header, if necessary:
