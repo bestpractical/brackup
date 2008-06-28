@@ -107,7 +107,7 @@ my $restore = Brackup::Restore->new(
                                     );
 
 if (eval { $restore->restore }){
-    warn "Restore complete." if $opt_verbose;
+    warn "Restore complete.\n" if $opt_verbose;
     exit 0;
 } else {
     warn "Error doing restore: $@\n";
