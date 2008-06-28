@@ -165,7 +165,9 @@ sub _update_statinfo {
         }
 
         if ($it->{Mtime} || $it->{Atime}) {
-            utime($it->{Atime}, $it->{Mtime}, $full) or
+            utime($it->{Atime} || $it->{Mtime},
+                  $it->{Mtime} || $it->{Atime},
+                  $full) or
                 die "Failed to change utime of $full: $!";
         }
     };

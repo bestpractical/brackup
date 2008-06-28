@@ -1,3 +1,5 @@
+  - fix utime warnings on restore (Gavin Carr)
+
   - actually strip non-ASCII characters (gary.richardson@gmail.com)
 
   - smarts to filesystem target, noticed when using sshfs (slow filesystem).
