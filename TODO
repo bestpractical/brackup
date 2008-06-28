@@ -10,13 +10,8 @@
   "discovering files" subsequently goes away while Brackup is working
   it's magic (like a vim .swp file) Brackup tosses an error and bails:
 
--- shouldn't backup the digest file (.brackup-digest.db)
-
 -- don't skip files ending in whitespace.  figure out why GPG barfs.  would
    the metafile also barf, having a trailing \r or \n?
-
--- "brackup-target <target> gc": find/clean orphan chunks on a target
-   from metafiles
 
 -- figure out how files with intenal \r or \n in filename get written
    to metafile.  need to be escaped?
