@@ -27,8 +27,9 @@ END {
 
 sub do_backup {
     my %opts = @_;
-    my $with_confsec = delete $opts{'with_confsec'} || sub {};
-    my $with_root    = delete $opts{'with_root'}    || sub {};
+    my $with_confsec    = delete $opts{'with_confsec'} || sub {};
+    my $with_targetsec  = delete $opts{'with_targetsec'} || sub {};
+    my $with_root       = delete $opts{'with_root'}    || sub {};
     die if %opts;
 
     my $initer = shift;
@@ -53,13 +54,14 @@ sub do_backup {
 
 
     $confsec = Brackup::ConfigSection->new("TARGET:test_restore");
-    $confsec->add("type" => "Filesystem");
+    $with_targetsec->($confsec);
+    $confsec->add("type" => "Filesystem") unless exists $confsec->{type};
     $confsec->add("inventory_db" => $inv_filename);
     $confsec->add("path" => $backup_dir);
     $conf->add_section($confsec);
 
     my $target = $conf->load_target("test_restore");
-    ok($target, "have a target");
+    ok($target, "have a target ($target)");
 
     my $backup = Brackup::Backup->new(
                                       root    => $root,
