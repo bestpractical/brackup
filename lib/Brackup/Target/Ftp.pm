@@ -84,12 +84,12 @@ sub _autoretry {
 sub _ls {
     my ($self, $path) = @_;
     my $result = $self->_autoretry(sub {
-        return $self->{ftp}->ls($self->metapath());
+        return $self->{ftp}->ls($path);
     });
     unless (defined($result)) {
         die "Listing failed for $path: " . $self->{ftp}->message;
     }
-    return $result;
+    return wantarray ? @$result : $result;
 }
 
 sub _size {
