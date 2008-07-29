@@ -43,7 +43,7 @@ MANIFEST			This list of files
 MANIFEST.SKIP
 META.yml			Module meta-data (added by MakeMaker)
 t/00-use.t
-t/01-backup.t
+t/01-backup-filesystem.t
 t/01-backup-sftp.t
 t/02-gpg.t
 t/03-combine-little-files.t
