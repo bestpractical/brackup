@@ -2,8 +2,9 @@
 #
 # Backup test of ftp target - set BRACKUP_TEST_FTP in your environment to use
 #
-# By default, attempts to do anonymous uploads to localhost, so configure your
-# ftp server appropriately, or set FTP_HOST, FTP_USER, and FTP_PASSWORD.
+# By default, attempts to do anonymous uploads to localhost to a 'tmp' 
+# directory within your ftp root, so configure your ftp server appropriately, 
+# or set FTP_HOST, FTP_USER, and FTP_PASSWORD environment variables to modify.
 #
 # Note that unlike the equivalent Filesystem and Sftp tests, this one does not
 # cleanup after itself, since in the default anonymous mode the owner of the
