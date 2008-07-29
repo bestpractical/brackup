@@ -33,6 +33,7 @@ lib/Brackup/StoredChunk.pm
 lib/Brackup/Target.pm
 lib/Brackup/Target/Amazon.pm
 lib/Brackup/Target/Filesystem.pm
+lib/Brackup/Target/Sftp.pm
 lib/Brackup/TargetBackupStatInfo.pm
 lib/Brackup/Test.pm
 lib/Brackup/Util.pm
@@ -43,6 +44,7 @@ MANIFEST.SKIP
 META.yml			Module meta-data (added by MakeMaker)
 t/00-use.t
 t/01-backup.t
+t/01-backup-sftp.t
 t/02-gpg.t
 t/03-combine-little-files.t
 t/04-gc.t
