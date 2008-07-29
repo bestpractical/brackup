@@ -81,7 +81,7 @@ sub name {
 
 sub ignore {
     my ($self, $pattern) = @_;
-    push @{ $self->{ignore} }, $pattern;
+    push @{ $self->{ignore} }, qr/$pattern/;
 }
 
 sub path {
