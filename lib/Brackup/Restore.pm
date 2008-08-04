@@ -72,13 +72,23 @@ sub restore {
     $self->{_meta}   = $meta;
 
     while (my $it = $parser->readline) {
+        my $type = $it->{Type} || "f";
+        die "Unknown filetype: type=$type, file: $it->{Path}" unless $type =~ /^[ldfp]$/;
+
         if ($self->{prefix}) {
-            next unless $it->{Path} =~ s/^\Q$self->{prefix}\E(?:\/|$)//;
+            next unless $it->{Path} =~ m/^\Q$self->{prefix}\E(?:\/|$)/;
+            # if non-dir and $it->{Path} eq $self->{prefix}, strip all but last component
+            if ($type ne 'd' && $it->{Path} =~ m/^\Q$self->{prefix}\E\/?$/) {
+                if (my ($leading_prefix) = ($self->{prefix} =~ m/^(.*\/)[^\/]+\/?$/)) {
+                    $it->{Path} =~ s/^\Q$leading_prefix\E//;
+                }
+            }
+            else {
+                $it->{Path} =~ s/^\Q$self->{prefix}\E\/?//;
+            }
         }
 
         my $full = $self->{to} . "/" . $it->{Path};
-        my $type = $it->{Type} || "f";
-        die "Unknown filetype: type=$type, file: $it->{Path}" unless $type =~ /^[ldfp]$/;
 
         # restore default modes from header
         $it->{Mode} ||= $meta->{DefaultFileMode} if $type eq "f";
