@@ -1,7 +1,7 @@
 # -*-perl-*-
 
 use strict;
-use Test::More tests => 12;
+use Test::More tests => 24;
 
 use Brackup::Test;
 use FindBin qw($Bin);
@@ -9,7 +9,7 @@ use Brackup::Util qw(tempfile);
 
 SKIP: {
 
-skip "\$ENV{BRACKUP_TEST_SFTP} not set", 12 unless $ENV{BRACKUP_TEST_SFTP};
+skip "\$ENV{BRACKUP_TEST_SFTP} not set", 24 unless $ENV{BRACKUP_TEST_SFTP};
 
 ############### Backup
 
@@ -35,9 +35,21 @@ my $backup_file = do_backup(
 
 ############### Restore
 
+# Full restore
 my $restore_dir = do_restore($backup_file);
-
 ok_dirs_match($restore_dir, $root_dir);
+
+# --just=DIR restore
+my $just_dir = do_restore($backup_file, prefix => 'my_dir');
+ok_dirs_match($just_dir, "$root_dir/my_dir");
+
+# --just=FILE restore
+my $just_file = do_restore($backup_file, prefix => 'huge-file.txt');
+ok_files_match("$just_file/huge-file.txt", "$root_dir/huge-file.txt");
+
+# --just=DIR/FILE restore
+my $just_dir_file = do_restore($backup_file, prefix => 'my_dir/sub_dir/program.sh');
+ok_files_match("$just_dir_file/program.sh", "$root_dir/my_dir/sub_dir/program.sh");
 
 }
 

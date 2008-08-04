@@ -4,7 +4,7 @@ require Exporter;
 use strict;
 use vars qw(@ISA @EXPORT);
 @ISA = qw(Exporter);
-@EXPORT = qw(do_backup do_restore ok_dirs_match);
+@EXPORT = qw(do_backup do_restore ok_dirs_match ok_files_match);
 
 use Test::More;
 use FindBin qw($Bin);
@@ -83,13 +83,15 @@ sub do_backup {
 }
 
 sub do_restore {
-    my $backup_file = shift;
+    my ($backup_file, %opts) = @_;
+    my $prefix     = delete $opts{'prefix'} || "";   # default is restore everything
+    die if %opts;
     my $restore_dir = tempdir( CLEANUP => 1 );
     ok_dir_empty($restore_dir);
 
     my $restore = Brackup::Restore->new(
                                         to     => $restore_dir,
-                                        prefix => "",  # backup everything
+                                        prefix => $prefix,
                                         file   => $backup_file,
                                         );
     ok($restore, "have restore object");
@@ -115,11 +117,55 @@ sub ok_dirs_match {
     }
 }
 
+sub ok_files_match {
+    my ($after, $before) = @_;
+
+    my $pre_ls  = file_meta($before);
+    my $post_ls = file_meta($after);
+
+    if ($has_diff) {
+        use Data::Dumper;
+        my $pre_dump = Dumper($pre_ls);
+        my $post_dump = Dumper($post_ls);
+        my $diff = Text::Diff::diff(\$pre_dump, \$post_dump);
+        is($diff, "", "files match");
+    } else {
+        is_deeply($post_ls, $pre_ls, "files match");
+    }
+}
+
 sub ok_dir_empty {
     my $dir = shift;
     unless (-d $dir) { ok(0, "not a dir"); return; }
     opendir(my $dh, $dir) or die "failed to opendir: $!";
     is_deeply([ sort readdir($dh) ], ['.', '..'], "dir is empty: $dir");
+}
+
+sub file_meta {
+    my $path = shift;
+    my $st = File::stat::lstat($path);
+
+    my $meta = {};
+    $meta->{size} = $st->size unless -d $path;
+    $meta->{is_file} = 1 if -f $path;
+    $meta->{is_link} = 1 if -l $path;
+    if ($meta->{is_link}) {
+        $meta->{link} = readlink $path;
+    } else {
+        # we ignore these for links, since Linux doesn't let us restore anyway,
+        # as Linux as no lutimes(2) syscall, as of Linux 2.6.16 at least
+        $meta->{atime} = $st->atime if 0; # TODO: make tests work with atimes
+        $meta->{mtime} = $st->mtime;
+        $meta->{mode}  = sprintf('%#o', $st->mode & 0777);
+    }
+
+    # the gpg tests open/close the rings in the root, so
+    # mtimes get bumped around or something.  the proper fix
+    # is too ugly for what it's worth, so let's just ignore
+    # the mtime of top-level
+    delete $meta->{mtime} if $path eq ".";
+
+    return $meta;
 }
 
 # given a directory, returns a hashref of its contentn
@@ -134,29 +180,7 @@ sub dir_structure {
         preprocess => sub { return sort @_ },
         wanted => sub {
             my $path = $_;
-            my $st = File::stat::lstat($path);
-
-            my $meta = {};
-            $meta->{size} = $st->size unless -d $path;
-            $meta->{is_file} = 1 if -f $path;
-            $meta->{is_link} = 1 if -l $path;
-            if ($meta->{is_link}) {
-                $meta->{link} = readlink $path;
-            } else {
-                # we ignore these for links, since Linux doesn't let us restore anyway,
-                # as Linux as no lutimes(2) syscall, as of Linux 2.6.16 at least
-                $meta->{atime} = $st->atime if 0; # TODO: make tests work with atimes
-                $meta->{mtime} = $st->mtime;
-                $meta->{mode}  = sprintf('%#o', $st->mode & 0777);
-            }
-
-            # the gpg tests open/close the rings in the root, so
-            # mtimes get bumped around or something.  the proper fix
-            # is too ugly for what it's worth, so let's just ignore
-            # the mtime of top-level
-            delete $meta->{mtime} if $path eq ".";
-
-            $files{$path} = $meta;
+            $files{$path} = file_meta($path);
         },
     }, ".");
 
@@ -166,3 +190,5 @@ sub dir_structure {
 
 
 1;
+
+# vim:et:sw=4
