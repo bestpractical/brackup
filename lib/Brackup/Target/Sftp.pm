@@ -36,10 +36,6 @@ sub new_from_backup_header {
     $self->{nocolons} = $header->{"NoColons"};
     $self->{nocolons} = $self->_default_nocolons unless defined $self->{nocolons};
 
-    unless (-d $self->{path}) {
-        die "Restore path $self->{path} doesn't exist.\n";
-    }
-
     $self->_common_new;
 
     return $self;
@@ -63,7 +59,7 @@ sub backup_header {
 }
 
 sub _default_nocolons { 
-    return 0;        # Can't assume remote OS allows colons
+    return 1;        # Can't assume remote OS allows colons
 }
 
 sub nocolons {
