@@ -108,10 +108,18 @@ exit($code->() ? 0 : 1);
 
 
 sub CMD_list_backups {
-    foreach my $si ($target->backups) {
-        printf("%-35s %-20s %10d\n",
+    printf("%-32s %-30s %10s\n",
+        'Backup File',
+        'Backup Date',
+        'Size (B)'); 
+    printf("%-32s %-30s %10s\n",
+        '-' x 11,
+        '-' x 11,
+        '-' x 8);
+    foreach my $si (sort { $b->time <=> $a->time } $target->backups) {
+        printf("%-32s %-30s %10d\n",
                $si->filename,
-               $si->time,
+               $si->localtime,
                $si->size);
     }
     return 1;

@@ -3,6 +3,7 @@ package Brackup::TargetBackupStatInfo;
 use strict;
 use warnings;
 use Carp qw(croak);
+use POSIX qw(strftime);
 
 sub new {
     my ($class, $target, $fn, %opts) = @_;
@@ -27,6 +28,10 @@ sub filename {
 
 sub time {
     return $_[0]->{time};
+}
+
+sub localtime {
+    return strftime("%a %d %b %Y %T", localtime( $_[0]->{time} ));
 }
 
 sub size {
