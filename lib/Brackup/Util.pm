@@ -5,7 +5,7 @@ require Exporter;
 
 use vars qw(@ISA @EXPORT_OK);
 @ISA = ('Exporter');
-@EXPORT_OK = qw(tempfile tempdir slurp valid_params);
+@EXPORT_OK = qw(tempfile tempdir slurp valid_params noclobber_filename);
 
 use File::Path qw();
 use Carp;
@@ -57,4 +57,15 @@ sub valid_params {
     return %ret;
 }
 
+# Uniquify the given filename to avoid clobbering existing files
+sub noclobber_filename {
+    my ($filename) = @_;
+    return $filename if ! -e $filename;
+    for (my $i = 1; ; $i++) {
+        return "$filename.$i" if ! -e "$filename.$i";
+    }
+}
+
 1;
+
+# vim:sw=4

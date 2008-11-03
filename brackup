@@ -63,6 +63,7 @@ use FindBin qw($Bin);
 use lib "$Bin/lib";
 
 use Brackup;
+use Brackup::Util qw(noclobber_filename);
 
 my ($src_name, $target_name, $backup_file, $opt_help);
 my $opt_dryrun;
@@ -131,6 +132,7 @@ $backup_file ||= $root->name . "-" . sprintf("%04d%02d%02d", $now[5]+1900, $now[
 $backup_file =~ s!^~/!$ENV{HOME}/! if $ENV{HOME};
 $backup_file = "$cwd/$backup_file" unless $backup_file =~ m!^/!;
 
+$backup_file = noclobber_filename($backup_file);
 my $backup = Brackup::Backup->new(
                                   root           => $root,
                                   target         => $target,
