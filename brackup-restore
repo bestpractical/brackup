@@ -110,6 +110,7 @@ if (eval { $restore->restore }){
     warn "Restore complete.\n" if $opt_verbose;
     exit 0;
 } else {
+    chomp $@;
     warn "Error doing restore: $@\n";
     exit 1;
 }
