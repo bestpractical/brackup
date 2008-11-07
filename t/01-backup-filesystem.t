@@ -1,7 +1,7 @@
 # -*-perl-*-
 
 use strict;
-use Test::More tests => 24;
+use Test::More tests => 27;
 
 use Brackup::Test;
 use FindBin qw($Bin);
@@ -39,4 +39,7 @@ ok_files_match("$just_file/huge-file.txt", "$root_dir/huge-file.txt");
 # --just=DIR/FILE restore
 my $just_dir_file = do_restore($backup_file, prefix => 'my_dir/sub_dir/program.sh');
 ok_files_match("$just_dir_file/program.sh", "$root_dir/my_dir/sub_dir/program.sh");
+
+# --just=nonexistent file
+do_restore($backup_file, prefix => 'nonexistent_file.txt', restore_should_die => 1);
 

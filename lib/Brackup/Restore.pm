@@ -71,6 +71,7 @@ sub restore {
     $self->{_target} = $target;
     $self->{_meta}   = $meta;
 
+    my $restore_count = 0;
     while (my $it = $parser->readline) {
         my $type = $it->{Type} || "f";
         die "Unknown filetype: type=$type, file: $it->{Path}" unless $type =~ /^[ldfp]$/;
@@ -88,6 +89,7 @@ sub restore {
             }
         }
 
+        $restore_count++;
         my $full = $self->{to} . "/" . $it->{Path};
 
         # restore default modes from header
@@ -101,10 +103,15 @@ sub restore {
         $self->_restore_file     ($full, $it) if $type eq "f";
     }
 
-    warn " * fixing stat info\n" if $self->{verbose};
-    $self->_exec_statinfo_updates;
-    warn " * done\n" if $self->{verbose};
-    return 1;
+    if ($restore_count) {
+        warn " * fixing stat info\n" if $self->{verbose};
+        $self->_exec_statinfo_updates;
+        warn " * done\n" if $self->{verbose};
+        return 1;
+    } else {
+        die "nothing found matching '$self->{prefix}'.\n" if $self->{prefix};
+        die "nothing found to restore.\n";
+    }
 }
 
 sub _output_temp_filename {

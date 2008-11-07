@@ -85,6 +85,7 @@ sub do_backup {
 sub do_restore {
     my ($backup_file, %opts) = @_;
     my $prefix     = delete $opts{'prefix'} || "";   # default is restore everything
+    my $restore_should_die = delete $opts{'restore_should_die'};
     die if %opts;
     my $restore_dir = tempdir( CLEANUP => 1 );
     ok_dir_empty($restore_dir);
@@ -95,9 +96,17 @@ sub do_restore {
                                         file   => $backup_file,
                                         );
     ok($restore, "have restore object");
-    ok(eval { $restore->restore; }, "did the restore")
-        or die "restore failed: $@";
-    return $restore_dir;
+    my $rv = eval { $restore->restore; };
+    if ($restore_should_die) {
+        ok(! defined $rv, "restore died: $@") 
+            or die "restore unexpectedly succeeded";
+        return;
+    }
+    else {
+        ok($rv, "did the restore") 
+            or die "restore failed: $@";
+        return $restore_dir;
+    }
 }
 
 sub ok_dirs_match {
