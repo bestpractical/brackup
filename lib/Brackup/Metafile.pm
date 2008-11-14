@@ -42,7 +42,7 @@ sub readline {
         }
 
         $line =~ s/[^[:print:]]/?/g;
-        die "Unexpected line in metafile $self->{file}, line $self->{linenum}: $line";
+        die "Unexpected line in metafile $self->{filename}, line $self->{linenum}: $line";
     }
     return undef;
 }
