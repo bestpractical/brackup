@@ -99,7 +99,7 @@ sub delete_backup {
 sub prune {
     my ($self, %opt) = @_;
 
-    my $keep_backups = $self->{keep_backups} || $opt{keep_backups}
+    my $keep_backups = $opt{keep_backups} || $self->{keep_backups}
         or die "ERROR: keep_backups option not set\n";
     die "ERROR: keep_backups option must be at least 1\n"
         unless $keep_backups > 0;
