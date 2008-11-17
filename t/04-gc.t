@@ -24,7 +24,7 @@ my ($backup_file, $backup, $target) = do_backup(
 
 ############### Add an orphan chunk
 
-my $orphan_chunks_count = int(rand 10);
+my $orphan_chunks_count = int(rand 10) + 1;
 for (1..$orphan_chunks_count) {
     my $chunk = Brackup::StoredChunk->new;
     $chunk->{_chunkref} = \ "foobar $_";
@@ -34,6 +34,6 @@ for (1..$orphan_chunks_count) {
 ############### Do garbage collection
 
 my $removed_count = $target->gc;
-ok($removed_count == $orphan_chunks_count, "all orphan chunks removed");
+ok($removed_count == $orphan_chunks_count, "all orphan chunks removed ($orphan_chunks_count)");
 
 __END__
