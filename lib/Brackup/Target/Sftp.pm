@@ -222,7 +222,7 @@ sub chunks {
     my @chunks = ();
     for ($self->{sftp}->find( $self->{path}, 
             wanted => qr/\.chunk$/, no_descend => qr/^backups$/ )) {
-        my $chunk_name = basename($_);
+        my $chunk_name = basename($_->{filename});
         $chunk_name =~ s/\.chunk$//;
         push @chunks, $chunk_name;
     }
