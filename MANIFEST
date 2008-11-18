@@ -48,7 +48,9 @@ t/01-backup-ftp.t
 t/01-backup-sftp.t
 t/02-gpg.t
 t/03-combine-little-files.t
-t/04-gc.t
+t/04-gc-filesystem.t
+t/04-gc-ftp.t
+t/04-gc-sftp.t
 t/data/000-dup1.txt
 t/data/000-dup2.txt
 t/data/huge-file.txt
