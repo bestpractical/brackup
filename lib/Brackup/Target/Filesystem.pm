@@ -317,6 +317,7 @@ sub chunks {
         m/\.chunk$/ or return;
         my $chunk_name = basename($_);
         $chunk_name =~ s/\.chunk$//;
+        $chunk_name =~ s/\./:/g if $self->nocolons;
         push @chunks, $chunk_name;
     };
     File::Find::find({ wanted => $found_chunk, no_chdir => 1}, $self->{path});

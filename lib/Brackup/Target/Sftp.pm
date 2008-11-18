@@ -224,6 +224,7 @@ sub chunks {
             wanted => qr/\.chunk$/, no_descend => qr/^backups$/ )) {
         my $chunk_name = basename($_->{filename});
         $chunk_name =~ s/\.chunk$//;
+        $chunk_name =~ s/\./:/g if $self->nocolons;
         push @chunks, $chunk_name;
     }
     return @chunks;

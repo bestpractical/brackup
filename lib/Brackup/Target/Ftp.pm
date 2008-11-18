@@ -213,6 +213,7 @@ sub chunks {
 
         if ($path =~ m/\.chunk$/) {
             $filename =~ s/\.chunk$//;
+            $filename =~ s/\./:/g if $self->nocolons;
             push @chunks, $filename;
             return 0;
         }
