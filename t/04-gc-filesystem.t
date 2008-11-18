@@ -1,7 +1,7 @@
 # -*-perl-*-
 
 use strict;
-use Test::More tests => 9;
+use Test::More tests => 10;
 
 use Brackup::Test;
 use FindBin qw($Bin);
@@ -33,7 +33,8 @@ for (1..$orphan_chunks_count) {
 
 ############### Do garbage collection
 
-my $removed_count = $target->gc;
-ok($removed_count == $orphan_chunks_count, "all orphan chunks removed ($orphan_chunks_count)");
+my $removed_count = eval { $target->gc };
+is($@, '', "gc successful");
+is($removed_count, $orphan_chunks_count, "all orphan chunks removed");
 
 __END__
