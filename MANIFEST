@@ -1,4 +1,5 @@
 brackup
+brackup-mount
 brackup-restore
 brackup-target
 Changes
@@ -26,13 +27,16 @@ lib/Brackup/GPGProcManager.pm
 lib/Brackup/InventoryDatabase.pm
 lib/Brackup/Manual/Overview.pod
 lib/Brackup/Metafile.pm
+lib/Brackup/Mount.pm
 lib/Brackup/PositionedChunk.pm
 lib/Brackup/Restore.pm
 lib/Brackup/Root.pm
 lib/Brackup/StoredChunk.pm
 lib/Brackup/Target.pm
 lib/Brackup/Target/Amazon.pm
+lib/Brackup/Target/Filebased.pm
 lib/Brackup/Target/Filesystem.pm
+lib/Brackup/Target/Ftp.pm
 lib/Brackup/Target/Sftp.pm
 lib/Brackup/TargetBackupStatInfo.pm
 lib/Brackup/Test.pm
@@ -49,8 +53,6 @@ t/01-backup-sftp.t
 t/02-gpg.t
 t/03-combine-little-files.t
 t/04-gc-filesystem.t
-t/04-gc-ftp.t
-t/04-gc-sftp.t
 t/data/000-dup1.txt
 t/data/000-dup2.txt
 t/data/huge-file.txt

@@ -1,3 +1,5 @@
+1.07 (2009-04-04)
+
   - fix utime warnings on restore (Gavin Carr)
 
   - actually strip non-ASCII characters (gary.richardson@gmail.com)
@@ -54,19 +56,19 @@
 
   - actually respect the --just flag on restore
 
-1.05 (august 2, 2007)
+1.05 (2007-08-02)
 
   - 'prune' and 'gc' commands commands for both Amazon
      and Filesystem targets.  from Alessandro Ranellucci <aar@cpan.org>.
 
-1.04 (july 30, 2007)
+1.04 (2007-06-30)
 
   - Amazon list_backups and delete backups (and delete for filesystem
     target too), from Alessandro Ranellucci <aar@cpan.org>
 
   - make tests pass on OS X (Jesse Vincent)
 
-1.03 (may 23, 2007)
+1.03 (2007-05-23)
 
   - brackup-restore's verbose flag is more verbose now, showing files
     as they're restored.
@@ -82,7 +84,7 @@
 
   - doc fixes/additions
 
-1.02 (may 22, 2007)
+1.02 (2007-05-22)
 
   - support for merging little files together into big chunks
     on the backup target.  aka "tail packing".  requires no changes
@@ -92,11 +94,11 @@
 
   - improved docs
 
-1.01 (may 21, 2007)
+1.01 (2007-05-21)
 
   - lot of new/updated docs
 
-1.00 (may 21, 2007)
+1.00 (2007-05-21)
 
   RELEASE NOTE: The author/maintainer of Brackup is finally happy now,
     and has 40 GB of data stored on Amazon, encrypted.  You can
@@ -164,7 +166,8 @@
 
   - start of stats code (to give stats after a backup).  not done.
 
-0.91 (sep 29 2006)
+0.91 (2006-09-29)
+
   - there's now a restore command (brackup-restore)
 
   - amazon restore support
