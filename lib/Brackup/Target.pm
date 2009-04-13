@@ -131,6 +131,7 @@ sub gc {
     # get all chunks and then loop through metafiles to detect
     # referenced ones
     my %chunks = map {$_ => 1} $self->chunks;
+    my $total_chunks = scalar keys %chunks;
     my $tempfile = +(tempfile())[1];
     my @backups = $self->backups;
     BACKUP: foreach my $i (0 .. $#backups) {
@@ -149,12 +150,19 @@ sub gc {
     }
     my @orphaned_chunks = keys %chunks;
 
+    # report orphaned chunks
+    if (@orphaned_chunks && $opt{verbose} && $opt{verbose} >= 2) {
+      warn "Orphaned chunks:\n";
+      warn "  $_\n" for (@orphaned_chunks);
+    }
+
     # remove orphaned chunks
     unless ($opt{dryrun}) {
         warn "Removing orphaned chunks\n" if $opt{verbose};
-        $self->delete_chunk($_) for @orphaned_chunks;
+        $self->delete_chunk($_) for (@orphaned_chunks);
     }
-    return scalar @orphaned_chunks;
+
+    return wantarray ? ( scalar @orphaned_chunks, $total_chunks ) :  scalar @orphaned_chunks;
 }
 
 

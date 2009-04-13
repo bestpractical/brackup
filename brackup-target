@@ -74,7 +74,7 @@ my $opt_keep_backups;
 my $opt_dryrun;
 usage() unless
     GetOptions(
-               'verbose'  => \$opt_verbose,
+               'verbose+' => \$opt_verbose,
                'dest=s'   => \$destdir,
                'config=s' => \$config_file,
                'keep-backups=i' => \$opt_keep_backups,
@@ -161,9 +161,10 @@ sub CMD_prune {
 }
 
 sub CMD_gc {
-    my $removed_chunks = $target->gc(dryrun => $opt_dryrun,
-                                     verbose => $opt_verbose);
-    debug("$removed_chunks chunks " . ($opt_dryrun ? "would be " : "") . "removed from target");
+    my ($removed_chunks, $total_chunks) = $target->gc(dryrun => $opt_dryrun,
+                                                      verbose => $opt_verbose);
+    debug("$removed_chunks/$total_chunks chunks " . ($opt_dryrun ? "would be " : "") . 
+          "removed from target");
 }
 
 sub debug {
