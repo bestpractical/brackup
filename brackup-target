@@ -97,6 +97,7 @@ my $config = eval { Brackup::Config->load($config_file) } or
 
 my $target_name = shift or usage();
 my $cmd_name    = shift or usage();
+$cmd_name =~ s/-/_/g;      # accept hyphenated versions of commands
 
 my $target = eval { $config->load_target($target_name); } or
     usage($@);
