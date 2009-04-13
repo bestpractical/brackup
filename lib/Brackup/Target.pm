@@ -116,8 +116,10 @@ sub prune {
         push @backups_to_delete, splice(@b, ($keep_backups > $#b+1) ? $#b+1 : $keep_backups);
     }
 
-    unless ($opt{dryrun}) {
-         $self->delete_backup($_) for @backups_to_delete;
+    warn ($opt{dryrun} ? "Pruning:\n" : "Pruned:\n") if $opt{verbose};
+    foreach my $backup_name (@backups_to_delete) {
+        warn "  $backup_name\n" if $opt{verbose};
+        $self->delete_backup($backup_name) unless $opt{dryrun};
     }
     return scalar @backups_to_delete;
 }

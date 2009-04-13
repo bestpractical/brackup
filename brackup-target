@@ -155,8 +155,9 @@ sub CMD_delete_backup {
 
 sub CMD_prune {
     my $removed_count = $target->prune( keep_backups => $opt_keep_backups,
-                                        dryrun => $opt_dryrun);
-    debug("$removed_count backups removed from target");
+                                        dryrun => $opt_dryrun,
+                                        verbose => $opt_verbose);
+    debug("$removed_count backups " . ($opt_dryrun ? "would be " : "") . "removed from target");
 }
 
 sub CMD_gc {
