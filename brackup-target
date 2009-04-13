@@ -161,8 +161,9 @@ sub CMD_prune {
 }
 
 sub CMD_gc {
-    my $removed_chunks = $target->gc(dryrun => $opt_dryrun);
-    debug("$removed_chunks chunks removed from target");
+    my $removed_chunks = $target->gc(dryrun => $opt_dryrun,
+                                     verbose => $opt_verbose);
+    debug("$removed_chunks chunks " . ($opt_dryrun ? "would be " : "") . "removed from target");
 }
 
 sub debug {

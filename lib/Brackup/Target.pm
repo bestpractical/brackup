@@ -132,7 +132,12 @@ sub gc {
     # referenced ones
     my %chunks = map {$_ => 1} $self->chunks;
     my $tempfile = +(tempfile())[1];
-    BACKUP: foreach my $backup ($self->backups) {
+    my @backups = $self->backups;
+    BACKUP: foreach my $i (0 .. $#backups) {
+        my $backup = $backups[$i];
+        warn sprintf "Collating chunks from backup %s [%d/%d]\n",
+            $backup->filename, $i+1, scalar(@backups) 
+                if $opt{verbose};
         $self->get_backup($backup->filename, $tempfile);
         my $parser = Brackup::Metafile->open($tempfile);
         $parser->readline;  # skip header
@@ -146,7 +151,8 @@ sub gc {
 
     # remove orphaned chunks
     unless ($opt{dryrun}) {
-         $self->delete_chunk($_) for @orphaned_chunks;
+        warn "Removing orphaned chunks\n" if $opt{verbose};
+        $self->delete_chunk($_) for @orphaned_chunks;
     }
     return scalar @orphaned_chunks;
 }
