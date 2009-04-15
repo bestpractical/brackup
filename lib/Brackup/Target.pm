@@ -112,6 +112,7 @@ sub prune {
         push @{ $backups{$1} }, $backup_name;
     }
     foreach my $source (keys %backups) {
+        next if $opt{source} && $source ne $opt{source};
         my @b = reverse sort @{ $backups{$source} };
         push @backups_to_delete, splice(@b, ($keep_backups > $#b+1) ? $#b+1 : $keep_backups);
     }

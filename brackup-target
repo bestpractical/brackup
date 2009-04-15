@@ -34,6 +34,11 @@ Do not actually execute write operations.
 To be used in combination with the I<prune> command. This overrides the
 I<keep_backups> option specified in the configuration file.
 
+=item --source <source>
+
+To be used in combination with the I<prune> command. This restricts the
+prune operation to only delete backup files from the given I<source>.
+
 =item --interactive
 
 To be used in combination with the I<gc> command. Runs interactively,
@@ -79,6 +84,7 @@ my $opt_verbose;
 my $opt_keep_backups;
 my $opt_dryrun;
 my $opt_interactive;
+my $opt_source;
 usage() unless
     GetOptions(
                'verbose+' => \$opt_verbose,
@@ -87,6 +93,7 @@ usage() unless
                'keep-backups=i' => \$opt_keep_backups,
                'dry-run'   => \$opt_dryrun,
                'interactive' => \$opt_interactive,
+               'source=s' => \$opt_source,
                'help'     => \$opt_help,
                );
 
@@ -166,6 +173,7 @@ sub CMD_delete_backup {
 sub CMD_prune {
     my $removed_count = $target->prune( keep_backups => $opt_keep_backups,
                                         dryrun => $opt_dryrun,
+                                        source => $opt_source,
                                         verbose => $opt_verbose);
     debug("$removed_count backups " . ($opt_dryrun ? "would be " : "") . "removed from target");
 }
