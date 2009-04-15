@@ -157,9 +157,18 @@ sub gc {
     }
 
     # remove orphaned chunks
-    unless ($opt{dryrun}) {
-        warn "Removing orphaned chunks\n" if $opt{verbose};
-        $self->delete_chunk($_) for (@orphaned_chunks);
+    if (@orphaned_chunks && ! $opt{dryrun}) {
+        my $confirm = 'y';
+        if ($opt{interactive}) {
+            printf "Run gc, removing %d/%d orphaned chunks? [y/N] ", 
+              scalar @orphaned_chunks, $total_chunks;
+            $confirm = <>;
+        }
+
+        if (lc substr($confirm,0,1) eq 'y') {
+            warn "Removing orphaned chunks\n" if $opt{verbose};
+            $self->delete_chunk($_) for (@orphaned_chunks);
+        }
     }
 
     return wantarray ? ( scalar @orphaned_chunks, $total_chunks ) :  scalar @orphaned_chunks;

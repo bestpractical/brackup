@@ -34,6 +34,12 @@ Do not actually execute write operations.
 To be used in combination with the I<prune> command. This overrides the
 I<keep_backups> option specified in the configuration file.
 
+=item --interactive
+
+To be used in combination with the I<gc> command. Runs interactively,
+requiring an explicit confirmation before deleting chunks that have been
+garbage collected. Implies --verbose.
+
 =back
 
 =head1 WARRANTY
@@ -72,6 +78,7 @@ my $opt_help;
 my $opt_verbose;
 my $opt_keep_backups;
 my $opt_dryrun;
+my $opt_interactive;
 usage() unless
     GetOptions(
                'verbose+' => \$opt_verbose,
@@ -79,6 +86,7 @@ usage() unless
                'config=s' => \$config_file,
                'keep-backups=i' => \$opt_keep_backups,
                'dry-run'   => \$opt_dryrun,
+               'interactive' => \$opt_interactive,
                'help'     => \$opt_help,
                );
 
@@ -91,6 +99,7 @@ if ($opt_help) {
     Pod::Usage::pod2usage( -verbose => 1, -exitval => 0 );
     exit 0;
 }
+$opt_verbose = 1 if $opt_interactive && ! $opt_verbose;
 
 my $config = eval { Brackup::Config->load($config_file) } or
     usage($@);
@@ -163,7 +172,8 @@ sub CMD_prune {
 
 sub CMD_gc {
     my ($removed_chunks, $total_chunks) = $target->gc(dryrun => $opt_dryrun,
-                                                      verbose => $opt_verbose);
+                                                      verbose => $opt_verbose,
+                                                      interactive => $opt_interactive);
     debug("$removed_chunks/$total_chunks chunks " . ($opt_dryrun ? "would be " : "") . 
           "removed from target");
 }
