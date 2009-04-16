@@ -1,5 +1,12 @@
 1.08
 
+  - make brackup-target --verbose prune and gc more verbose (gavincarr)
+
+  - add a --interactive option to brackup-target gc (gavincarr) 
+
+  - add a --source option to brackup-target prune, to restrict a prune 
+    run to a particular source (gavincarr)
+   
   - update Amazon target to handle new ISO8601 modify timestamps (Ben 
     Schumacher)
 
