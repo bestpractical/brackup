@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use base 'Brackup::Target';
 use Net::Amazon::S3 0.41;
+use DateTime::Format::ISO8601;
 
 # fields in object:
 #   s3  -- Net::Amazon::S3
@@ -172,8 +173,9 @@ sub backups {
     my @ret;
     my $backups = $self->{s3}->list_bucket_all({ bucket => $self->{backup_bucket} });
     foreach my $backup (@{ $backups->{keys} }) {
+        my $iso8601 = DateTime::Format::ISO8601->parse_datetime( $backup->{last_modified} );
         push @ret, Brackup::TargetBackupStatInfo->new($self, $backup->{key},
-                                                      time => $backup->{last_modified},
+                                                      time => $iso8601->epoch,
                                                       size => $backup->{size});
     }
     return @ret;

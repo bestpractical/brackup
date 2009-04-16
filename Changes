@@ -1,3 +1,8 @@
+1.08
+
+  - update Amazon target to handle new ISO8601 modify timestamps (Ben 
+    Schumacher)
+
 1.07 (2009-04-04)
 
   - fix utime warnings on restore (Gavin Carr)
