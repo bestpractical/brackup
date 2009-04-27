@@ -1,5 +1,5 @@
 steps = FindVersion, ChangeVersion, CheckChangeLog, DistTest, Commit, Tag, MakeDist, UploadCPAN, AddToSVNDir
 svn.tagpattern = %v
-AddToSVNDir.dir = /home/lj/cvs/web-danga/dist/Brackup/
+AddToSVNDir.dir = /home/bradfitz/proj/web-danga/dist/Brackup/
 
 
