@@ -34,6 +34,7 @@ lib/Brackup/Root.pm
 lib/Brackup/StoredChunk.pm
 lib/Brackup/Target.pm
 lib/Brackup/Target/Amazon.pm
+lib/Brackup/Target/CloudFiles.pm
 lib/Brackup/Target/Filebased.pm
 lib/Brackup/Target/Filesystem.pm
 lib/Brackup/Target/Ftp.pm
