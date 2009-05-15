@@ -22,8 +22,9 @@ sub new {
     return $self;
 }
 
-sub get {
-    my ($self, $key) = @_;
+sub _load_all
+{
+    my $self = shift;
     unless ($self->{_loaded_all}++) {
         # SQLite sucks at doing anything quickly (likes hundred thousand
         # selects back-to-back), so we just suck the whole damn thing into
@@ -35,6 +36,11 @@ sub get {
             $self->{data}{$k} = $v;
         }
     }
+}
+
+sub get {
+    my ($self, $key) = @_;
+    $self->_load_all unless $self->{_loaded_all};
     return $self->{data}{$key};
 }
 
@@ -43,6 +49,29 @@ sub set {
     $self->{dbh}->do("REPLACE INTO $self->{table} VALUES (?,?)", undef, $key, $val);
     $self->{data}{$key} = $val;
     return 1;
+}
+
+# Iterator interface, returning ($key, $value), and () on eod
+sub each {
+    my $self = shift;
+    $self->_load_all unless $self->{_loaded_all};
+    $self->{keys} = [ keys %{$self->{data}} ] unless $self->{_loaded_keys}++;
+    return wantarray ? () : undef unless @{$self->{keys}};
+    my $next = shift @{$self->{keys}};
+    return wantarray ? ($next, $self->{data}{$next}) : $next;
+}
+
+sub delete {
+    my ($self, $key) = @_;
+    $self->{dbh}->do("DELETE FROM $self->{table} WHERE key = ?", undef, $key);
+    delete $self->{data}{$key};
+    return 1;
+}
+
+sub count {
+    my $self = shift;
+    $self->_load_all unless $self->{_loaded_all};
+    return scalar keys %{$self->{data}};
 }
 
 sub backing_file {

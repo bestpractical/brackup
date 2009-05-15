@@ -15,6 +15,9 @@ sub new {
 # proxy through to underlying dictionary
 sub get { shift->{dict}->get(@_) }
 sub set { shift->{dict}->set(@_) }
+sub each { shift->{dict}->each(@_) }
+sub delete { shift->{dict}->delete(@_) }
+sub count { shift->{dict}->count(@_) }
 
 
 1;
