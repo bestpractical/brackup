@@ -217,6 +217,11 @@ sub metapath {
     return $self->{path} . '/' . $self->SUPER::metapath($name);
 }
 
+sub size {
+    my ($self, $path) = @_;
+    return -s $path;
+}
+
 sub has_chunk_of_handle {
     my ($self, $handle) = @_;
     my $dig = $handle->digest;  # "sha1:sdfsdf" format scalar
