@@ -92,13 +92,13 @@ sub _ls {
     return wantarray ? @$result : $result;
 }
 
-sub _size {
+sub size {
     my ($self, $path) = @_;
     my $size = $self->_autoretry(sub {
         return $self->{ftp}->size($path);
     });
     unless (defined($size)) {
-        die "Getting size for $path filed: " . $self->{ftp}->message;
+        die "Getting size for $path failed: " . $self->{ftp}->message;
     }
     return $size;
 }
@@ -187,7 +187,7 @@ sub store_chunk {
     my $chunkref = $chunk->chunkref;
     $self->_put($path, $$chunkref);
 
-    my $actual_size = $self->_size($path);
+    my $actual_size = $self->size($path);
     my $expected_size = length $$chunkref;
     unless ($actual_size == $expected_size) {
         die "Chunk $path incompletely written to disk: size is " .
@@ -242,7 +242,7 @@ sub backups {
         (my $bn = $fn) =~ s/\.brackup$//;
 
         my $path = $self->metapath($fn);
-        my $size = $self->_size($path);
+        my $size = $self->size($path);
         my $mtime = $self->_mdtm($path);
 
         push @ret, Brackup::TargetBackupStatInfo->new($self, $bn,
