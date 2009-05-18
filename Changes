@@ -1,3 +1,5 @@
+1.09 (2009-05-18)
+
   - move all decryption to one place; support decrypting metafiles.
     (Stephane Alnet, stephane@shimaore.net, Chris Anderson, cva@pobox.com)
 
