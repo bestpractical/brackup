@@ -5,6 +5,7 @@ use warnings;
 use Brackup::InventoryDatabase;
 use Brackup::TargetBackupStatInfo;
 use Brackup::Util 'tempfile';
+use Brackup::DecryptedFile;
 use Carp qw(croak);
 
 sub new {
@@ -141,7 +142,8 @@ sub gc {
             $backup->filename, $i+1, scalar(@backups) 
                 if $opt{verbose};
         $self->get_backup($backup->filename, $tempfile);
-        my $parser = Brackup::Metafile->open($tempfile);
+        my $decrypted_backup = new Brackup::DecryptedFile(filename => $tempfile);
+        my $parser = Brackup::Metafile->open($decrypted_backup->name);
         $parser->readline;  # skip header
         ITEM: while (my $it = $parser->readline) {
             next ITEM unless $it->{Chunks};

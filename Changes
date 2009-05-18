@@ -1,3 +1,6 @@
+  - move all decryption to one place; support decrypting metafiles.
+    (Stephane Alnet, stephane@shimaore.net, Chris Anderson, cva@pobox.com)
+
   - added CloudFiles target to enable backups to Rackspace/Mosso's online
     data storage service. (William Wolf)
 

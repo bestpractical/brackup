@@ -12,6 +12,7 @@ use Brackup::Util qw(tempdir tempfile);
 use File::Find;
 use File::stat ();
 use Cwd;
+use Brackup::DecryptedFile;
 
 use Brackup;
 
