@@ -7,7 +7,7 @@ use Date::Parse;
 use Carp qw(croak);
 
 
-eval { require Nets::Mosso::CloudFiles } or die "You need the Net::Mosso::CloudFiles module installed to use the CloudFiles target in brackup.  Please install this module first.\n\n";
+eval { require Net::Mosso::CloudFiles } or die "You need the Net::Mosso::CloudFiles module installed to use the CloudFiles target in brackup.  Please install this module first.\n\n";
 
 # fields in object:
 #   cf  -- Net::Mosso::CloudFiles
