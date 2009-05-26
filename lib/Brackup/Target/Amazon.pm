@@ -205,6 +205,24 @@ sub delete_backup {
     return $bucket->delete_key($name);
 }
 
+sub chunkpath {
+    my $self = shift;
+    my $dig = shift;
+
+    return $dig;
+}
+
+sub size {
+    my $self = shift;
+    my $dig = shift;
+
+    my $res = eval { $self->{s3}->head_key({ bucket => $self->{chunk_bucket}, key => $dig }); };
+    return 0 unless $res;
+    return 0 if $@ && $@ =~ /key not found/;
+    return 0 unless $res->{content_type} eq "x-danga/brackup-chunk";
+    return $res->{content_length};
+}
+
 1;
 
 =head1 NAME
