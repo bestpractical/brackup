@@ -2,6 +2,7 @@ brackup
 brackup-mount
 brackup-restore
 brackup-target
+brackup-verify-inventory
 Changes
 doc/data-structures.txt
 doc/databases.txt
