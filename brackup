@@ -41,7 +41,11 @@ expressed or implied.  We aren't responsible for your data loss.
 
 =head1 SEE ALSO
 
-brackup-restore
+L<Brackup::Manual::Overview>
+
+L<brackup-restore>
+
+L<brackup-target>
 
 =head1 AUTHOR
 
