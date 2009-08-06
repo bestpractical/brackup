@@ -8,6 +8,7 @@ use Carp qw(croak);
 use File::stat ();
 use Fcntl qw(S_ISREG S_ISDIR S_ISLNK S_ISFIFO);
 use Digest::SHA1;
+use String::Escape qw(printable);
 use Brackup::PositionedChunk;
 use Brackup::Chunker::Default;
 use Brackup::Chunker::MP3;
@@ -197,7 +198,7 @@ sub as_rfc822 {
     };
     my $st = $self->stat;
 
-    $set->("Path", $self->{path});
+    $set->("Path", printable($self->{path}));
     my $type = $self->type;
     if ($self->is_file) {
         my $size = $self->size;

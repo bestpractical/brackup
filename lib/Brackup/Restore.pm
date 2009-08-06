@@ -4,6 +4,7 @@ use warnings;
 use Carp qw(croak);
 use Digest::SHA1;
 use POSIX qw(mkfifo);
+use String::Escape qw(unprintable);
 use Brackup::DecryptedFile;
 use Brackup::Decrypt;
 
@@ -60,29 +61,32 @@ sub restore {
     my $restore_count = 0;
     while (my $it = $parser->readline) {
         my $type = $it->{Type} || "f";
-        die "Unknown filetype: type=$type, file: $it->{Path}" unless $type =~ /^[ldfp]$/;
+        my $path = unprintable($it->{Path});
+        my $path_escaped = $it->{Path};
+        die "Unknown filetype: type=$type, file: $path_escaped" unless $type =~ /^[ldfp]$/;
 
         if ($self->{prefix}) {
-            next unless $it->{Path} =~ m/^\Q$self->{prefix}\E(?:\/|$)/;
-            # if non-dir and $it->{Path} eq $self->{prefix}, strip all but last component
-            if ($type ne 'd' && $it->{Path} =~ m/^\Q$self->{prefix}\E\/?$/) {
+            next unless $path =~ m/^\Q$self->{prefix}\E(?:\/|$)/;
+            # if non-dir and $path eq $self->{prefix}, strip all but last component
+            if ($type ne 'd' && $path =~ m/^\Q$self->{prefix}\E\/?$/) {
                 if (my ($leading_prefix) = ($self->{prefix} =~ m/^(.*\/)[^\/]+\/?$/)) {
-                    $it->{Path} =~ s/^\Q$leading_prefix\E//;
+                    $path =~ s/^\Q$leading_prefix\E//;
                 }
             }
             else {
-                $it->{Path} =~ s/^\Q$self->{prefix}\E\/?//;
+                $path =~ s/^\Q$self->{prefix}\E\/?//;
             }
         }
 
         $restore_count++;
-        my $full = $self->{to} . "/" . $it->{Path};
+        my $full = $self->{to} . "/" . $path;
+        my $full_escaped = $self->{to} . "/" . $path_escaped;
 
         # restore default modes from header
         $it->{Mode} ||= $meta->{DefaultFileMode} if $type eq "f";
         $it->{Mode} ||= $meta->{DefaultDirMode}  if $type eq "d";
 
-        warn " * restoring $it->{Path} to $full\n" if $self->{verbose};
+        warn " * restoring $path_escaped to $full_escaped\n" if $self->{verbose};
         $self->_restore_link     ($full, $it) if $type eq "l";
         $self->_restore_directory($full, $it) if $type eq "d";
         $self->_restore_fifo     ($full, $it) if $type eq "p";

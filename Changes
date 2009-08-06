@@ -1,4 +1,6 @@
 
+  - add metafile path name escaping using String::Escape (gavincarr)
+
   - add brackup-verify-inventory utility (gavincarr)
 
   - add chunkpath and size methods to Amazon S3 target (gavincarr)
