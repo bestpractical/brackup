@@ -246,6 +246,7 @@ sub backup {
         close $metafh or die;
 
         my $contents;
+        my $is_encrypted = 0;
 
         # store the metafile, encrypted, on the target
         if ($gpg_rcpt) {
@@ -256,6 +257,7 @@ sub backup {
                 and die "Failed to run gpg while encryping metafile: $!\n";
             $contents = _contents_of($encfile);
             unlink $encfile;
+            $is_encrypted = 1;
         } else {
             $contents = _contents_of($backup_file);
         }
@@ -263,7 +265,7 @@ sub backup {
         # store it on the target
         $self->debug("Storing metafile to " . ref($target));
         my $name = $self->{root}->publicname . "-" . $self->backup_time;
-        $target->store_backup_meta($name, $contents);
+        $target->store_backup_meta($name, $contents, { is_encrypted => $is_encrypted })
     }
     $self->report_progress(100, "Backup complete.");
 

@@ -73,19 +73,29 @@ sub _eurl {
 
 sub _get_upload_url {
     my $self = shift;
-    unless (@{$self->{upload_urls}}) {
-        my $req = HTTP::Request->new("GET",
-                                     "$self->{url}/get_upload_urls?" .
-                                     "count=10&" .
-                                     "password=" . _eurl($self->{password}) . "&" .
-                                     "user_email=" . $self->{user_email});
-        my $res = $self->{ua}->request($req);
-        if ($res->is_success) {
-            $self->{upload_urls} = [ split(/\s*\n\s*/, $res->content) ];
-        } else {
-            die "Failed to get upload URLs: " . $res->status_line . "\n" . $res->content;
-        }
+    my $for_backup = shift || 0;
+
+    if (!$for_backup && @{$self->{upload_urls}}) {
+        my $url = shift @{$self->{upload_urls}};
+        die "Bogus URL: $url" unless $url =~ /^http/;
+        return $url;
     }
+
+    my $count = $for_backup ? 1 : 10;
+
+    my $req = HTTP::Request->new("GET",
+                                 "$self->{url}/get_upload_urls?" .
+                                 "for_backup=$for_backup&" .
+                                 "count=$count&" .
+                                 "password=" . _eurl($self->{password}) . "&" .
+                                 "user_email=" . $self->{user_email});
+    my $res = $self->{ua}->request($req);
+    if ($res->is_success) {
+        $self->{upload_urls} = [ split(/\s*\n\s*/, $res->content) ];
+    } else {
+        die "Failed to get upload URLs: " . $res->status_line . "\n" . $res->content;
+    }
+
     my $url = shift @{$self->{upload_urls}};
     die "Bogus URL: $url" unless $url =~ /^http/;
     return $url;
@@ -143,9 +153,37 @@ sub chunks {
 }
 
 sub store_backup_meta {
-    my ($self, $name, $file) = @_;
-    die "no impl";
-    return 1;
+    my ($self, $name, $file, $meta) = @_;
+    $meta ||= {};
+
+    print "Storing backup: $name\n";
+
+    my $upload_url = $self->_get_upload_url(1)  # for backup
+        or die;
+
+    my $req = HTTP::Request::Common::POST($upload_url,
+                                          Content_Type => 'form-data',
+                                          Content => [
+                                                      "password" => $self->{password},
+                                                      "user_email" => $self->{user_email},
+                                                      "encrypted" => $meta->{is_encrypted} ? 1 : 0,
+                                                      "title" => $name,
+                                                      "file" => [ undef, $name,
+                                                                  "Content-Type" => "x-danga/brackup-backup",
+                                                                  Content => $file ]
+                                                     ]);
+
+    my $res = $self->{ua}->simple_request($req);
+    unless ($res->status_line =~ /^302/) {
+        # TODO: retries on 5xx?
+        die "Expected 302 redirect from AppEngine, got: " . $res->status_line;
+    }
+
+    my $location = $res->header("Location");
+    return 1 if $location =~ m!/success$!;
+
+    warn "Got error message from AppEngine: $location\n";
+    return 0;
 }
 
 sub backups {
