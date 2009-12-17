@@ -24,7 +24,7 @@ sub new {
 
 # return hashref of key/value pairs you want returned to you during a restore
 # you should include anything you need to restore.
-# keys should only contain \w
+# keys must match /^\w+$/
 sub backup_header {
     return {}
 }

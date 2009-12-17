@@ -306,7 +306,7 @@ sub backup_header {
     $ret .= "BackupTime: " . $now . " (" . localtime($now) . ")\n";
     $ret .= "BackupDriver: " . ref($self->{target}) . "\n";
     if (my $fields = $self->{target}->backup_header) {
-        foreach my $k (keys %$fields) {
+        foreach my $k (sort keys %$fields) {
             die "Bogus header field from driver" unless $k =~ /^\w+$/;
             my $val = $fields->{$k};
             die "Bogus header value from driver" if $val =~ /[\r\n]/;

@@ -7,7 +7,7 @@ use Carp qw(croak);
 use LWP::ConnCache;
 use LWP::UserAgent;
 use HTTP::Request;
-use HTTP::Request::Common ();
+use HTTP::Request::Common;
 
 # fields in object:
 #   user_email
@@ -25,6 +25,11 @@ sub new {
     $self->{url} = $confsec->value("server_url")
         or die "No 'server_url'";
 
+    return $self->_init;
+}
+
+sub _init {
+    my $self = shift;
     $self->{url} =~ s!/$!!;
     my $conn_cache = LWP::ConnCache->new(total_capacity => 10);
     $self->{ua} = LWP::UserAgent->new(conn_cache => $conn_cache);
@@ -42,11 +47,24 @@ sub _prompt {
     return $ans;
 }
 
+sub backup_header {
+    my $self = shift;
+    return {
+        "UserEmail" => $self->{user_email},
+        "URL" => $self->{url},
+    };
+}
+
 sub new_from_backup_header {
     my ($class, $header) = @_;
-    use Data::Dumper;
-    die "not implemented new_from_backup_header.  header = " . Dumper($header);
-    #return $self;
+    my $password = _prompt("App Engine Target Server Password for $header->{UserEmail}: ")
+        or die "Password required.\n";
+    my $self = bless {
+        user_email => $header->{UserEmail},
+        url => $header->{URL},
+        password => $password,
+    }, $class;
+    return $self->_init;
 }
 
 sub has_chunk {
@@ -59,9 +77,22 @@ sub has_chunk {
 
 sub load_chunk {
     my ($self, $dig) = @_;
-    die "no impl";
-    #return 0;
-    #return \ $val;
+    my $req = GET("$self->{url}/get_chunk?digest=$dig&" .
+                  "password=" . _eurl($self->{password}) . "&" .
+                  "user_email=" . $self->{user_email});
+    my $res = $self->{ua}->request($req);
+    if ($res->is_success) {
+        my $content_type = $res->header("Content-Type");
+        die "Expected x-danga/brackup-chunk content type but got $content_type."
+            unless $content_type eq "x-danga/brackup-chunk";
+        my $content_ref = \ scalar $res->content;
+        # TODO: verify digest out of paranoia?
+        return $content_ref;
+    } else {
+        warn "Failed to get chunk $dig: " . $res->status_line . "\n"
+            . $res->content;
+    }
+    return 0;
 }
 
 sub _eurl {
