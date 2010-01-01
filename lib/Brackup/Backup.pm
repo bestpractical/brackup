@@ -265,7 +265,7 @@ sub backup {
         # store it on the target
         $self->debug("Storing metafile to " . ref($target));
         my $name = $self->{root}->publicname . "-" . $self->backup_time;
-        $target->store_backup_meta($name, $contents, { is_encrypted => $is_encrypted })
+        $target->store_backup_meta($name, $contents, { is_encrypted => $is_encrypted });
     }
     $self->report_progress(100, "Backup complete.");
 
