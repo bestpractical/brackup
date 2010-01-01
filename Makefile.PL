@@ -4,7 +4,8 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile( NAME            => 'Brackup',
                VERSION_FROM    => 'lib/Brackup.pm',
-               EXE_FILES       => [ 'brackup', 'brackup-restore', 'brackup-target' ],
+               EXE_FILES       => [ 'brackup', 'brackup-restore', 'brackup-target', 
+                                    'brackup-mount', 'brackup-verify-inventory', ],
                PREREQ_PM       => {
                    'DBD::SQLite'  => 0,
                    'Digest::SHA1' => 0,
