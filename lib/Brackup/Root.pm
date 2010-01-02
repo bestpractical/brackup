@@ -118,7 +118,7 @@ sub foreach_file {
 
                 # gpg seems to barf on files ending in whitespace, blowing
                 # stuff up, so we just skip them instead...
-                if ($path =~ /\s+$/) {
+                if ($self->gpg_rcpt && $path =~ /\s+$/) {
                     warn "Skipping file ending in whitespace: <$path>\n";
                     next;
                 }
