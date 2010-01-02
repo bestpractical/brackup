@@ -3,6 +3,7 @@ package Brackup::PositionedChunk;
 use strict;
 use warnings;
 use Carp qw(croak);
+use Fcntl qw(O_RDONLY);
 use Digest::SHA1 qw(sha1_hex);
 
 use fields (
@@ -92,7 +93,7 @@ sub raw_chunkref {
 
     my $data;
     my $fullpath = $self->{file}->fullpath;
-    open(my $fh, $fullpath) or die "Failed to open $fullpath: $!\n";
+    sysopen(my $fh, $fullpath, O_RDONLY) or die "Failed to open $fullpath: $!";
     binmode($fh);
     seek($fh, $self->{offset}, 0) or die "Couldn't seek: $!\n";
     my $rv = read($fh, $data, $self->{length})

@@ -9,6 +9,7 @@ use vars qw(@ISA @EXPORT_OK);
 
 use File::Path qw();
 use Carp;
+use Fcntl qw(O_RDONLY);
 
 my $mainpid = $$;
 my $_temp_directory;
@@ -45,7 +46,7 @@ sub tempdir {
 
 sub slurp {
     my $file = shift;
-    open(my $fh, $file) or die "Failed to open $file: $!\n";
+    sysopen(my $fh, $file, O_RDONLY) or die "Failed to open $file: $!";
     return do { local $/; <$fh>; }
 }
 

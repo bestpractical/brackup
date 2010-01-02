@@ -4,6 +4,7 @@ use warnings;
 use Carp qw(croak);
 use Digest::SHA1;
 use POSIX qw(mkfifo);
+use Fcntl qw(O_RDONLY O_CREAT O_WRONLY O_TRUNC);
 use String::Escape qw(unprintable);
 use Brackup::DecryptedFile;
 use Brackup::Decrypt;
@@ -176,7 +177,7 @@ sub _restore_file {
         die "File $full ($it->{Path}) already exists.  Aborting.";
     }
 
-    open (my $fh, ">$full") or die "Failed to open $full for writing";
+    sysopen(my $fh, $full, O_CREAT|O_WRONLY|O_TRUNC) or die "Failed to open '$full' for writing: $!";
     binmode($fh);
     my @chunks = grep { $_ } split(/\s+/, $it->{Chunks} || "");
     foreach my $ch (@chunks) {
@@ -217,7 +218,7 @@ sub _restore_file {
             unless $good_dig =~ /^sha1:(.+)/;
         $good_dig = $1;
 
-        open (my $readfh, $full) or die "Couldn't reopen file for verification";
+        sysopen(my $readfh, $full, O_RDONLY) or die "Failed to reopen '$full' for verification: $!";
         binmode($readfh);
         my $sha1 = Digest::SHA1->new;
         $sha1->addfile($readfh);

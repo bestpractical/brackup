@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use Carp qw(croak);
 use File::stat ();
-use Fcntl qw(S_ISREG S_ISDIR S_ISLNK S_ISFIFO);
+use Fcntl qw(S_ISREG S_ISDIR S_ISLNK S_ISFIFO O_RDONLY);
 use Digest::SHA1;
 use String::Escape qw(printable);
 use Brackup::PositionedChunk;
@@ -153,7 +153,7 @@ sub _calc_full_digest {
     unless ($dig) {
         my $sha1 = Digest::SHA1->new;
         my $path = $self->fullpath;
-        open (my $fh, $path) or die "Couldn't open $path: $!\n";
+        sysopen(my $fh, $path, O_RDONLY) or die "Failed to open $path: $!";
         binmode($fh);
         $sha1->addfile($fh);
         close($fh);
