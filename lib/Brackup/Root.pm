@@ -116,12 +116,13 @@ sub foreach_file {
                 # the backup meta files later, so let's skip it.
                 next if $path eq $self->{digcache_file};
 
+                # GC: seems to work fine as of at least gpg 1.4.5, so commenting out
                 # gpg seems to barf on files ending in whitespace, blowing
                 # stuff up, so we just skip them instead...
-                if ($self->gpg_rcpt && $path =~ /\s+$/) {
-                    warn "Skipping file ending in whitespace: <$path>\n";
-                    next;
-                }
+                #if ($self->gpg_rcpt && $path =~ /\s+$/) {
+                #    warn "Skipping file ending in whitespace: <$path>\n";
+                #    next;
+                #}
 
                 my $statobj = File::stat::lstat($path);
                 my $is_dir = -d _;
