@@ -1,9 +1,11 @@
 
-  - add metafile path name escaping using String::Escape (gavincarr)
+  - fix filename trailing whitespace problems with open (Gavin Carr)
 
-  - add brackup-verify-inventory utility (gavincarr)
+  - add metafile path name escaping using String::Escape (Gavin Carr)
 
-  - add chunkpath and size methods to Amazon S3 target (gavincarr)
+  - add brackup-verify-inventory utility (Gavin Carr)
+
+  - add chunkpath and size methods to Amazon S3 target (Gavin Carr)
 
 1.09 (2009-05-18)
 
@@ -15,12 +17,12 @@
 
 1.08 (2009-04-26)
 
-  - make brackup-target --verbose prune and gc more verbose (gavincarr)
+  - make brackup-target --verbose prune and gc more verbose (Gavin Carr)
 
-  - add a --interactive option to brackup-target gc (gavincarr) 
+  - add a --interactive option to brackup-target gc (Gavin Carr) 
 
   - add a --source option to brackup-target prune, to restrict a prune 
-    run to a particular source (gavincarr)
+    run to a particular source (Gavin Carr)
    
   - update Amazon target to handle new ISO8601 modify timestamps (Ben 
     Schumacher)

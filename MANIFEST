@@ -58,6 +58,7 @@ t/03-combine-little-files.t
 t/04-gc-filesystem.t
 t/04-gc-ftp.t
 t/04-gc-sftp.t
+t/05-filename-escaping.t
 t/data/000-dup1.txt
 t/data/000-dup2.txt
 t/data/huge-file.txt
@@ -67,4 +68,13 @@ t/data/my_dir/sub_dir/program.sh
 t/data/pubring-test.gpg
 t/data/secring-test.gpg
 t/data/test-file.txt
+t/data-weird-filenames/000-dup1.txt
+t/data-weird-filenames/000-dup2.txt
+'t/data-weird-filenames/filename whitespace'
+'t/data-weird-filenames/filename_trailing_whitespace   '
+t/data-weird-filenames/huge-file.txt
+t/data-weird-filenames/my-link.txt
+t/data-weird-filenames/pubring-test.gpg
+t/data-weird-filenames/secring-test.gpg
+t/data-weird-filenames/test-file.txt
 TODO
