@@ -11,15 +11,23 @@ use Carp qw(croak);
 sub new {
     my ($class, $confsec) = @_;
     my $self = bless {}, $class;
-    my $name = $confsec->name;
-    $name =~ s!^TARGET:!! or die;
+    $self->{name} = $confsec->name;
+    $self->{name} =~ s/^TARGET://
+        or die "No target found matching " . $confsec->name;
+    die "Target name must be only a-z, A-Z, 0-9, and _." 
+        unless $self->{name} =~ /^\w+/;
 
     $self->{keep_backups} = $confsec->value("keep_backups");
     $self->{inv_db} =
         Brackup::InventoryDatabase->new($confsec->value("inventory_db") ||
-                                        "$ENV{HOME}/.brackup-target-$name.invdb");
+                                        "$ENV{HOME}/.brackup-target-$self->{name}.invdb");
 
     return $self;
+}
+
+sub name {
+    my $self = shift;
+    return $self->{name};
 }
 
 # return hashref of key/value pairs you want returned to you during a restore
