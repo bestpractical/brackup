@@ -132,7 +132,8 @@ my $target = eval { $config->load_target($target_name); } or
 
 
 my @now = localtime();
-$backup_file ||= $root->name . "-" . sprintf("%04d%02d%02d", $now[5]+1900, $now[4]+1, $now[3]) . ".brackup";
+$backup_file ||= sprintf("%s-%s-%04d%02d%02d.brackup", 
+    $root->name, $target->name, $now[5]+1900, $now[4]+1, $now[3]);
 $backup_file =~ s!^~/!$ENV{HOME}/! if $ENV{HOME};
 $backup_file = "$cwd/$backup_file" unless $backup_file =~ m!^/!;
 
