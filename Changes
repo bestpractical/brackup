@@ -1,4 +1,7 @@
 
+  - add Brackup::BackupStats implementation, brackup stats output, and 
+    --save-stats argument (Gavin Carr)
+
   - fix filename trailing whitespace problems with open (Gavin Carr)
 
   - add metafile path name escaping using String::Escape (Gavin Carr)

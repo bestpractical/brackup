@@ -15,6 +15,8 @@ sub new {
     $self->{target}  = delete $opts{target};   # Brackup::Target
     $self->{dryrun}  = delete $opts{dryrun};   # bool
     $self->{verbose} = delete $opts{verbose};  # bool
+    $self->{inventory} = delete $opts{inventory};  # bool
+    $self->{savefiles} = delete $opts{savefiles};  # bool
     $self->{zenityprogress} = delete $opts{zenityprogress};  # bool
 
     $self->{modecounts} = {}; # type -> mode(octal) -> count
@@ -43,6 +45,7 @@ sub backup {
 
     # if we're pre-calculating the amount of data we'll
     # actually need to upload, store it here.
+    my $n_files_up   = 0;
     my $n_kb_up      = 0.0;
     my $n_kb_up_need = 0.0; # by default, not calculated/used.
 
@@ -59,6 +62,9 @@ sub backup {
     });
 
     $self->debug("Number of files: $n_files\n");
+    $stats->timestamp('File Discovery');
+    $stats->set('Number of Files' => $n_files);
+    $stats->set('Total File Size' => sprintf('%0.01f MB', $n_kb / 1024));
 
     # calc needed chunks
     if ($ENV{CALC_NEEDED}) {
@@ -76,10 +82,12 @@ sub backup {
             }
         }
         warn "kb need to upload = $n_kb_up_need\n";
+        $stats->timestamp('Calc Needed');
     }
 
 
     my $chunk_iterator = Brackup::ChunkIterator->new(@files);
+    $stats->timestamp('Chunk Iterator');
 
     my $gpg_iter;
     my $gpg_pm;   # gpg ProcessManager
@@ -164,7 +172,10 @@ sub backup {
             next;
         }
 
-        $show_status->() unless $file_has_shown_status++;
+        unless ($file_has_shown_status++) {
+            $show_status->();
+            $n_files_up++;
+        }
         $self->debug("  * storing chunk: ", $pchunk->as_string, "\n");
         $self->report_progress(undef, $pchunk->file->path . " (" . $pchunk->offset . "," . $pchunk->length . ")");
 
@@ -227,11 +238,15 @@ sub backup {
             #}
         }
 
+        $stats->check_maxmem;
         $pchunk->forget_chunkref;
         $schunk->forget_chunkref if $schunk;
     }
     $end_file->();
     $comp_chunk->finalize if $comp_chunk;
+    $stats->timestamp('Chunk Storage');
+    $stats->set('Number of Files Uploaded:', $n_files_up);
+    $stats->set('Total File Size Uploaded:', sprintf('%0.01f MB', $n_kb_up / 1024));
 
     unless ($self->{dryrun}) {
         # write the metafile
@@ -266,6 +281,7 @@ sub backup {
         $self->debug("Storing metafile to " . ref($target));
         my $name = $self->{root}->publicname . "-" . $self->backup_time;
         $target->store_backup_meta($name, $contents, { is_encrypted => $is_encrypted });
+        $stats->timestamp('Metafile Storage');
     }
     $self->report_progress(100, "Backup complete.");
 
