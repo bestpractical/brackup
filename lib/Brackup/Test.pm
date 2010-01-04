@@ -65,8 +65,9 @@ sub do_backup {
     ok($target, "have a target ($target)");
 
     my $backup = Brackup::Backup->new(
-                                      root    => $root,
-                                      target  => $target,
+                                      root      => $root,
+                                      target    => $target,
+                                      savefiles => 1,
                                       );
     ok($backup, "have a backup object");
 

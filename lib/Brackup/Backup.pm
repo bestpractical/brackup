@@ -6,6 +6,8 @@ use Brackup::ChunkIterator;
 use Brackup::CompositeChunk;
 use Brackup::GPGProcManager;
 use Brackup::GPGProcess;
+use File::Basename;
+use File::Temp;
 
 sub new {
     my ($class, %opts) = @_;
@@ -22,6 +24,7 @@ sub new {
     $self->{modecounts} = {}; # type -> mode(octal) -> count
 
     $self->{saved_files} = [];   # list of Brackup::File objects backed up
+    $self->{unflushed_files} = [];   # list of Brackup::File objects not in backup_file
 
     croak("Unknown options: " . join(', ', keys %opts)) if %opts;
 
@@ -57,6 +60,7 @@ sub backup {
     $root->foreach_file(sub {
         my ($file) = @_;  # a Brackup::File
         push @files, $file;
+        $self->record_mode($file);
         $n_files++;
         $n_kb += $file->size / 1024;
     });
@@ -87,6 +91,7 @@ sub backup {
 
 
     my $chunk_iterator = Brackup::ChunkIterator->new(@files);
+    undef @files;
     $stats->timestamp('Chunk Iterator');
 
     my $gpg_iter;
@@ -96,13 +101,33 @@ sub backup {
         $gpg_pm = Brackup::GPGProcManager->new($gpg_iter, $target);
     }
 
+    # begin temp backup_file
+    my $metafh;
+    unless ($self->{dryrun}) {
+        $metafh = File::Temp->new(
+                                  DIR => dirname($backup_file),
+                                  TEMPLATE => '.' . basename($backup_file) . 'XXXXX',
+        );
+        print $metafh $self->backup_header;
+    }
+
     my $cur_file; # current (last seen) file
     my @stored_chunks;
     my $file_has_shown_status = 0;
 
+    my $merge_under = $root->merge_files_under;
+    my $comp_chunk  = undef;
+
     my $end_file = sub {
         return unless $cur_file;
-        $self->add_file($cur_file, [ @stored_chunks ]);
+        if ($merge_under && $comp_chunk) {
+            # defer recording to backup_file until CompositeChunk finalization
+            $self->add_unflushed_file($cur_file, [ @stored_chunks ]);
+        }
+        else {
+            print $metafh $cur_file->as_rfc822([ @stored_chunks ], $self) if $metafh;
+        }
+        $self->add_saved_file($cur_file, [ @stored_chunks ]) if $self->{savefiles};
         $n_files_done++;
         $n_kb_done += $cur_file->size / 1024;
         $cur_file = undef;
@@ -136,9 +161,6 @@ sub backup {
         }
         $file_has_shown_status = 0;
     };
-
-    my $merge_under = $root->merge_files_under;
-    my $comp_chunk  = undef;
 
     # records are either Brackup::File (for symlinks, directories, etc), or
     # PositionedChunks, in which case the file can asked of the chunk
@@ -203,6 +225,7 @@ sub backup {
                     $self->debug("Finalizing composite chunk $comp_chunk...");
                     $comp_chunk->finalize;
                     $comp_chunk = undef;
+                    $self->flush_files($metafh);
                 }
                 $comp_chunk ||= Brackup::CompositeChunk->new($root, $target);
                 $comp_chunk->append_little_chunk($schunk);
@@ -244,21 +267,16 @@ sub backup {
     }
     $end_file->();
     $comp_chunk->finalize if $comp_chunk;
+    $self->flush_files($metafh);
     $stats->timestamp('Chunk Storage');
     $stats->set('Number of Files Uploaded:', $n_files_up);
     $stats->set('Total File Size Uploaded:', sprintf('%0.01f MB', $n_kb_up / 1024));
 
     unless ($self->{dryrun}) {
-        # write the metafile
-        $self->debug("Writing metafile ($backup_file)");
-        $self->report_progress(100, "Saving metafile " . $backup_file);
-        open (my $metafh, ">$backup_file") or die "Failed to open $backup_file for writing: $!\n";
-        print $metafh $self->backup_header;
-        $self->foreach_saved_file(sub {
-            my ($file, $schunk_list) = @_;
-            print $metafh $file->as_rfc822($schunk_list, $self);  # arrayref of StoredChunks
-        });
+        # close the metafile
         close $metafh or die;
+        rename $metafh->filename, $backup_file
+            or die "Failed to rename temporary backup_file: $!\n";
 
         my $contents;
         my $is_encrypted = 0;
@@ -340,11 +358,29 @@ sub backup_header {
     return $ret;
 }
 
-sub add_file {
-    my ($self, $file, $handlelist) = @_;
+sub record_mode {
+    my ($self, $file) = @_;
     $self->{modecounts}{$file->type}{$file->mode}++;
-    push @{ $self->{saved_files} }, [ $file, $handlelist ];
 }
+
+sub add_unflushed_file {
+    my ($self, $file, $handlelist) = @_;
+    push @{ $self->{unflushed_files} }, [ $file, $handlelist ];
+}   
+
+sub flush_files {
+    my ($self, $fh) = @_;
+    while (my $rec = shift @{ $self->{unflushed_files} }) {
+      next unless $fh;
+      my ($file, $stored_chunks) = @$rec;
+      print $fh $file->as_rfc822($stored_chunks, $self);
+    }
+}
+
+sub add_saved_file {
+    my ($self, $file, $handlelist) = @_;
+    push @{ $self->{saved_files} }, [ $file, $handlelist ];
+}   
 
 sub foreach_saved_file {
     my ($self, $cb) = @_;
