@@ -159,16 +159,32 @@ sub store_chunk {
                                                                   Content => $$chunkref ]
                                                       ]);
 
-    my $res = $self->{ua}->simple_request($req);
-    unless ($res->status_line =~ /^302/) {
-        # TODO: retries on 5xx?
-        die "Expected 302 redirect from AppEngine, got: " . $res->status_line;
+    my $location = 0;
+    my $n_errors = 0;
+    while ($n_errors < 10) {
+        my $res = $self->{ua}->simple_request($req);
+        if ($res->status_line =~ /^500/) {
+            # AppEngine's datastore decided to time out on its
+            # un-contended transactions?  Bleh.
+            $n_errors++;
+            warn "500 error from AppEngine (errors=$n_errors).  Retrying after some sleep.\n";
+            sleep(5);
+            next;
+        }
+
+        unless ($res->status_line =~ /^302/) {
+            # TODO: retries on 5xx?
+            die "Expected 302 redirect from AppEngine, got: " . $res->status_line;
+        }
+
+        my $location = $res->header("Location");
+        return 1 if $location =~ m!/success$!;
+
+        warn "Got error message from AppEngine: $location\n";
+        return 0;
     }
 
-    my $location = $res->header("Location");
-    return 1 if $location =~ m!/success$!;
-
-    warn "Got error message from AppEngine: $location\n";
+    warn "Too many failures.";
     return 0;
 }
 
