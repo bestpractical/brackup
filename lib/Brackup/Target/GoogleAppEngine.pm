@@ -276,6 +276,11 @@ sub size {
 
 Brackup::Target::GoogleAppEngine - backup to the App Engine target server
 
+=head1 WARNING WARNING WARNING
+
+This isn't totally done yet.  B<Don't trust it quite yet>.  Restore should
+work now, but storing and re-retrieving metafiles isn't done yet, for instance.
+
 =head1 EXAMPLE
 
 In your ~/.brackup.conf file:
@@ -309,6 +314,8 @@ You should make a separate password just for this.
 
 URL to your brackup-gae-server instance.
 
+Source code to run your own instance is at: L<http://github.com/bradfitz/brackup-gae-server>
+
 =back
 
 =head1 WARRANTY AND SUPPORT
@@ -317,6 +324,9 @@ None.  Use this at your own risk.  I'm a Google employee, but I'm not
 writing this as a Google employee, and this is not a Google product.
 
 This comes with no warranty, neither expressed nor implied.
+
+Also, it doesn't even work yet.  It's still in development.  See the
+WARNING WARNING WARNING section at top.
 
 =head1 SEE ALSO
 
