@@ -22,12 +22,12 @@ sub new {
 }
 
 sub new_from_backup_header {
-    my ($class, $header) = @_;
+    my ($class, $header, $confsec) = @_;
     my $self = bless {}, $class;
 
     $self->{ftp_host} = $ENV{FTP_HOST} || $header->{'FtpHost'};
     $self->{ftp_user} = $ENV{FTP_USER} || $header->{'FtpUser'};
-    $self->{ftp_password} = $ENV{FTP_PASSWORD} or
+    $self->{ftp_password} = $ENV{FTP_PASSWORD} || $confsec->{ftp_password} or
         die "FTP_PASSWORD missing in environment";
     $self->{path} = $header->{'BackupPath'} or
         die "No BackupPath specified in the backup metafile.\n";

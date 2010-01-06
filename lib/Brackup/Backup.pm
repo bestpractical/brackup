@@ -349,6 +349,7 @@ sub backup_header {
     }
     $ret .= "RootName: " . $self->{root}->name . "\n";
     $ret .= "RootPath: " . $self->{root}->path . "\n";
+    $ret .= "TargetName: " . $self->{target}->name . "\n";
     $ret .= "DefaultFileMode: " . $self->default_file_mode . "\n";
     $ret .= "DefaultDirMode: " . $self->default_directory_mode . "\n";
     if (my $rcpt = $self->{root}->gpg_rcpt) {

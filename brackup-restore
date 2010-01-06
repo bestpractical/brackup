@@ -117,6 +117,7 @@ my $restore = Brackup::Restore->new(
                                     to     => $restore_dir,
                                     prefix => $prefix,
                                     file   => $meta_file,
+                                    config => $config,
                                     verbose => $opt_verbose,
                                     );
 

@@ -16,6 +16,7 @@ sub new {
     $self->{to}      = delete $opts{to};      # directory we're restoring to
     $self->{prefix}  = delete $opts{prefix};  # directory/file filename prefix, or "" for all
     $self->{filename}= delete $opts{file};    # filename we're restoring from
+    $self->{config}  = delete $opts{config};  # brackup config (if available)
     $self->{verbose} = delete $opts{verbose};
 
     $self->{prefix} =~ s/\/$// if $self->{prefix};
@@ -50,9 +51,14 @@ sub restore {
 
     my $driver_meta = _driver_meta($meta);
 
+    my $confsec;
+    if ($self->{config} && $meta->{TargetName}) {
+        $confsec = eval { $self->{config}->load_target($meta->{TargetName}) };
+    }
+
     eval "use $driver_class; 1;" or die
         "Failed to load driver ($driver_class) to restore from: $@\n";
-    my $target = eval {"$driver_class"->new_from_backup_header($driver_meta); };
+    my $target = eval {"$driver_class"->new_from_backup_header($driver_meta, $confsec); };
     if ($@) {
         die "Failed to instantiate target ($driver_class) for restore. Perhaps it doesn't support restoring yet?\n\nThe error was: $@";
     }
