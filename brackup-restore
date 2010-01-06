@@ -28,6 +28,7 @@ L<brackup-target>.
 =item --to=NAME
 
 Required.  The destination root directory for your restored files.
+Will be created if it doesn't exist.
 
 =item --all
 
@@ -62,6 +63,7 @@ software under the terms of same terms as perl itself.
 use strict;
 use warnings;
 use Getopt::Long;
+use File::Path;
 
 use FindBin qw($Bin);
 use lib "$Bin/lib";
@@ -98,6 +100,10 @@ usage("Given directory isn't a directory") unless -d $restore_dir;
 usage("Given restore file doesn't exist")  unless -e $meta_file;
 usage("Given restore file isn't a file")   unless -f $meta_file;
 $prefix ||= "";  # with -all, "", which means everything
+
+if (! -e $restore_dir) {
+    mkpath($restore_dir, 0, 0700) or die "Cannot create restore directory: $!";
+}
 
 my $restore = Brackup::Restore->new(
                                     to     => $restore_dir,
