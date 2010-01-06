@@ -59,8 +59,29 @@ sub restore {
     $self->{_target} = $target;
     $self->{_meta}   = $meta;
 
-    my $restore_count = 0;
+    # we first process directories, then files sorted by their first chunk,
+    # then the rest. The file sorting allows us to avoid loading composite 
+    # chunks and identical single chunk files multiple times from the target
+    # (see _restore_file)
+    my (@dirs, @files, @rest);
     while (my $it = $parser->readline) {
+        my $type = $it->{Type} || 'f';
+        if($type eq 'f') {
+            # find dig of first chunk
+            ($it->{Chunks} || '') =~ /^(\S+)/;
+            my ($offset, $len, $enc_len, $dig) = split(/;/, $1 || '');
+            $it->{fst_dig} = $dig || '';
+            push @files, $it;
+        } elsif($type eq 'd') {
+            push @dirs, $it;
+        } else {
+            push @rest, $it;
+        }
+    }
+    @files = sort { $a->{fst_dig} cmp $b->{fst_dig} } @files;
+
+    my $restore_count = 0;
+    for my $it (@dirs, @files, @rest) {
         my $type = $it->{Type} || "f";
         my $path = unprintable($it->{Path});
         my $path_escaped = $it->{Path};
@@ -93,6 +114,10 @@ sub restore {
         $self->_restore_fifo     ($full, $it) if $type eq "p";
         $self->_restore_file     ($full, $it) if $type eq "f";
     }
+
+    # clear chunk cached by _restore_file
+    delete $self->{_cached_dig};
+    delete $self->{_cached_dataref};
 
     if ($restore_count) {
         warn " * fixing stat info\n" if $self->{verbose};
@@ -182,16 +207,27 @@ sub _restore_file {
     my @chunks = grep { $_ } split(/\s+/, $it->{Chunks} || "");
     foreach my $ch (@chunks) {
         my ($offset, $len, $enc_len, $dig) = split(/;/, $ch);
-        my $dataref = $self->{_target}->load_chunk($dig) or
-            die "Error loading chunk $dig from the restore target\n";
+
+        # we process files sorted by the dig of their first chunk, caching
+        # the last seen chunk to avoid loading composite chunks multiple 
+        # times (all files included in composite chunks are single-chunk 
+        # files, by definition). Even for non-composite chunks there is a 
+        # speedup if we have single-chunk identical files.
+        my $dataref;
+        if($dig eq ($self->{_cached_dig} || '')) {
+            warn "   ** using cached chunk $dig\n" if $self->{verbose};
+            $dataref = $self->{_cached_dataref};
+        } else {
+            warn "   ** loading chunk $dig from target\n" if $self->{verbose};
+            $dataref = $self->{_target}->load_chunk($dig) or
+                die "Error loading chunk $dig from the restore target\n";
+            $self->{_cached_dig} = $dig;
+            $self->{_cached_dataref} = $dataref;
+        }
 
         my $len_chunk = length $$dataref;
 
         # using just a range of the file
-        # TODO: inefficient!  we don't want to download the chunk from the
-        # target multiple times.  better to cache it locally, or at least
-        # only fetch a region from the target (but that's still kinda inefficient
-        # and pushes complexity into the Target interface)
         if ($enc_len =~ /^(\d+)-(\d+)$/) {
             my ($from, $to) = ($1, $2);
             # file range.  gotta be at least as big as bigger number

@@ -1,4 +1,7 @@
 
+  - sort brackup-restore files to avoid loading composite chunks from
+    target multiple times (Kostas Chatzikokolakis)
+
   - write metafile as we go, instead of big bang at the end (Gavin Carr)
 
   - add Brackup::BackupStats implementation, brackup stats output, and 
