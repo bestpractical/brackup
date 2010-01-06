@@ -1,15 +1,20 @@
 # -*-perl-*-
+#
+# Backup test of sftp target - set $ENV{BRACKUP_TEST_SFTP} to run
+#
 
 use strict;
-use Test::More tests => 24;
+use Test::More;
 
 use Brackup::Test;
 use FindBin qw($Bin);
 use Brackup::Util qw(tempfile);
 
-SKIP: {
-
-skip "\$ENV{BRACKUP_TEST_SFTP} not set", 24 unless $ENV{BRACKUP_TEST_SFTP};
+if ($ENV{BRACKUP_TEST_SFTP}) {
+  plan tests => 24;
+} else {
+  plan skip_all => "\$ENV{BRACKUP_TEST_SFTP} not set";
+}
 
 ############### Backup
 
@@ -50,8 +55,6 @@ ok_files_match("$just_file/huge-file.txt", "$root_dir/huge-file.txt");
 # --just=DIR/FILE restore
 my $just_dir_file = do_restore($backup_file, prefix => 'my_dir/sub_dir/program.sh');
 ok_files_match("$just_dir_file/program.sh", "$root_dir/my_dir/sub_dir/program.sh");
-
-}
 
 # vim:sw=4:et
 

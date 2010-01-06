@@ -1,15 +1,20 @@
 # -*-perl-*-
+#
+# Garbage collection test with ftp target - set $ENV{BRACKUP_TEST_FTP} to run
+#
 
 use strict;
-use Test::More tests => 10;
+use Test::More;
 
 use Brackup::Test;
 use FindBin qw($Bin);
 use Brackup::Util qw(tempfile);
 
-SKIP: {
-
-skip "\$ENV{BRACKUP_TEST_FTP} not set", 10 unless $ENV{BRACKUP_TEST_FTP};
+if ($ENV{BRACKUP_TEST_FTP}) {
+  plan tests => 10;
+} else {
+  plan skip_all => "\$ENV{BRACKUP_TEST_FTP} not set";
+}
 
 ############### Backup
 
@@ -47,8 +52,6 @@ for (1..$orphan_chunks_count) {
 my $removed_count = eval { $target->gc };
 is($@, '', "gc successful");
 is($removed_count, $orphan_chunks_count, "all orphan chunks removed");
-
-}
 
 # vim:sw=4:et
 
