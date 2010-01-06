@@ -10,9 +10,9 @@ brackup-restore - The brackup restore tool.
 
 =head1 SYNOPSIS
 
- $ brackup-restore --from=foo.brackup --to=<base_directory> --all
- $ brackup-restore --from=foo.brackup --to=<base_directory> --just=<file>
- $ brackup-restore --from=foo.brackup --to=<base_directory> --just=<dir>
+ $ brackup-restore [-v] --from=foo.brackup --to=<base_directory> --all
+ $ brackup-restore [-v] --from=foo.brackup --to=<base_directory> --just=<file>
+ $ brackup-restore [-v] --from=foo.brackup --to=<base_directory> --just=<dir>
 
 =head2 OPTIONS
 
@@ -20,9 +20,9 @@ brackup-restore - The brackup restore tool.
 
 =item --from=NAME
 
-Required.  The backup metafile, describing the tree you want to
-restore.  Probably named like "source-YYYYMMDD.brackup".  If you lost
-it, it's also stored on your backup target, and you can fetch it with
+Required.  The backup metafile, describing the tree you want to restore.  
+Probably named like "source-target-YYYYMMDD.brackup".  If you lost it, 
+it's also stored on your backup target, and you can fetch it with
 L<brackup-target>.
 
 =item --to=NAME
@@ -36,11 +36,19 @@ Restore all files.
 
 =item --just="DIRECTORY"
 
-Restore just the directory named.  (and all contents thereunder)
+Restore just the directory named (and all its contents). 
 
 =item --just="FILE"
 
 Restore just the file named.
+
+=item --config=NAME
+
+Brackup config file to use instead of default.
+
+=item --verbose|-v
+
+Show more info during restore.
 
 =back
 
@@ -96,9 +104,9 @@ my $config = eval { Brackup::Config->load($config_file) } or
     usage($@);
 
 usage() unless $meta_file && $restore_dir && ($prefix || $opt_all);
-usage("Given directory isn't a directory") unless -d $restore_dir;
-usage("Given restore file doesn't exist")  unless -e $meta_file;
-usage("Given restore file isn't a file")   unless -f $meta_file;
+usage("Backup metafile '$meta_file' doesn't exist")  unless -e $meta_file;
+usage("Backup metafile '$meta_file' isn't a file")   unless -f $meta_file;
+usage("Restore directory '$restore_dir' isn't a directory") if -e $restore_dir && ! -d $restore_dir;
 $prefix ||= "";  # with -all, "", which means everything
 
 if (! -e $restore_dir) {
@@ -128,6 +136,6 @@ sub usage {
         $why =~ s/\s+$//;
         $why = "Error: $why\n\n";
     }
-    die "${why}brackup-restore --from=[metafile.brackup] --to=[restore_dir] <--all|--just=[what]>\nbrackup-restore --help\n";
+    die "${why}brackup-restore [-v] --from=[metafile.brackup] --to=[restore_dir] <--all|--just=[what]>\nbrackup-restore --help\n";
 
 }
