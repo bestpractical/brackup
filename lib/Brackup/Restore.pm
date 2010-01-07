@@ -96,6 +96,7 @@ sub restore {
         my $type = $it->{Type} || "f";
         my $path = unprintable($it->{Path});
         my $path_escaped = $it->{Path};
+        my $path_escaped_stripped = $it->{Path};
         die "Unknown filetype: type=$type, file: $path_escaped" unless $type =~ /^[ldfp]$/;
 
         if ($self->{prefix}) {
@@ -104,16 +105,18 @@ sub restore {
             if ($type ne 'd' && $path =~ m/^\Q$self->{prefix}\E\/?$/) {
                 if (my ($leading_prefix) = ($self->{prefix} =~ m/^(.*\/)[^\/]+\/?$/)) {
                     $path =~ s/^\Q$leading_prefix\E//;
+                    $path_escaped_stripped =~ s/^\Q$leading_prefix\E//;
                 }
             }
             else {
                 $path =~ s/^\Q$self->{prefix}\E\/?//;
+                $path_escaped_stripped =~ s/^\Q$self->{prefix}\E\/?//;
             }
         }
 
         $restore_count++;
         my $full = $self->{to} . "/" . $path;
-        my $full_escaped = $self->{to} . "/" . $path_escaped;
+        my $full_escaped = $self->{to} . "/" . $path_escaped_stripped;
 
         # restore default modes from header
         $it->{Mode} ||= $meta->{DefaultFileMode} if $type eq "f";
