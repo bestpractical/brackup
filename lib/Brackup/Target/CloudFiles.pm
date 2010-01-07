@@ -64,12 +64,12 @@ sub new_from_backup_header {
     my ($class, $header, $confsec) = @_;
 
     my $username  = ($ENV{'CF_USERNAME'} || 
-        $confsec->{cf_username} ||
+        $confsec->value('cf_username') ||
 		_prompt("Your CloudFiles username: "))
         or die "Need your Cloud Files username.\n";
 
     my $apiKey = ($ENV{'CF_API_KEY'} || 
-        $confsec->{cf_api_key} ||
+        $confsec->value('cf_api_key') ||
 		_prompt("Your CloudFiles api key: "))
         or die "Need your CloudFiles api key.\n";
 

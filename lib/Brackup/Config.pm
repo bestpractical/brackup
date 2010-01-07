@@ -16,6 +16,11 @@ sub add_section {
     $self->{$sec->name} = $sec;
 }
 
+sub get_section {
+    my ($self, $name) = @_;
+    return $self->{$name};
+}
+
 sub load {
     my ($class, $file) = @_;
     $file ||= Brackup::Config->default_config_file_name;
@@ -144,7 +149,7 @@ sub load_target {
 
     my $type = $confsec->value("type") or
         die "Target '$name' has no 'type'";
-    die "Invalid characters in $name's 'type'"
+    die "Invalid characters in ${name}'s 'type'"
         unless $type =~ /^\w+$/;
 
     my $class = "Brackup::Target::$type";

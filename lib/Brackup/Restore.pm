@@ -53,7 +53,7 @@ sub restore {
 
     my $confsec;
     if ($self->{config} && $meta->{TargetName}) {
-        $confsec = eval { $self->{config}->load_target($meta->{TargetName}) };
+        $confsec = eval { $self->{config}->get_section('TARGET:' . $meta->{TargetName}) };
     }
 
     eval "use $driver_class; 1;" or die

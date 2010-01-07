@@ -343,6 +343,7 @@ sub backup_header {
         foreach my $k (sort keys %$fields) {
             die "Bogus header field from driver" unless $k =~ /^\w+$/;
             my $val = $fields->{$k};
+            next if ! defined $val || $val eq '';   # skip keys with empty values
             die "Bogus header value from driver" if $val =~ /[\r\n]/;
             $ret .= "Driver-$k: $val\n";
         }

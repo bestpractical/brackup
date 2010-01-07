@@ -66,25 +66,44 @@ sub _prompt {
     return $ans;
 }
 
+sub backup_header {
+    my ($self) = @_;
+    return {
+        "AWSAccessKeyID"    => $self->{access_key_id},
+        "AWSPrefix"         => $self->{prefix},
+        "AWSLocation"       => $self->{location},
+        "AWSBackupPrefix"   => $self->{backup_prefix},
+    };
+}
+
 sub new_from_backup_header {
     my ($class, $header, $confsec) = @_;
 
     my $accesskey     = ($ENV{'AWS_KEY'} || 
-                         $confsec->{aws_access_key_id} || 
+                         $header->{AWSAccessKeyID} || 
+                         $confsec->value('aws_access_key_id') || 
                          _prompt("Your Amazon AWS access key? "))
         or die "Need your Amazon access key.\n";
     my $sec_accesskey = ($ENV{'AWS_SEC_KEY'} || 
-                         $confsec->{aws_secret_access_key} || 
+                         $confsec->value('aws_secret_access_key') || 
                          _prompt("Your Amazon AWS secret access key? "))
         or die "Need your Amazon secret access key.\n";
     my $prefix        = ($ENV{'AWS_PREFIX'} || 
-                         $confsec->{aws_prefix} || 
-                         _prompt("Your Amazon AWS prefix? (Leave empty if none) "));
+                         $header->{AWSPrefix} ||
+                         $confsec->value('aws_prefix'));
+    my $location      = ($ENV{'AWS_LOCATION'} || 
+                         $header->{AWSLocation} ||
+                         $confsec->value('aws_location'));
+    my $backup_prefix = ($ENV{'AWS_BACKUP_PREFIX'} || 
+                         $header->{AWSBackupPrefix} ||
+                         $confsec->value('backup_prefix'));
 
     my $self = bless {}, $class;
     $self->{access_key_id}     = $accesskey;
     $self->{sec_access_key_id} = $sec_accesskey;
     $self->{prefix}            = $prefix || $self->{access_key_id};
+    $self->{location}          = $location || undef;
+    $self->{backup_prefix}     = $backup_prefix || undef;
     $self->_common_s3_init;
     return $self;
 }
