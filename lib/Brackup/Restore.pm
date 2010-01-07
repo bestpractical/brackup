@@ -65,6 +65,11 @@ sub restore {
     $self->{_target} = $target;
     $self->{_meta}   = $meta;
 
+    # handle absolute prefixes by stripping off RootPath to relativise
+    if ($self->{prefix} && $self->{prefix} =~ m/^\//) {
+        $self->{prefix} =~ s/^\Q$meta->{RootPath}\E\/?//;
+    }
+
     # we first process directories, then files sorted by their first chunk,
     # then the rest. The file sorting allows us to avoid loading composite 
     # chunks and identical single chunk files multiple times from the target
