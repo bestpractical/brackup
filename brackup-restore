@@ -79,9 +79,7 @@ use lib "$Bin/lib";
 use Brackup;
 use Brackup::Util qw(tempfile);
 
-my ($opt_verbose, $meta_file, $opt_help, $restore_dir, $opt_all, $prefix);
-
-my $config_file = Brackup::Config->default_config_file_name;
+my ($opt_verbose, $meta_file, $opt_help, $restore_dir, $opt_all, $prefix, $config_file);
 
 usage() unless
     GetOptions(
@@ -100,18 +98,19 @@ if ($opt_help) {
     exit 0;
 }
 
-my $config = eval { Brackup::Config->load($config_file) } or
-    usage($@);
-
 usage() unless $meta_file && $restore_dir && ($prefix || $opt_all);
 usage("Backup metafile '$meta_file' doesn't exist")  unless -e $meta_file;
 usage("Backup metafile '$meta_file' isn't a file")   unless -f $meta_file;
 usage("Restore directory '$restore_dir' isn't a directory") if -e $restore_dir && ! -d $restore_dir;
+usage("Config file '$config_file' doesn't exist")    if $config_file && ! -f $config_file;
 $prefix ||= "";  # with -all, "", which means everything
 
 if (! -e $restore_dir) {
     mkpath($restore_dir, 0, 0700) or die "Cannot create restore directory: $!";
 }
+
+$config_file ||= Brackup::Config->default_config_file_name;
+my $config = Brackup::Config->load($config_file) if -f $config_file;
 
 my $restore = Brackup::Restore->new(
                                     to     => $restore_dir,

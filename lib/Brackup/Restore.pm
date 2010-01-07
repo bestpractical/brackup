@@ -55,6 +55,8 @@ sub restore {
     if ($self->{config} && $meta->{TargetName}) {
         $confsec = eval { $self->{config}->get_section('TARGET:' . $meta->{TargetName}) };
     }
+    # If no config section, use an empty one up with no keys to simplify Target handling
+    $confsec ||= Brackup::ConfigSection->new('fake');
 
     eval "use $driver_class; 1;" or die
         "Failed to load driver ($driver_class) to restore from: $@\n";
