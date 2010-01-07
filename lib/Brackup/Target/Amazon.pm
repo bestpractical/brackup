@@ -2,7 +2,7 @@ package Brackup::Target::Amazon;
 use strict;
 use warnings;
 use base 'Brackup::Target';
-use Net::Amazon::S3 0.41;
+use Net::Amazon::S3 0.42;
 use DateTime::Format::ISO8601;
 
 # fields in object:
@@ -53,6 +53,7 @@ sub _common_s3_init {
     $self->{s3}            = Net::Amazon::S3->new({
         aws_access_key_id     => $self->{access_key_id},
         aws_secret_access_key => $self->{sec_access_key_id},
+        retry                 => 1,
     });
 }
 
