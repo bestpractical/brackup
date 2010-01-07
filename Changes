@@ -1,4 +1,7 @@
 
+  - make brackup-restore use brackup.conf target settings, if available 
+    e.g. for passwords (Gavin Carr)
+
   - sort brackup-restore files to avoid loading composite chunks from
     target multiple times (Kostas Chatzikokolakis)
 
