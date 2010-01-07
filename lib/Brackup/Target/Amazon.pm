@@ -67,16 +67,16 @@ sub _prompt {
     return $ans;
 }
 
+# Location and backup_prefix aren't required for restores, so they're omitted here
 sub backup_header {
     my ($self) = @_;
     return {
         "AWSAccessKeyID"    => $self->{access_key_id},
         "AWSPrefix"         => $self->{prefix},
-        "AWSLocation"       => $self->{location},
-        "AWSBackupPrefix"   => $self->{backup_prefix},
     };
 }
 
+# Location and backup_prefix aren't required for restores, so they're omitted here
 sub new_from_backup_header {
     my ($class, $header, $confsec) = @_;
 
@@ -92,19 +92,11 @@ sub new_from_backup_header {
     my $prefix        = ($ENV{'AWS_PREFIX'} || 
                          $header->{AWSPrefix} ||
                          $confsec->value('aws_prefix'));
-    my $location      = ($ENV{'AWS_LOCATION'} || 
-                         $header->{AWSLocation} ||
-                         $confsec->value('aws_location'));
-    my $backup_prefix = ($ENV{'AWS_BACKUP_PREFIX'} || 
-                         $header->{AWSBackupPrefix} ||
-                         $confsec->value('backup_prefix'));
 
     my $self = bless {}, $class;
     $self->{access_key_id}     = $accesskey;
     $self->{sec_access_key_id} = $sec_accesskey;
     $self->{prefix}            = $prefix || $self->{access_key_id};
-    $self->{location}          = $location || undef;
-    $self->{backup_prefix}     = $backup_prefix || undef;
     $self->_common_s3_init;
     return $self;
 }
@@ -302,8 +294,8 @@ a new one by specifing a different I<aws_prefix>.
 
 =item B<backup_prefix>
 
-When storing the backup metadata to S3, the string specified here will be
-prefixed onto the backup name. This is useful if you are collecting
+When storing the backup metadata file to S3, the string specified here will 
+be prefixed onto the backup name. This is useful if you are collecting
 backups from several hosts into a single Amazon S3 account but need to
 be able to differentiate them; set your prefix to be the hostname
 of each system, for example.
