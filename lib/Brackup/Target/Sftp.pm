@@ -206,8 +206,7 @@ sub store_chunk {
     my $dig = $chunk->backup_digest;
     my $path = $self->chunkpath($dig);
 
-    my $chunkref = $chunk->chunkref;
-    $self->_put_chunk($path, $$chunkref); 
+    $self->_put_fh($path, $chunk->chunkref); 
 
     my $actual_size = $self->size($path);
     my $expected_size = $chunk->backup_length;

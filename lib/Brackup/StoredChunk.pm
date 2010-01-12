@@ -3,7 +3,8 @@ package Brackup::StoredChunk;
 use strict;
 use warnings;
 use Carp qw(croak);
-use Digest::SHA1 qw(sha1_hex);
+use Brackup::Util qw(io_sha1);
+use Fcntl qw(SEEK_SET);
 
 # fields:
 #   pchunk - always
@@ -13,6 +14,7 @@ use Digest::SHA1 qw(sha1_hex);
 #   compchunk  - composite chunk, if we were added to a composite chunk
 #   compfrom   - offset in composite chunk where we start
 #   compto     - offset in composite chunk where we end
+#   lite       - true if this is a 'lite' or 'handle' version
 
 sub new {
     my ($class, $pchunk) = @_;
@@ -35,6 +37,7 @@ sub new_from_inventory_value {
         pchunk     => $pchunk,
         backdigest => $dig,
         backlength => $len,
+        lite       => 1,
     }, $class;
 
     # normal
@@ -127,40 +130,50 @@ sub backup_digest {
 
 sub _populate_lengthdigest {
     my $self = shift;
+
+    # Composite chunk version
     if (my $cchunk = $self->{compchunk}) {
         $self->{backlength} = $cchunk->backup_length;
         $self->{backdigest} = $cchunk->digest;
         return 1;
     }
 
-    my $dataref = $self->chunkref;
-    $self->{backlength} = CORE::length($$dataref);
-    $self->{backdigest} = "sha1:" . sha1_hex($$dataref);
+    die "ASSERT: encrypted length or digest not set" if $self->encrypted;
+
+    # Unencrypted version
+    $self->{backdigest} = "sha1:" . io_sha1($self->{pchunk}->raw_chunkref);
+    $self->{backlength} = $self->{pchunk}->length;  # length of raw data
     return 1;
 }
 
 sub chunkref {
     my $self = shift;
-    return $self->{_chunkref} if $self->{_chunkref};
+    if ($self->{_chunkref}) {
+      $self->{_chunkref}->seek(0, SEEK_SET);
+      return $self->{_chunkref};
+    }
 
     # encrypting case: chunkref gets set via set_encrypted_chunkref in Backup::backup
     croak "ASSERT: encrypted but no chunkref set" if $self->encrypted;
 
     # caller/consistency check:
     Carp::confess("Can't access chunkref on lite StoredChunk instance (handle only)")
-        if $self->{backlength} || $self->{backdigest};
+        if $self->{lite};
 
     # non-encrypting case
     return $self->{_chunkref} = $self->{pchunk}->raw_chunkref;
 }
 
-# set scalar/scalarref of encryptd chunkref
+# set encrypted chunk filehandle and digest/length
 sub set_encrypted_chunkref {
-    my ($self, $arg) = @_;
-    die "ASSERT: not enc"       unless $self->encrypted;
+    my ($self, $fh, $enc_length) = @_;
+    die "ASSERT: not enc"      unless $self->encrypted;
     die "ASSERT: already set?" if $self->{backlength} || $self->{backdigest};
 
-    return $self->{_chunkref} = ref $arg ? $arg : \$arg;
+    $self->{backdigest} = "sha1:" . io_sha1($fh);
+    $self->{backlength} = $enc_length;
+
+    return $self->{_chunkref} = $fh;
 }
 
 # lose the chunkref data

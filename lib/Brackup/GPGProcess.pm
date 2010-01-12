@@ -3,12 +3,13 @@ use strict;
 use warnings;
 use Brackup::Util qw(tempfile);
 use POSIX qw(_exit);
-#use Fcntl qw(SEEK_SET);
+use IO::File;
 
 sub new {
     my ($class, $pchunk) = @_;
 
     my ($destfh, $destfn) = tempfile();
+    close $destfh;
 
     my $no_fork = $ENV{BRACKUP_NOFORK} || 0;  # if true (perhaps on Windows?), then don't fork... do all inline.
 
@@ -21,7 +22,6 @@ sub new {
     if ($pid) {
         return bless {
             destfn    => $destfn,
-            destfh    => $destfh,
             pid       => $pid,
             running   => 1,
         }, $class;
@@ -44,7 +44,6 @@ sub new {
     if ($no_fork) {
         return bless {
             destfn => $destfn,
-            destfh => $destfh,
             pid    => 0,
         }, $class;
     }
@@ -63,22 +62,13 @@ sub note_stopped { $_[0]{running} = 0; }
 sub chunkref {
     my ($self) = @_;
     die "Still running!" if $self->{running};
+    die "No data in file" unless $self->size_on_disk;
 
-#   open(my $fh, $self->{destfn})
-#       or die "Failed to open gpg temp file $self->{destfn}: $!";
-#   binmode($fh);
-#   my $data = do { local $/; <$fh>; };
-#   die "No data in file" unless length $data;
-#   close($fh);
+    my $fh = IO::File->new($self->{destfn}, 'r')
+        or die "Failed to open gpg temp file $self->{destfn}: $!";
+    binmode($fh);
 
-    my $data = do { local $/; my $fh = $self->{destfh}; <$fh>; };
-    die "No data in file" unless length $data;
-
-    return \$data;
-
-    # rewind destfh and return
-#   $self->{destfh}->seek(0, SEEK_SET);
-#   return $self->{destfh};
+    return $fh;
 }
 
 sub size_on_disk {

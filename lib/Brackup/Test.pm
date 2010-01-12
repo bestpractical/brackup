@@ -22,7 +22,7 @@ my @to_unlink;
 my $par_pid = $$;
 END {
     if ($$ == $par_pid) {
-        my $rv = unlink @to_unlink;
+        my $rv = unlink @to_unlink unless $ENV{BRACKUP_TEST_NOCLEANUP};
     }
 }
 
@@ -46,7 +46,7 @@ sub do_backup {
     ok($root, "have a source root");
     $with_root->($root);
 
-    my $backup_dir = tempdir( CLEANUP => 1 );
+    my $backup_dir = tempdir( CLEANUP => $ENV{BRACKUP_TEST_NOCLEANUP} ? 0 : 1 );
     ok_dir_empty($backup_dir);
 
     my ($inv_fh, $inv_filename) = tempfile();
@@ -89,7 +89,7 @@ sub do_restore {
     my $prefix     = delete $opts{'prefix'} || "";   # default is restore everything
     my $restore_should_die = delete $opts{'restore_should_die'};
     die if %opts;
-    my $restore_dir = tempdir( CLEANUP => 1 );
+    my $restore_dir = tempdir( CLEANUP => $ENV{BRACKUP_TEST_NOCLEANUP} ? 0 : 1 );
     ok_dir_empty($restore_dir);
 
     my $restore = Brackup::Restore->new(
@@ -197,6 +197,28 @@ sub dir_structure {
 
     chdir($cwd) or die "Failed to chdir back to $cwd";
     return \%files;
+}
+
+# add a random number of orphan chunks to $target
+sub add_orphan_chunks {
+    my ($root, $target, $orphan_chunks_count) = @_;
+
+    for (1..$orphan_chunks_count) {
+        # HACK: to avoid worse hacks, we need a pchunk to store an orphan chunk.
+        # We use small segments of 'pubring-test.gpg' so that they are different 
+        # than all other chunks
+        my $pchunk = Brackup::PositionedChunk->new(
+            file => Brackup::File->new(root => $root,
+                                       path => 'pubring-test.gpg'),
+            offset => $_ * 10,
+            length => 10,
+        );
+
+        # no encryption, copy raw data and store schunk
+        my $schunk = Brackup::StoredChunk->new($pchunk);
+#       $schunk->copy_raw_data;
+        $target->store_chunk($schunk);
+    }
 }
 
 

@@ -3,8 +3,10 @@ package Brackup::PositionedChunk;
 use strict;
 use warnings;
 use Carp qw(croak);
-use Fcntl qw(O_RDONLY);
-use Digest::SHA1 qw(sha1_hex);
+use Brackup::Util qw(io_sha1);
+use IO::File;
+use IO::InnerFile;
+use Fcntl qw(SEEK_SET);
 
 use fields (
             'file',     # the Brackup::File object
@@ -79,8 +81,7 @@ sub _calc_raw_digest {
         return $self->{_raw_digest} = $dig;
     }
 
-    my $rchunk = $self->raw_chunkref;
-    $dig = "sha1:" . sha1_hex($$rchunk);
+    $dig = "sha1:" . io_sha1($self->raw_chunkref);
 
     $cache->set($key => $dig);
 
@@ -89,20 +90,18 @@ sub _calc_raw_digest {
 
 sub raw_chunkref {
     my $self = shift;
-    return $self->{_raw_chunkref} if $self->{_raw_chunkref};
-
-    my $data;
-    my $fullpath = $self->{file}->fullpath;
-    sysopen(my $fh, $fullpath, O_RDONLY) or die "Failed to open $fullpath: $!";
-    binmode($fh);
-    seek($fh, $self->{offset}, 0) or die "Couldn't seek: $!\n";
-    my $rv = read($fh, $data, $self->{length})
-        or die "Failed to read: $!\n";
-    unless ($rv == $self->{length}) {
-        Carp::confess("Read $rv bytes, not $self->{length}");
+    if ($self->{_raw_chunkref}) {
+      $self->{_raw_chunkref}->seek(0, SEEK_SET);
+      return $self->{_raw_chunkref};
     }
 
-    return $self->{_raw_chunkref} = \$data;
+    my $fullpath = $self->{file}->fullpath;
+    my $fh = IO::File->new($fullpath, 'r') or die "Failed to open $fullpath: $!";
+    binmode($fh);
+
+    my $ifh = IO::InnerFile->new($fh, $self->{offset}, $self->{length})
+        or die "Failed to create inner file handle for $fullpath: $!\n";
+    return $self->{_raw_chunkref} = $ifh;
 }
 
 # useful string for targets to key on.  of one of the forms:

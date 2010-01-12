@@ -1,4 +1,7 @@
 
+  - make encryption and chunk storage use filehandles (where possible)
+    instead of scalar contents (Kostas Chatzikokolakis)
+
   - update metafile storage to pass filehandle instead of full contents 
     (Gavin Carr, Kostas Chatzikokolakis)
 

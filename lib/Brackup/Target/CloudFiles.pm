@@ -106,13 +106,14 @@ sub load_chunk {
 sub store_chunk {
     my ($self, $chunk) = @_;
     my $dig = $chunk->backup_digest;
-    my $blen = $chunk->backup_length;
     my $chunkref = $chunk->chunkref;
+
+    my $content = do { local $/; <$chunkref> };
 
 	$self->{chunkContainer}->object(
         name => $dig,
         content_type => 'x-danga/brackup-chunk'
-    )->put($$chunkref);
+    )->put($content);
 
 	return 1;
 }

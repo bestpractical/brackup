@@ -124,15 +124,15 @@ sub load_chunk {
 sub store_chunk {
     my ($self, $chunk) = @_;
     my $dig = $chunk->backup_digest;
-    my $blen = $chunk->backup_length;
-    my $chunkref = $chunk->chunkref;
+    my $fh = $chunk->chunkref;
+    my $chunkref = do { local $/; <$fh> };
 
     my $try = sub {
         eval {
             $self->{s3}->add_key({
                 bucket        => $self->{chunk_bucket},
                 key           => $dig,
-                value         => $$chunkref,
+                value         => $chunkref,
                 content_type  => 'x-danga/brackup-chunk',
             });
         };
@@ -171,7 +171,7 @@ sub chunks {
 }
 
 sub store_backup_meta {
-    my ($self, $name, $fh) = @_;
+    my ($self, $name, $fh, $meta) = @_;
 
     $name = $self->{backup_prefix} . "-" . $name if defined $self->{backup_prefix};
 
@@ -179,7 +179,7 @@ sub store_backup_meta {
         my $bucket = $self->{s3}->bucket($self->{backup_bucket}); 
         $bucket->add_key_filename(
             $name,
-            $fh,
+            $meta->{filename},
             { content_type => 'x-danga/brackup-meta' },
         );
     };

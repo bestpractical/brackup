@@ -277,7 +277,7 @@ sub backup {
         rename $metafh->filename, $backup_file
             or die "Failed to rename temporary backup_file: $!\n";
 
-        my $store_fh;
+        my ($store_fh, $store_filename);
         my $is_encrypted = 0;
 
         # store the metafile, encrypted, on the target
@@ -288,23 +288,25 @@ sub backup {
                    "--recipient", $gpg_rcpt, "--encrypt", "--output=$encfile", "--yes", $backup_file)
                 and die "Failed to run gpg while encryping metafile: $!\n";
             open ($store_fh, $encfile) or die "Failed to open encrypted metafile '$encfile': $!\n";
-            unlink $encfile;
+            $store_filename = $encfile;
             $is_encrypted = 1;
         } else {
             # Rewind $metafh
             seek($metafh, 0, SEEK_SET) or die "Rewind seek on metafile '$backup_file' failed: $!";
             $store_fh = $metafh;
+            $store_filename = $backup_file;
         }
 
         # store it on the target
         $self->debug("Storing metafile to " . ref($target));
         my $name = $self->{root}->publicname . "-" . $self->backup_time;
-        $target->store_backup_meta($name, $store_fh, { is_encrypted => $is_encrypted });
+        $target->store_backup_meta($name, $store_fh, { filename => $store_filename, is_encrypted => $is_encrypted });
         $stats->timestamp('Metafile Storage');
 
         # close metafile(s)
         close $metafh or die "Close on metafile '$backup_file' failed: $!";
-        if ($gpg_rcpt) {
+        if ($is_encrypted) {
+            unlink $store_filename;
             close $store_fh or die "Close on encrypted metafile failed: $!";
         }
     }

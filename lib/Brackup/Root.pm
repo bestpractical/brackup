@@ -4,7 +4,7 @@ use warnings;
 use Carp qw(croak);
 use File::Find;
 use Brackup::DigestCache;
-use Brackup::Util qw(tempfile);
+use Brackup::Util qw(tempfile io_print_to_fh);
 use IPC::Open2;
 use Symbol;
 
@@ -200,13 +200,11 @@ sub du_stats {
     $pop_dir->() while @dir_stack;
 }
 
-# given data (scalar or scalarref), returns encrypted data
+# given filehandle to data, returns encrypted data
 sub encrypt {
-    my ($self, $data, $outfn) = @_;
+    my ($self, $data_fh, $outfn) = @_;
     my $gpg_rcpt = $self->gpg_rcpt
         or Carp::confess("Encryption not setup for this root");
-
-    $data = \$data unless ref $data;
 
     my $cout = Symbol::gensym();
     my $cin = Symbol::gensym();
@@ -224,7 +222,7 @@ sub encrypt {
 
     # send data to gpg
     binmode $cin;
-    print $cin $$data
+    my $bytes = io_print_to_fh($data_fh, $cin)
       or die "Sending data to gpg failed: $!";
 
     close $cin;

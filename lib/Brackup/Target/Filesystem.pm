@@ -288,15 +288,14 @@ sub store_chunk {
     my $partial = "$path.partial";
     open (my $fh, '>', $partial) or die "Failed to open $partial for writing: $!\n";
     binmode($fh);
-    my $chunkref = $chunk->chunkref;
-    print $fh $$chunkref;
+    io_print_to_fh($chunk->chunkref, $fh);
     close($fh) or die "Failed to close $path\n";
 
     unlink $path;
     rename $partial, $path or die "Failed to rename $partial to $path: $!\n";
 
     my $actual_size   = -s $path;
-    my $expected_size = length $$chunkref;
+    my $expected_size = $chunk->backup_length;
     unless (defined($actual_size)) {
         die "Chunk output file $path does not exist. Do you need to set no_filename_colons=1?";
     }

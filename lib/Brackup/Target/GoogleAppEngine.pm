@@ -147,6 +147,8 @@ sub store_chunk {
 
     print "Storing chunk: $dig\n";
 
+    my $content = do { local $/; <$chunkref> };
+
     my $req = HTTP::Request::Common::POST($upload_url,
                                           Content_Type => 'form-data',
                                           Content => [
@@ -156,7 +158,7 @@ sub store_chunk {
                                                       "size" => $blen,
                                                       "file" => [ undef, $filename,
                                                                   "Content-Type" => "x-danga/brackup-chunk",
-                                                                  Content => $$chunkref ]
+                                                                  Content => $content ]
                                                       ]);
 
     my $location = 0;

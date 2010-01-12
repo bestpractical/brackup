@@ -22,14 +22,10 @@ my ($backup_file, $backup, $target) = do_backup(
                             },
                             );
 
-############### Add an orphan chunk
+############### Add orphan chunks
 
 my $orphan_chunks_count = int(rand 10) + 1;
-for (1..$orphan_chunks_count) {
-    my $chunk = Brackup::StoredChunk->new;
-    $chunk->{_chunkref} = \ "foobar $_";
-    $target->store_chunk($chunk);
-}
+Brackup::Test::add_orphan_chunks($backup->{root}, $target, $orphan_chunks_count);
 
 ############### Do garbage collection
 

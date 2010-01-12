@@ -118,6 +118,10 @@ sub _mdtm {
 sub _put_fh {
     my ($self, $path, $fh) = @_;
 
+    # Ugly-hack: monkey-patch IO::InnerFile to provide BINMODE for Net::FTP::put
+    *{IO::InnerFile::BINMODE} = sub { $_[0]->binmode }
+      if $fh->isa('IO::InnerFile');
+
     # Make sure directory exists.
     my $dir = dirname($path);
     $self->_autoretry(sub {
@@ -125,7 +129,6 @@ sub _put_fh {
     }) or die "Creating directory $dir failed: " . $self->{ftp}->message;
 
     $self->_autoretry(sub {
-        binmode($fh);
         $self->{ftp}->put($fh, $path);
     }) or die "Writing file $path failed: " . $self->{ftp}->message;
 }
@@ -188,8 +191,7 @@ sub store_chunk {
     my $dig = $chunk->backup_digest;
     my $path = $self->chunkpath($dig);
 
-    my $chunkref = $chunk->chunkref;
-    $self->_put_chunk($path, $$chunkref);
+    $self->_put_fh($path, $chunk->chunkref);
 
     my $actual_size = $self->size($path);
     my $expected_size = $chunk->backup_length;

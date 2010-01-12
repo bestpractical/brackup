@@ -42,11 +42,11 @@ sub enc_chunkref_of {
     }
 
     $self->_proc_summary_dump;
-    my $cref = $self->get_proc_chunkref($proc);
+    my ($cref, $enc_length) = $self->get_proc_chunkref($proc);
     $self->_proc_summary_dump;
     $self->start_some_processes;
 
-    return $cref;
+    return ($cref, $enc_length);
 }
 
 sub start_some_processes {
@@ -90,7 +90,7 @@ sub get_proc_chunkref {
     my $cref = $proc->chunkref;
     delete $self->{procs}{$proc};
     $self->{uncollected_bytes} -= $proc->size_on_disk;
-    return $cref;
+    return ($cref, $proc->size_on_disk);
 }
 
 # returns PID of a process that finished
