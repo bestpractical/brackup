@@ -202,19 +202,11 @@ sub du_stats {
 
 # given data (scalar or scalarref), returns encrypted data
 sub encrypt {
-    my ($self, $data) = @_;
+    my ($self, $data, $outfn) = @_;
     my $gpg_rcpt = $self->gpg_rcpt
         or Carp::confess("Encryption not setup for this root");
 
     $data = \$data unless ref $data;
-
-    my ($tmpfh, $tmpfn) = tempfile();
-    print $tmpfh $$data
-        or die "failed to print: $!";
-    close $tmpfh
-        or die "failed to close: $!\n";
-    Carp::confess("size not right")
-        unless -s $tmpfn == length $$data;
 
     my $cout = Symbol::gensym();
     my $cin = Symbol::gensym();
@@ -225,21 +217,21 @@ sub encrypt {
         "--trust-model=always",
         "--batch",
         "--encrypt",
-        "--output=-",  # Send output to stdout
+        "--output", $outfn,
         "--yes",
-        $tmpfn
+        "-"                 # read from stdin
     );
 
-    binmode $cout;
+    # send data to gpg
+    binmode $cin;
+    print $cin $$data
+      or die "Sending data to gpg failed: $!";
 
-    my $ret = do { local $/; <$cout>; };
+    close $cin;
+    close $cout;
 
     waitpid($pid, 0);
     die "GPG failed: $!" if $? != 0; # If gpg return status is non-zero
-
-    unlink($tmpfn);
-
-    return $ret;
 }
 
 1;

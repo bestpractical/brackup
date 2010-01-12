@@ -143,18 +143,15 @@ sub chunkref {
     my $self = shift;
     return $self->{_chunkref} if $self->{_chunkref};
 
+    # encrypting case: chunkref gets set via set_encrypted_chunkref in Backup::backup
+    croak "ASSERT: encrypted but no chunkref set" if $self->encrypted;
+
     # caller/consistency check:
     Carp::confess("Can't access chunkref on lite StoredChunk instance (handle only)")
         if $self->{backlength} || $self->{backdigest};
 
     # non-encrypting case
-    unless ($self->encrypted) {
-        return $self->{_chunkref} = $self->{pchunk}->raw_chunkref;
-    }
-
-    # encrypting case.
-    my $enc = $self->root->encrypt($self->{pchunk}->raw_chunkref);
-    return $self->{_chunkref} = \$enc;
+    return $self->{_chunkref} = $self->{pchunk}->raw_chunkref;
 }
 
 # set scalar/scalarref of encryptd chunkref

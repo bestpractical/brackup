@@ -292,7 +292,7 @@ sub backup {
             $is_encrypted = 1;
         } else {
             # Rewind $metafh
-            $metafh->seek(0, SEEK_SET) or die "Rewind seek on metafile '$backup_file' failed: $!";
+            seek($metafh, 0, SEEK_SET) or die "Rewind seek on metafile '$backup_file' failed: $!";
             $store_fh = $metafh;
         }
 

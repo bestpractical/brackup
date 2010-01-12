@@ -89,7 +89,7 @@ sub get_proc_chunkref {
     my ($self, $proc) = @_;
     my $cref = $proc->chunkref;
     delete $self->{procs}{$proc};
-    $self->{uncollected_bytes} -= length($$cref);
+    $self->{uncollected_bytes} -= $proc->size_on_disk;
     return $cref;
 }
 

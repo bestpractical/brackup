@@ -1,4 +1,7 @@
 
+  - update metafile storage to pass filehandle instead of full contents 
+    (Gavin Carr, Kostas Chatzikokolakis)
+
   - make brackup-restore use brackup.conf target settings, if available 
     e.g. for passwords (Gavin Carr)
 
