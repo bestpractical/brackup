@@ -145,7 +145,7 @@ sub _mkdir {
     }) or die "Creating directory $dir failed: " . $self->{sftp}->error;
 }
 
-sub _put {
+sub _put_chunk {
     my ($self, $path, $content) = @_;
 
     $self->_mkdir(dirname($path));
@@ -157,6 +157,15 @@ sub _put {
         $self->{sftp}->close($fh) or die "Failed to close";
         return $result;
     }) or die "Writing file $path failed: " . $self->{sftp}->error;
+}
+
+sub _put_fh {
+    my ($self, $path, $fh) = @_;
+
+    $self->_mkdir(dirname($path));
+
+    $self->_autoretry(sub { $self->{sftp}->put($fh, $path) })
+        or die "Doing a put to path $path failed: " . $self->{sftp}->error;
 }
 
 sub _get {
@@ -198,10 +207,10 @@ sub store_chunk {
     my $path = $self->chunkpath($dig);
 
     my $chunkref = $chunk->chunkref;
-    $self->_put($path, $$chunkref);
+    $self->_put_chunk($path, $$chunkref); 
 
     my $actual_size = $self->size($path);
-    my $expected_size = length $$chunkref;
+    my $expected_size = $chunk->backup_length;
     unless ($actual_size == $expected_size) {
         die "Chunk $path incompletely written to disk: size is " .
             "$actual_size, expecting $expected_size\n";
@@ -231,8 +240,8 @@ sub chunks {
 }
 
 sub store_backup_meta {
-    my ($self, $name, $content) = @_;
-    $self->_put($self->metapath("$name.brackup"), $content);
+    my ($self, $name, $fh) = @_;
+    $self->_put_fh($self->metapath("$name.brackup"), $fh);
     return 1;
 }
 

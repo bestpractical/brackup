@@ -171,18 +171,18 @@ sub chunks {
 }
 
 sub store_backup_meta {
-    my ($self, $name, $file) = @_;
+    my ($self, $name, $fh) = @_;
 
-    $name = $self->{backup_prefix}."-".$name if defined $self->{backup_prefix};
+    $name = $self->{backup_prefix} . "-" . $name if defined $self->{backup_prefix};
 
-    my $rv = eval { $self->{s3}->add_key({
-        bucket        => $self->{backup_bucket},
-        key           => $name,
-        value         => $file,
-        content_type  => 'x-danga/brackup-meta',
-    })};
-
-    return $rv;
+    eval { 
+        my $bucket = $self->{s3}->bucket($self->{backup_bucket}); 
+        $bucket->add_key_filename(
+            $name,
+            $fh,
+            { content_type => 'x-danga/brackup-meta' },
+        );
+    };
 }
 
 sub backups {

@@ -8,6 +8,7 @@ use Brackup::GPGProcManager;
 use Brackup::GPGProcess;
 use File::Basename;
 use File::Temp;
+use Fcntl qw(SEEK_SET);
 
 sub new {
     my ($class, %opts) = @_;
@@ -273,12 +274,10 @@ sub backup {
     $stats->set('Total File Size Uploaded:', sprintf('%0.01f MB', $n_kb_up / 1024));
 
     unless ($self->{dryrun}) {
-        # close the metafile
-        close $metafh or die;
         rename $metafh->filename, $backup_file
             or die "Failed to rename temporary backup_file: $!\n";
 
-        my $contents;
+        my $store_fh;
         my $is_encrypted = 0;
 
         # store the metafile, encrypted, on the target
@@ -288,28 +287,30 @@ sub backup {
                    "--trust-model=always",
                    "--recipient", $gpg_rcpt, "--encrypt", "--output=$encfile", "--yes", $backup_file)
                 and die "Failed to run gpg while encryping metafile: $!\n";
-            $contents = _contents_of($encfile);
+            open ($store_fh, $encfile) or die "Failed to open encrypted metafile '$encfile': $!\n";
             unlink $encfile;
             $is_encrypted = 1;
         } else {
-            $contents = _contents_of($backup_file);
+            # Rewind $metafh
+            $metafh->seek(0, SEEK_SET) or die "Rewind seek on metafile '$backup_file' failed: $!";
+            $store_fh = $metafh;
         }
 
         # store it on the target
         $self->debug("Storing metafile to " . ref($target));
         my $name = $self->{root}->publicname . "-" . $self->backup_time;
-        $target->store_backup_meta($name, $contents, { is_encrypted => $is_encrypted });
+        $target->store_backup_meta($name, $store_fh, { is_encrypted => $is_encrypted });
         $stats->timestamp('Metafile Storage');
+
+        # close metafile(s)
+        close $metafh or die "Close on metafile '$backup_file' failed: $!";
+        if ($gpg_rcpt) {
+            close $store_fh or die "Close on encrypted metafile failed: $!";
+        }
     }
     $self->report_progress(100, "Backup complete.");
 
     return $stats;
-}
-
-sub _contents_of {
-    my $file = shift;
-    open (my $fh, $file) or die "Failed to read contents of $file: $!\n";
-    return do { local $/; <$fh>; };
 }
 
 sub default_file_mode {

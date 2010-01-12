@@ -133,9 +133,11 @@ sub chunks {
 }
 
 sub store_backup_meta {
-    my ($self, $name, $file) = @_;
+    my ($self, $name, $fh) = @_;
 
-    $self->{backupContainer}->object(name => $name)->put($file);
+    my $content = do { local $/; <$fh> };
+
+    $self->{backupContainer}->object(name => $name)->put($content);
 
 	return 1;
 }

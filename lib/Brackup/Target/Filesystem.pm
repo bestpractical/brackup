@@ -6,6 +6,7 @@ use File::Basename;
 use File::Find ();
 use File::Path;
 use File::stat ();
+use Brackup::Util qw(io_print_to_fh);
 
 
 sub new {
@@ -330,16 +331,18 @@ sub chunks {
 }
 
 sub store_backup_meta {
-    my ($self, $name, $content) = @_;
+    my ($self, $name, $fh) = @_;
 
     my $dir = $self->metapath();
     unless (-d $dir) {
         mkdir $dir or die "Failed to mkdir $dir: $!\n";
     }
 
-    open (my $fh, '>', "$dir/$name.brackup") or die;
-    print $fh $content;
-    close $fh or die;
+    my $out_filepath = "$dir/$name.brackup";
+    open (my $out_fh, '>', $out_filepath)
+      or die "Failed to open metafile '$out_filepath': $!\n";
+    io_print_to_fh($fh, $out_fh);
+    close $out_fh or die "Failed to close metafile '$out_filepath': $!\n";
 
     return 1;
 }

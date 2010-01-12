@@ -5,7 +5,7 @@ require Exporter;
 
 use vars qw(@ISA @EXPORT_OK);
 @ISA = ('Exporter');
-@EXPORT_OK = qw(tempfile tempdir slurp valid_params noclobber_filename);
+@EXPORT_OK = qw(tempfile tempdir slurp valid_params noclobber_filename io_print_to_fh);
 
 use File::Path qw();
 use Carp;
@@ -65,6 +65,18 @@ sub noclobber_filename {
     for (my $i = 1; ; $i++) {
         return "$filename.$i" if ! -e "$filename.$i";
     }
+}
+
+# Prints all data from an IO::Handle to a filehandle
+sub io_print_to_fh {
+    my ($io_handle, $fh) = @_;
+    my $buf;
+    my $bytes = 0;
+    while($io_handle->read($buf, 4096)) {
+        print $fh $buf;
+        $bytes += length $buf;
+    }
+    return $bytes;
 }
 
 1;

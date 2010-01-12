@@ -200,13 +200,15 @@ sub chunks {
 }
 
 sub store_backup_meta {
-    my ($self, $name, $file, $meta) = @_;
+    my ($self, $name, $fh, $meta) = @_;
     $meta ||= {};
 
     print "Storing backup: $name\n";
 
     my $upload_url = $self->_get_upload_url(1)  # for backup
         or die;
+
+    my $content = do { local $/; <$fh> };
 
     my $req = HTTP::Request::Common::POST($upload_url,
                                           Content_Type => 'form-data',
@@ -217,7 +219,7 @@ sub store_backup_meta {
                                                       "title" => $name,
                                                       "file" => [ undef, $name,
                                                                   "Content-Type" => "x-danga/brackup-backup",
-                                                                  Content => $file ]
+                                                                  Content => $content ]
                                                      ]);
 
     my $res = $self->{ua}->simple_request($req);
