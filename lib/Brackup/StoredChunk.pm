@@ -179,7 +179,7 @@ sub set_encrypted_chunkref {
 # lose the chunkref data
 sub forget_chunkref {
     my $self = shift;
-    delete $self->{_chunkref};
+    delete $self->{_chunkref};      # this also deletes the tempfile, if any
 }
 
 # to the format used by the metafile

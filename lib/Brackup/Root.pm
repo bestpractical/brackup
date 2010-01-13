@@ -4,7 +4,7 @@ use warnings;
 use Carp qw(croak);
 use File::Find;
 use Brackup::DigestCache;
-use Brackup::Util qw(tempfile io_print_to_fh);
+use Brackup::Util qw(io_print_to_fh);
 use IPC::Open2;
 use Symbol;
 

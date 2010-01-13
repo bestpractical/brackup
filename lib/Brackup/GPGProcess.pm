@@ -1,15 +1,15 @@
 package Brackup::GPGProcess;
 use strict;
 use warnings;
-use Brackup::Util qw(tempfile);
+use Brackup::Util qw(tempfile_obj);
 use POSIX qw(_exit);
 use IO::File;
 
 sub new {
     my ($class, $pchunk) = @_;
 
-    my ($destfh, $destfn) = tempfile();
-    close $destfh;
+    my $destfh = tempfile_obj();
+    my $destfn = $destfh->filename;
 
     my $no_fork = $ENV{BRACKUP_NOFORK} || 0;  # if true (perhaps on Windows?), then don't fork... do all inline.
 
@@ -21,7 +21,7 @@ sub new {
     # caller (parent)
     if ($pid) {
         return bless {
-            destfn    => $destfn,
+            destfh    => $destfh,
             pid       => $pid,
             running   => 1,
         }, $class;
@@ -43,7 +43,7 @@ sub new {
 
     if ($no_fork) {
         return bless {
-            destfn => $destfn,
+            destfh => $destfh,
             pid    => 0,
         }, $class;
     }
@@ -64,16 +64,12 @@ sub chunkref {
     die "Still running!" if $self->{running};
     die "No data in file" unless $self->size_on_disk;
 
-    my $fh = IO::File->new($self->{destfn}, 'r')
-        or die "Failed to open gpg temp file $self->{destfn}: $!";
-    binmode($fh);
-
-    return $fh;
+    return $self->{destfh};
 }
 
 sub size_on_disk {
     my $self = shift;
-    return -s $self->{destfn};
+    return -s $self->{destfh}->filename;
 }
 
 1;

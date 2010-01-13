@@ -5,7 +5,7 @@ require Exporter;
 
 use vars qw(@ISA @EXPORT_OK);
 @ISA = ('Exporter');
-@EXPORT_OK = qw(tempfile tempdir slurp valid_params noclobber_filename io_print_to_fh io_sha1);
+@EXPORT_OK = qw(tempfile tempfile_obj tempdir slurp valid_params noclobber_filename io_print_to_fh io_sha1);
 
 use File::Path qw();
 use Carp;
@@ -36,6 +36,10 @@ sub _get_temp_directory {
 sub tempfile {
     my (@ret) = File::Temp::tempfile(DIR => _get_temp_directory());
     return wantarray ? @ret : $ret[0];
+}
+
+sub tempfile_obj {
+    return File::Temp->new(DIR => _get_temp_directory(), CLEANUP => $ENV{BRACKUP_TEST_NOCLEANUP} ? 0 : 1);
 }
 
 # Utils::tempdir() accepts the same options as File::Temp::tempdir.

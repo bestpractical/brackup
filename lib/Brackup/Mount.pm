@@ -9,7 +9,6 @@ use Fuse;
 
 use Brackup;
 use Brackup::Restore;
-use Brackup::Util qw(tempfile);
 use POSIX qw(ENOENT EISDIR EROFS ENOTDIR EBUSY EINVAL O_WRONLY O_RDWR);
 use Fcntl qw(S_IFREG S_IFDIR S_IFLNK);
 use File::Temp;

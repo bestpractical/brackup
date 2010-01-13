@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Carp qw(croak);
 use Fcntl qw(SEEK_SET);
-use Brackup::Util qw(tempfile io_sha1 io_print_to_fh); 
+use Brackup::Util qw(tempfile_obj io_sha1 io_print_to_fh); 
 
 use fields (
             'used_up',
@@ -14,8 +14,7 @@ use fields (
             'finalized', # if we've written ourselves to the target yet
             'subchunks', # the chunks this composite chunk is made of
             'sha1',         # Digest::SHA1 object
-            '_chunk_file',  # the file containing the whole composite chunk
-            '_chunk_fh',    # chunk_file handle
+            '_chunk_fh',  # tempfile file containing the whole composite chunk
             );
 
 sub new {
@@ -27,7 +26,7 @@ sub new {
     $self->{target}    = $target;
     $self->{subchunks} = [];
     $self->{sha1}      = Digest::SHA1->new;
-    ($self->{_chunk_fh}, $self->{_chunk_file}) = tempfile();
+    $self->{_chunk_fh} = tempfile_obj();
     return $self;
 }
 
@@ -66,6 +65,8 @@ sub finalize {
         $self->{target}->add_to_inventory($schunk->pchunk => $schunk);
     }
 
+    $self->forget_chunkref;
+
     return 1;
 }
 
@@ -101,14 +102,10 @@ sub inventory_value {
 sub forget_chunkref {
     my $self = shift;
     if ($self->{_chunk_fh}) {
-      close $self->{_chunk_fh};
-      delete $self->{_chunk_fh};
-    }
-    if ($self->{_chunk_file}) {
-      die "ASSERT: used_up: $self->{used_up}, -s _chunk_file: " . -s $self->{_chunk_file}
-          unless -s $self->{_chunk_file} == $self->{used_up};
-      unlink $self->{_chunk_file};
-      delete $self->{_chunk_file};
+        die "ASSERT: used_up: $self->{used_up}, size: " . -s $self->{_chunk_fh}->filename
+            unless -s $self->{_chunk_fh}->filename == $self->{used_up};
+        close $self->{_chunk_fh};
+        delete $self->{_chunk_fh};      # also deletes the temp file
     }
 }
 # </duck-typing>
