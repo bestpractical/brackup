@@ -57,7 +57,7 @@ sub do_backup {
     $confsec = Brackup::ConfigSection->new("TARGET:test_restore");
     $with_targetsec->($confsec);
     $confsec->add("type" => "Filesystem") unless exists $confsec->{type};
-    $confsec->add("inventory_db" => $inv_filename);
+    $confsec->add("inventorydb_file" => $inv_filename);
     $confsec->add("path" => $backup_dir);
     $conf->add_section($confsec);
 

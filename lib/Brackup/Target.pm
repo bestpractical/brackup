@@ -19,8 +19,10 @@ sub new {
 
     $self->{keep_backups} = $confsec->value("keep_backups");
     $self->{inv_db} =
-        Brackup::InventoryDatabase->new($confsec->value("inventory_db") ||
-                                        "$ENV{HOME}/.brackup-target-$self->{name}.invdb");
+        Brackup::InventoryDatabase->new($confsec->value("inventorydb_file") ||
+                                        $confsec->value("inventory_db") ||
+                                        "$ENV{HOME}/.brackup-target-$self->{name}.invdb",
+                                        $confsec);
 
     return $self;
 }
@@ -210,17 +212,53 @@ In your ~/.brackup.conf file:
 
 =item B<type>
 
-The driver for this target type.  The type B<Foo> corresponds to the Perl module Brackup::Target::B<Foo>.
+The driver for this target type.  The type B<Foo> corresponds to the Perl module 
+Brackup::Target::B<Foo>.
 
-As such, the only valid options for type, if you're just using the
-Target modules that come with the Brackup core, are:
-
-B<Amazon> -- see L<Brackup::Target::Amazon> for configuration details
+The set of targets (and the valid options for type) currently distributed with the
+Brackup core are:
 
 B<Filesystem> -- see L<Brackup::Target::Filesystem> for configuration details
 
+B<Ftp> -- see L<Brackup::Target::Ftp> for configuration details
+
+B<Sftp> -- see L<Brackup::Target::Sftp> for configuration details
+
+B<Amazon> -- see L<Brackup::Target::Amazon> for configuration details
+
+B<Amazon> -- see L<Brackup::Target::CloudFiles> for configuration details
+
 =item B<keep_backups>
 
-The number of recent backups to keep when running I<brackup-target prune>.
+The default number of recent backups to keep when running I<brackup-target prune>.
+
+=item B<inventorydb_file>
+
+The location of the L<Brackup::InventoryDatabase> inventory database file for 
+this target e.g.
+
+  [TARGET:amazon]
+  type = Amazon
+  aws_access_key_id  = ...
+  aws_secret_access_key =  ...
+  inventorydb_file = /home/bradfitz/.amazon-already-has-these-chunks.db
+
+Only required if you wish to change this from the default, which is 
+".brackup-target-TARGETNAME.invdb" in your home directory.
+
+=item B<inventorydb_type>
+
+Dictionary type to use for the inventory database. The dictionary type B<Bar>
+corresponds to the perl module Brackup::Dict::B<Bar>.
+
+The default inventorydb_type is B<SQLite>. See L<Brackup::InventoryDatabase> for 
+more.
 
 =back
+
+=head1 SEE ALSO
+
+L<Brackup>
+
+L<Brackup::InventoryDatabase>
+

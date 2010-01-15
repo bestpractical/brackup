@@ -4,17 +4,17 @@ use warnings;
 
 sub new {
     my ($class, $root, $rconf) = @_;
-    my $self = bless {
-        file  => $rconf->value('digestdb_file') || 
-                 $root->path . '/' . default_filename(),
-        type  => $rconf->value('digestdb_type') || 'SQLite',
-    }, $class;
+    my $self = bless {}, $class;
 
-    my $dict_class = "Brackup::Dict::$self->{type}";
+    my $file = $rconf->value('digestdb_file') || 
+              ($root->path . '/' . default_filename());
+    my $type = $rconf->value('digestdb_type') || 'SQLite';
+
+    my $dict_class = "Brackup::Dict::$type";
     eval "require $dict_class";
     $self->{dict} = $dict_class->new(
         table => "digest_cache", 
-        file => $self->{file},
+        file => $file,
     );
 
     return $self;

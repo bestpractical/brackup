@@ -5,11 +5,14 @@ use warnings;
 use Carp qw(croak);
 
 sub new {
-    my ($class, $file) = @_;
+    my ($class, $file, $tconf) = @_;
     my $self = bless {}, $class;
 
-    # only SQLite is supported at present.  future: gdbm, mysql, etc
-    $self->{dict} = Brackup::Dict::SQLite->new(table => "target_inv", file => $file);
+    my $type = $tconf->value('inventorydb_type') || 'SQLite';
+
+    my $dict_class = "Brackup::Dict::$type";
+    eval "require $dict_class";
+    $self->{dict} = $dict_class->new(table => "target_inv", file => $file);
 }
 
 # proxy through to underlying dictionary
@@ -77,47 +80,60 @@ would be pretty easy.  (this is a TODO item)
 
 In any case, it's not tragic if you lose your inventory database... it
 just means you'll need to upload more stuff and maybe waste some disk
-space.  (A tool to clean orphaned chunks from a target is also easy,
-and also a TODO item...)  If you're feeling paranoid, it's safer to
-delete your inventory database, tricking Brackup into thinking your
+space until you next run a 'L<brackup-target> gc' garbage collection,
+which cleans up orphaned chunks. If you're feeling paranoid, it's safer 
+to delete your inventory database, tricking Brackup into thinking your
 target is empty (even if it's not), rather than Brackup thinking your
 target has something when it actually doesn't.
 
 =head1 DETAILS
 
-=head2 File format
+=head2 Storage type
 
-While designed to be abstract, the only supported digest cache format at
-the moment is an SQLite database, stored in a single file.  The schema
-is created automatically as needed... no database maintenance is required.
+The inventory database makes use of Dictionary modules (Brackup::Dict::*) 
+to handle database storage. The default dictionary used is 
+L<Brackup::Dict::SQLite>, which stores the cache as an SQLite database
+in a single file. The schema is created automatically as needed... no 
+database maintenance is required.
 
-=head2 File location
-
-The SQLite file is stored in either the location specified in a
-L<Brackup::Target>'s [TARGET] declaration in ~/.brackup.conf, as:
+The dictionary type can be specified in the [TARGET] declaration in 
+your brackup.conf file, using the 'inventorydb_type' property e.g.:
 
   [TARGET:amazon]
   type = Amazon
   aws_access_key_id  = ...
   aws_secret_access_key =  ...
-  target_inv = /home/bradfitz/.amazon-already-has-these-chunks.db
+  # specify the lighter/slower Brackup::Dict::SQLite2 instead of the default
+  inventorydb_type = SQLite2
+
+=head2 File location
+
+The inventory database file (for file-based dictionaries) is stored in 
+either the location specified in the 'inventorydb_file' property of a 
+[TARGET] declaration in ~/.brackup.conf e.g.:
+
+  [TARGET:amazon]
+  type = Amazon
+  aws_access_key_id  = ...
+  aws_secret_access_key =  ...
+  inventorydb_file = /home/bradfitz/.amazon-already-has-these-chunks.db
 
 Or, more commonly (and recommended), is to not specify it and accept
 the default location, which is ".brackup-target-TARGETNAME.invdb" in
-your home directory.  (where it might be shared by multiple backup
-roots)
+your home directory (where it might be shared by multiple backup
+roots).
 
 =head2 SQLite Schema
 
 This is made automatically for you, but if you want to look around in
 it, the schema is:
 
-  CREATE TABLE digest_cache (
+  CREATE TABLE target_inv (
        key TEXT PRIMARY KEY,
        value TEXT
   )
 
-=head2 Keys & Values stored in the cache
+=head2 Keys & Values stored in the database
 
 B<Keys>
 
@@ -152,4 +168,6 @@ C<to_offset> should be used.
 =head1 SEE ALSO
 
 L<Brackup>
+
+L<Brackup::Target>
 
