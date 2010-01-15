@@ -22,7 +22,9 @@ lib/Brackup/Config.pm
 lib/Brackup/ConfigSection.pm
 lib/Brackup/Decrypt.pm
 lib/Brackup/DecryptedFile.pm
+lib/Brackup/Dict/Null.pm
 lib/Brackup/Dict/SQLite.pm
+lib/Brackup/Dict/SQLite2.pm
 lib/Brackup/DigestCache.pm
 lib/Brackup/File.pm
 lib/Brackup/GPGProcManager.pm

@@ -2,22 +2,33 @@ package Brackup::DigestCache;
 use strict;
 use warnings;
 
-# for now.  kinda ghetto.  could be anything...
-# should 'have-a' instead of 'is-a' dict, and proxy
-# the methods through.  but can do that later...
-use base 'Brackup::Dict::SQLite';
-
 sub new {
     my ($class, $root, $rconf) = @_;
-    my $dir  = $root->path;
-    my $file = $rconf->value('digestdb_file') || "$dir/" . default_filename();
-    my $self = $class->SUPER::new("digest_cache", $file);
-    # ...
+    my $self = bless {
+        file  => $rconf->value('digestdb_file') || 
+                 $root->path . '/' . default_filename(),
+        type  => $rconf->value('digestdb_type') || 'SQLite',
+    }, $class;
+
+    my $dict_class = "Brackup::Dict::$self->{type}";
+    eval "require $dict_class";
+    $self->{dict} = $dict_class->new(
+        table => "digest_cache", 
+        file => $self->{file},
+    );
+
     return $self;
 }
 
 sub default_filename { ".brackup-digest.db" };
 
+# proxy through to underlying dictionary
+sub get { shift->{dict}->get(@_) }
+sub set { shift->{dict}->set(@_) }
+sub each { shift->{dict}->each(@_) }
+sub delete { shift->{dict}->delete(@_) }
+sub count { shift->{dict}->count(@_) }
+sub backing_file { shift->{dict}->backing_file(@_) }
 
 1;
 
@@ -29,26 +40,45 @@ Brackup::DigestCache - cache digests of file and chunk contents
 
 =head1 DESCRIPTION
 
-The Brackup DigestCache caches the digests (currently SHA1) of files
+The brackup DigestCache caches the digests (currently SHA1) of files
 and file chunks, to prevent untouched files from needing to be re-read
 on subsequent, iterative backups.
 
-The digest cache is I<purely> a cache.  It has no important data in it,
-so don't worry about losing it.  Worst case if you lose it: subsequent
-backups take longer while the digest cache is re-built.
+The digest cache is I<purely> a cache. It has no critical data in it,
+so if you lose it, subsequent backups will just take longer while the 
+digest cache is re-built.
+
+Having said that, the digest cache is actually pretty important when
+using encryption. If you lose the cache all your files will need to be 
+re-read, re-encrypted, and reloaded to the target, and will result in
+duplicate storage of all your data, as Brackup can't tell if the data 
+already exists, because encryption makes different files each time.  
+So do look after it. :-)
+
+Note that you don't need the digest cache to do a restore.
 
 =head1 DETAILS
 
-=head2 File format
+=head2 Storage type
 
-While designed to be abstract, the only supported digest cache format at
-the moment is an SQLite database, stored in a single file.  The schema
-is created automatically as needed... no database maintenance is required.
+The digest cache makes use of Dictionary modules (Brackup::Dict::*) to 
+handle the storage of the cache. The default dictionary used is 
+L<Brackup::Dict::SQLite>, which stores the cache as an SQLite database
+in a single file. The schema is created automatically as needed... no 
+database maintenance is required.
+
+The dictionary type can be specified in the [SOURCE] declaration in 
+your brackup.conf file, using the 'digestdb_type' property e.g.:
+
+  [SOURCE:home]
+  path = /home/bradfitz/
+  # specify the lighter/slower Brackup::Dict::SQLite2 instead of the default
+  digestdb_type = SQLite2
 
 =head2 File location
 
-The SQLite file is stored in either the location specified in a
-L<Brackup::Root>'s [SOURCE] declaration in ~/.brackup.conf, as:
+The cache database file is stored in either the location specified in 
+a L<Brackup::Root>'s [SOURCE] declaration in ~/.brackup.conf, as:
 
   [SOURCE:home]
   path = /home/bradfitz/
@@ -64,36 +94,29 @@ root directory.
   # this is the default:
   # digestdb_file = /home/bradfitz/.brackup-digest.db
 
-=head2 SQLite Schema
-
-This is made automatically for you, but if you want to look around in
-it, the schema is:
-
-  CREATE TABLE digest_cache (
-       key TEXT PRIMARY KEY,
-       value TEXT
-  )
-
 =head2 Keys & Values stored in the cache
 
 B<Files digests keys>  (see L<Brackup::File>)
 
- [rootname]path/to/file.txt:<ctime>,<mtime>,<size>,<inodenum>
+  [rootname]path/to/file.txt:<ctime>,<mtime>,<size>,<inodenum>
 
 B<Chunk digests keys>  (see L<Brackup::PositionedChunk>)
 
- [rootname]path/to/file.txt:<ctime>,<mtime>,<size>,<inodenum>;o=<offset>;l=<length>
+  [rootname]path/to/file.txt:<ctime>,<mtime>,<size>,<inodenum>;o=<offset>;l=<length>
 
 B<Values>
 
-In either case, the values are the digest of the chunk/file, in form:
+In both cases, the values are the digest of the chunk/file, in form:
 
    sha1:e23c4b5f685e046e7cc50e30e378ab11391e528e
 
 =head1 SEE ALSO
 
+L<brackup>
+
 L<Brackup>
 
+L<Brackup::Dict::SQLite>
 
-
+L<Brackup::Dict::SQLite2>
 

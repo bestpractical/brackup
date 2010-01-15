@@ -9,7 +9,7 @@ sub new {
     my $self = bless {}, $class;
 
     # only SQLite is supported at present.  future: gdbm, mysql, etc
-    $self->{dict} = Brackup::Dict::SQLite->new("target_inv", $file);
+    $self->{dict} = Brackup::Dict::SQLite->new(table => "target_inv", file => $file);
 }
 
 # proxy through to underlying dictionary

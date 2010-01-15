@@ -5,20 +5,21 @@ use DBI;
 use DBD::SQLite;
 
 sub new {
-    my ($class, $table, $file) = @_;
+    my ($class, %opts) = @_;
     my $self = bless {
-        table => $table,
-        file  => $file,
+        table => $opts{table},
+        file  => $opts{file},
         data  => {},
     }, $class;
 
-    my $dbh = $self->{dbh} = DBI->connect("dbi:SQLite:dbname=$file","","", { RaiseError => 1, PrintError => 0 }) or
-        die "Failed to connect to SQLite filesystem digest cache database at $file: " . DBI->errstr;
+    my $dbh = $self->{dbh} = DBI->connect("dbi:SQLite:dbname=$opts{file}","","", { RaiseError => 1, PrintError => 0 }) or
+        die "Failed to connect to SQLite filesystem digest cache database at $opts{file}: " . DBI->errstr;
 
     eval {
-        $dbh->do("CREATE TABLE $table (key TEXT PRIMARY KEY, value TEXT)");
+        $dbh->do("CREATE TABLE $opts{table} (key TEXT PRIMARY KEY, value TEXT)");
     };
     die "Error: $@" if $@ && $@ !~ /table \w+ already exists/;
+
     return $self;
 }
 
@@ -85,3 +86,54 @@ sub wipe {
 
 1;
 
+__END__
+
+=head1 NAME
+
+Brackup::Dict::SQLite - key-value dictionary implementation, using a 
+SQLite database for storage
+
+=head1 DESCRIPTION
+
+Brackup::Dict::SQLite implements a simple key-value dictionary using
+a SQLite database (in a single file) for storage. It provides the 
+default storage backend for both the L<Brackup::DigestCache> digest 
+cache and the L<Brackup::InventoryDatabase> inventory database (as 
+separate databases). The database schema is created automatically as 
+needed - no database maintenance is required.
+
+Brackup::Dict::SQLite is optimised for speed and loads the entire
+database into memory at startup. If you wish to trade-off some
+performance for a more conservative memory footprint, you should
+consider using L<Brackup::Dict::SQLite2> instead.
+
+See L<Brackup::DigestCache> and L<Brackup::InventoryDatabase> for
+how to manually specify the dictionary class to use.
+
+=head1 DETAILS
+
+=head2 File location
+
+The database file location is a parameter defined by the using class,
+so see L<Brackup::DigestCache> and L<Brackup::InventoryDatabase> for
+their respective database locations.
+
+=head2 SQLite Schema
+
+This is defined automatically, but if you want to look around in it, 
+the schema is:
+
+  CREATE TABLE <TABLE> (
+       key TEXT PRIMARY KEY,
+       value TEXT
+  )
+
+=head1 SEE ALSO
+
+L<brackup>
+
+L<Brackup>
+
+L<Brackup::Dict::SQLite2>
+
+=cut

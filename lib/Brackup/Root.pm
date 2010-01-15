@@ -114,7 +114,7 @@ sub foreach_file {
                 # skip the digest database file.  not sure if this is smart or not.
                 # for now it'd be kinda nice to have, but it's re-creatable from
                 # the backup meta files later, so let's skip it.
-                next if $path eq $self->{digcache_file};
+                next if $self->{digcache_file} && $path eq $self->{digcache_file};
 
                 # GC: seems to work fine as of at least gpg 1.4.5, so commenting out
                 # gpg seems to barf on files ending in whitespace, blowing
