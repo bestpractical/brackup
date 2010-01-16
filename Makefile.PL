@@ -12,6 +12,7 @@ WriteMakefile( NAME            => 'Brackup',
                    'DBI'          => 0,
                    'String::Escape' => 0,
                    'IO::InnerFile'  => 0,
+                   'File::Temp'     => 0.17,   # require a seekable File::Temp
                },
                ABSTRACT_FROM => 'lib/Brackup.pm',
                AUTHOR     => 'Brad Fitzpatrick <brad@danga.com>',
