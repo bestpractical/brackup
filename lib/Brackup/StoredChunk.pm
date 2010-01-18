@@ -179,6 +179,8 @@ sub set_encrypted_chunkref {
 # lose the chunkref data
 sub forget_chunkref {
     my $self = shift;
+    return unless $self->{_chunkref};
+    $self->{_chunkref}->close;
     delete $self->{_chunkref};      # this also deletes the tempfile, if any
 }
 

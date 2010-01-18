@@ -246,6 +246,7 @@ sub backup {
 
 
             $n_kb_up += $pchunk->length / 1024;
+            $schunk->forget_chunkref;
             push @stored_chunks, $schunk;
         }
 
@@ -264,7 +265,6 @@ sub backup {
 
         $stats->check_maxmem;
         $pchunk->forget_chunkref;
-        $schunk->forget_chunkref if $schunk;
     }
     $end_file->();
     $comp_chunk->finalize if $comp_chunk;
