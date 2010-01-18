@@ -70,4 +70,9 @@ sub values {
     return @$vals;
 }
 
+sub keys {
+    my $self = shift;
+    return grep !/^_/, keys %$self;
+}
+
 1;

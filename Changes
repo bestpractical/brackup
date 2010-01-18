@@ -1,4 +1,6 @@
 
+  - add simple config section inheritance ('inherit' directive) (Gavin Carr)
+
   - convert DigestCache from is-a-Dict to has-a-Dict, allow dictionary type
     to be specified for both DigestCache and InventoryDatabase, add slower/
     lighter iterator-based Dict::SQLite2, and (test) Dict::Null (Gavin Carr)

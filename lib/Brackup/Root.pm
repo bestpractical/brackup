@@ -304,4 +304,24 @@ chunked along their metadata boundaries.  If a file has both ID3v1 and
 ID3v2 chunks, the file will be cut into three parts: two little ones
 for the ID3 tags, and one big one for the music bytes.
 
+=item B<inherit>
+
+The name of another Brackup::Root section to inherit from i.e. to use 
+for any parameters that are not already defined in the current section.
+The example above could also be written:
+
+  [SOURCE:defaults]
+  chunk_size = 64MB
+  noatime = 0
+
+  [SOURCE:bradhome]
+  inherit = defaults
+  path = /home/bradfitz/
+  gpg_recipient = 5E1B3EC5
+  ignore = ^\.thumbnails/
+  ignore = ^\.kde/share/thumbnails/
+  ignore = ^\.ee/(minis|icons|previews)/
+  ignore = ^build/
+  noatime = 1
+
 =back

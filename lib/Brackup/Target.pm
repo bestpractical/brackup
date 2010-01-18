@@ -254,6 +254,25 @@ corresponds to the perl module Brackup::Dict::B<Bar>.
 The default inventorydb_type is B<SQLite>. See L<Brackup::InventoryDatabase> for 
 more.
 
+=item B<inherit>
+
+The name of another Brackup::Target section to inherit from i.e. to use 
+for any parameters that are not already defined in the current section e.g.:
+
+  [TARGET:ftp_defaults]
+  type = Ftp
+  ftp_host = myserver
+  ftp_user = myusername
+  ftp_password = mypassword
+
+  [TARGET:ftp_home]
+  inherit = ftp_defaults
+  path = home
+
+  [TARGET:ftp_images]
+  inherit = ftp_defaults
+  path = images
+
 =back
 
 =head1 SEE ALSO
