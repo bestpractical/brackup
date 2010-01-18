@@ -48,13 +48,6 @@ The digest cache is I<purely> a cache. It has no critical data in it,
 so if you lose it, subsequent backups will just take longer while the 
 digest cache is re-built.
 
-Having said that, the digest cache is actually pretty important when
-using encryption. If you lose the cache all your files will need to be 
-re-read, re-encrypted, and reloaded to the target, and will result in
-duplicate storage of all your data, as Brackup can't tell if the data 
-already exists, because encryption makes different files each time.  
-So do look after it. :-)
-
 Note that you don't need the digest cache to do a restore.
 
 =head1 DETAILS
