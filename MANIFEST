@@ -63,6 +63,7 @@ t/04-gc-filesystem.t
 t/04-gc-ftp.t
 t/04-gc-sftp.t
 t/05-filename-escaping.t
+t/06-config-inheritance.t                                                                                               
 t/data/000-dup1.txt
 t/data/000-dup2.txt
 t/data/huge-file.txt
@@ -81,4 +82,6 @@ t/data-weird-filenames/my-link.txt
 t/data-weird-filenames/pubring-test.gpg
 t/data-weird-filenames/secring-test.gpg
 t/data-weird-filenames/test-file.txt
+t/misc/brackup.conf
 TODO
+
