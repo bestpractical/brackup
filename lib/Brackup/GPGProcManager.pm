@@ -12,6 +12,7 @@ sub new {
         target    => $target,
         procs_running => {}, # pid -> GPGProcess
         uncollected_bytes => 0,
+        uncollected_chunks => 0,
     }, $class;
 }
 
@@ -58,6 +59,7 @@ sub start_some_processes {
     my $pchunk;
     # TODO: make this stuff configurable/auto-tuned
     while ($self->num_running_procs < 5 &&
+           $self->uncollected_chunks < 20 &&
            $self->num_uncollected_bytes < 128 * 1024 * 1024 &&
            ($pchunk = $self->next_chunk_to_encrypt)) {
         $self->_proc_summary_dump;
@@ -70,8 +72,8 @@ sub _proc_summary_dump {
     my $self = shift;
     return unless $ENV{GPG_DEBUG};
 
-    printf STDERR "num_running=%d, num_outstanding_bytes=%d\n",
-    $self->num_running_procs,  $self->num_uncollected_bytes;
+    printf STDERR "num_running=%d, num_outstanding_bytes=%d uncollected_chunks=%d\n",
+    $self->num_running_procs,  $self->num_uncollected_bytes, $self->uncollected_chunks;
 }
 
 sub next_chunk_to_encrypt {
@@ -90,6 +92,7 @@ sub get_proc_chunkref {
     my $cref = $proc->chunkref;
     delete $self->{procs}{$proc};
     $self->{uncollected_bytes} -= $proc->size_on_disk;
+    $self->{uncollected_chunks}--;
     return ($cref, $proc->size_on_disk);
 }
 
@@ -114,11 +117,14 @@ sub wait_for_a_process {
 
 sub num_uncollected_bytes { $_[0]{uncollected_bytes} }
 
+sub uncollected_chunks { $_[0]{uncollected_chunks} }
+
 sub gen_process_for {
     my ($self, $pchunk) = @_;
     my $proc = Brackup::GPGProcess->new($pchunk);
     $self->{procs_running}{$proc->pid} = $proc;
     $self->{procs}{$pchunk} = $proc;
+    $self->{uncollected_chunks}++;
     return $proc;
 }
 
