@@ -13,6 +13,8 @@ sub new {
     my $dict_class = "Brackup::Dict::$type";
     eval "require $dict_class";
     $self->{dict} = $dict_class->new(table => "target_inv", file => $file);
+
+    return $self;
 }
 
 # proxy through to underlying dictionary
