@@ -43,9 +43,13 @@ sub set {
 # Iterator interface, returning ($key, $value), and () on eod
 sub each {
     my $self = shift;
-    $self->{each_sth} ||= $self->{dbh}->prepare("SELECT key, value from $self->{table}");
+    if (! $self->{each_sth}) {
+        $self->{each_sth} = $self->{dbh}->prepare("SELECT key, value from $self->{table}");
+        $self->{each_sth}->execute;
+    }
     my ($k, $v) = $self->{each_sth}->fetchrow_array;
-    return wantarray ? ($k, $v) : $k;
+    return wantarray ? ($k, $v) : $k if defined $k;
+    return wantarray ? () : undef;
 }
 
 sub delete {

@@ -23,6 +23,13 @@ sub new {
     return $self;
 }
 
+sub _reset {
+    my $self = shift;
+    $self->{data} = {};
+    $self->{keys} = [];
+    $self->{_loaded_keys} = 0;
+}
+
 sub _load_all
 {
     my $self = shift;
@@ -31,6 +38,7 @@ sub _load_all
         # selects back-to-back), so we just suck the whole damn thing into
         # a perl hash.  cute, huh?  then it doesn't have to
         # open/read/seek/seek/seek/read/close for each select later.
+        $self->_reset;
         my $sth = $self->{dbh}->prepare("SELECT key, value FROM $self->{table}");
         $sth->execute;
         while (my ($k, $v) = $sth->fetchrow_array) {
@@ -57,7 +65,10 @@ sub each {
     my $self = shift;
     $self->_load_all unless $self->{_loaded_all};
     $self->{keys} = [ keys %{$self->{data}} ] unless $self->{_loaded_keys}++;
-    return wantarray ? () : undef unless @{$self->{keys}};
+    if (! @{$self->{keys}}) {
+        $self->{_loaded_keys} = 0;
+        return wantarray ? () : undef;
+    }
     my $next = shift @{$self->{keys}};
     return wantarray ? ($next, $self->{data}{$next}) : $next;
 }

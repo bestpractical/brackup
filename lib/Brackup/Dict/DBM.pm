@@ -35,7 +35,10 @@ sub set {
 sub each {
     my $self = shift;
     $self->{keys} = [ keys %{$self->{dbm}} ] unless $self->{_loaded_keys}++;
-    return wantarray ? () : undef unless @{$self->{keys}};
+    if (! @{$self->{keys}}) {
+        $self->{_loaded_keys} = 0;
+        return wantarray ? () : undef;
+    }
     my $next = shift @{$self->{keys}};
     return wantarray ? ($next, $self->{dbm}->{$next}) : $next;
 }
