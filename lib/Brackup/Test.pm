@@ -13,6 +13,7 @@ use File::Find;
 use File::stat ();
 use Cwd;
 use Brackup::DecryptedFile;
+use Digest::SHA1 qw/sha1_hex/;
 
 use Brackup;
 
@@ -81,7 +82,49 @@ sub do_backup {
     }
     ok(-s $meta_filename, "backup file has size");
 
+    check_inventory_db($target, [$root->gpg_args]);
+
     return wantarray ? ($meta_filename, $backup, $target) : $meta_filename;
+}
+
+sub check_inventory_db {
+    my ($target, $gpg_args) = @_;
+
+    eval {
+        my $inv_db = $target->inventory_db                      or die 'cannot open inventory db';
+
+        while (my ($key, $value) = $inv_db->each) {
+            my ($raw_dig, $gpg_rcpt) = split /;/, $key;
+            my ($enc_dig, $enc_size, $range) = split /\s+/, $value;
+
+            # check the stored data
+            my $dataref = $target->load_chunk($enc_dig)         or die "cannot load chunk $enc_dig";
+            length $$dataref == $enc_size                       or die "chunk $enc_dig has wrong size, not $enc_size";
+            $enc_dig eq "sha1:".sha1_hex($$dataref)             or die "chunk $enc_dig has wrong digest";
+ 
+            # if we are in a composite chunk, keep only the part we want
+            if($range) {
+                my ($from, $to) = split '-', $range;
+                my $part = substr $$dataref, $from, $to-$from;
+                $dataref = \$part;
+            }
+
+            # decrypt if encrypted
+            my $dec_ref;
+            if($gpg_rcpt =~ /^to=(.*)$/) {
+                my $meta = { 'GPG-Recipient' => $1 };
+                local @Brackup::GPG_ARGS = @$gpg_args;
+
+                $dec_ref = Brackup::Decrypt::decrypt_data($dataref, meta => $meta);
+            } else {
+                $dec_ref = $dataref;
+            }
+
+            # check the raw data
+            $raw_dig eq "sha1:".sha1_hex($$dec_ref)       or die "chunk $enc_dig has wrong raw digest";
+        }
+    };
+    ok(!$@, "inventory db is good")   or diag($@);
 }
 
 sub do_restore {

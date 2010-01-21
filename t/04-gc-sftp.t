@@ -11,7 +11,7 @@ use FindBin qw($Bin);
 use Brackup::Util qw(tempfile);
 
 if ($ENV{BRACKUP_TEST_SFTP}) {
-  plan tests => 10;
+  plan tests => 11;
 } else {
   plan skip_all => "\$ENV{BRACKUP_TEST_SFTP} not set";
 }

@@ -11,9 +11,9 @@ use Brackup::Util qw(tempfile);
 
 my $gpg_version;
 if ($gpg_version = `gpg --version`) {
-    plan tests => 23;
+    plan tests => 25;
 } else {
-    plan tests => 12;
+    plan tests => 13;
 }
 
 my $gpg_args = ["--no-default-keyring",

@@ -10,7 +10,7 @@ use Brackup::Util qw(tempfile);
 ############### Backup
 
 if (`gpg --version`) {
-    plan tests => 12;
+    plan tests => 13;
 } else {
     plan skip_all => 'gpg binary not found, skipping encrypted tests';
 }

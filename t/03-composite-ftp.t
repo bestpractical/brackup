@@ -23,9 +23,9 @@ use Brackup::Util qw(tempfile);
 my $gpg_version;
 if ($ENV{BRACKUP_TEST_FTP}) {
   if ($gpg_version = `gpg --version`) {
-      plan tests => 29;
+      plan tests => 31;
   } else {
-      plan tests => 15;
+      plan tests => 16;
   }
 } else {
   plan skip_all => "\$ENV{BRACKUP_TEST_FTP} not set";
