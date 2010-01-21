@@ -35,6 +35,7 @@ my ($backup_file, $backup, $target) = do_backup(
                                 $tsec->add("ftp_host",      $ENV{FTP_HOST} || 'localhost');
                                 $tsec->add("ftp_user",      $ENV{FTP_USER} || 'anonymous');
                                 $tsec->add("ftp_password",  $ENV{FTP_PASSWORD} || 'user@example.com');
+                                $tsec->add("inventorydb_type", $ENV{BRACKUP_TEST_INVENTORYDB_TYPE} || 'SQLite');
                             },
                             );
 

@@ -20,6 +20,11 @@ my ($backup_file, $backup, $target) = do_backup(
                                 $csec->add("chunk_size",    "2k");
                                 $csec->add("digestdb_file", $digdb_fn);
                             },
+                            with_targetsec => sub {
+                                my $tsec = shift;
+                                $tsec->add("type", 'Filesystem');
+                                $tsec->add("inventorydb_type", $ENV{BRACKUP_TEST_INVENTORYDB_TYPE} || 'SQLite');
+                            }
                             );
 
 ############### Add orphan chunks

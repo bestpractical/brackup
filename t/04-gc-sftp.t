@@ -35,6 +35,7 @@ my ($backup_file, $backup, $target) = do_backup(
                                 $tsec->add("sftp_host",     $ENV{SFTP_HOST} || 'localhost');
                                 $tsec->add("sftp_port",     $ENV{SFTP_PORT}) if $ENV{SFTP_PORT};
                                 $tsec->add("sftp_user",     $ENV{SFTP_USER} || '');
+                                $tsec->add("inventorydb_type", $ENV{BRACKUP_TEST_INVENTORYDB_TYPE} || 'SQLite');
                             },
                             );
 
