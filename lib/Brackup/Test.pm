@@ -32,6 +32,7 @@ sub do_backup {
     my $with_confsec    = delete $opts{'with_confsec'} || sub {};
     my $with_targetsec  = delete $opts{'with_targetsec'} || sub {};
     my $with_root       = delete $opts{'with_root'}    || sub {};
+    my $target          = delete $opts{'with_target'};
     die if %opts;
 
     my $initer = shift;
@@ -47,22 +48,24 @@ sub do_backup {
     ok($root, "have a source root");
     $with_root->($root);
 
-    my $backup_dir = tempdir( CLEANUP => $ENV{BRACKUP_TEST_NOCLEANUP} ? 0 : 1 );
-    ok_dir_empty($backup_dir);
+    unless ($target) {
+        my $backup_dir = tempdir( CLEANUP => $ENV{BRACKUP_TEST_NOCLEANUP} ? 0 : 1 );
+        ok_dir_empty($backup_dir);
 
-    my ($inv_fh, $inv_filename) = tempfile();
-    close($inv_fh);
-    push @to_unlink, $inv_filename;
+        my ($inv_fh, $inv_filename) = tempfile();
+        close($inv_fh);
+        push @to_unlink, $inv_filename;
 
 
-    $confsec = Brackup::ConfigSection->new("TARGET:test_restore");
-    $with_targetsec->($confsec);
-    $confsec->add("type" => "Filesystem") unless exists $confsec->{type};
-    $confsec->add("inventorydb_file" => $inv_filename);
-    $confsec->add("path" => $backup_dir);
-    $conf->add_section($confsec);
+        $confsec = Brackup::ConfigSection->new("TARGET:test_restore");
+        $with_targetsec->($confsec);
+        $confsec->add("type" => "Filesystem") unless exists $confsec->{type};
+        $confsec->add("inventorydb_file" => $inv_filename);
+        $confsec->add("path" => $backup_dir);
+        $conf->add_section($confsec);
+        $target = $conf->load_target("test_restore");
+    }
 
-    my $target = $conf->load_target("test_restore");
     ok($target, "have a target ($target)");
 
     my $backup = Brackup::Backup->new(
