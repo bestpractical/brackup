@@ -11,7 +11,7 @@ use FindBin qw($Bin);
 use Brackup::Util qw(tempfile);
 
 if ($ENV{BRACKUP_TEST_FTP}) {
-  plan tests => 24;
+  plan tests => 25;
 } else {
   plan skip_all => "\$ENV{BRACKUP_TEST_FTP} not set";
 }
@@ -67,6 +67,9 @@ is($pruned_count, 1, 'one backup deleted in prune');
 my $removed_count = eval { $target->gc };
 is($@, '', "first gc successful");
 is($removed_count, 3, "3 chunks removed after prune");
+
+# Recheck inventory db
+Brackup::Test::check_inventory_db($target, []);
 
 ############### Add orphan chunks
 

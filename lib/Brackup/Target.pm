@@ -181,6 +181,13 @@ sub gc {
         if (lc substr($confirm,0,1) eq 'y') {
             warn "Removing orphaned chunks\n" if $opt{verbose};
             $self->delete_chunk($_) for (@orphaned_chunks);
+
+            # delete orphaned chunks from inventory
+            my $inventory_db = $self->inventory_db;
+            while (my ($k, $v) = $inventory_db->each) {
+                $v =~ s/ .*$//;         # strip value back to hash
+                $inventory_db->delete($k) if exists $chunks{$v};
+            }
         }
     }
 
@@ -280,4 +287,8 @@ for any parameters that are not already defined in the current section e.g.:
 L<Brackup>
 
 L<Brackup::InventoryDatabase>
+
+=cut
+
+# vim:sw=4:et
 

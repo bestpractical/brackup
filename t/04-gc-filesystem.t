@@ -4,7 +4,7 @@
 #
 
 use strict;
-use Test::More tests => 24;
+use Test::More tests => 25;
 
 use Brackup::Test;
 use FindBin qw($Bin);
@@ -58,6 +58,9 @@ is($pruned_count, 1, 'one backup deleted in prune');
 my $removed_count = eval { $target->gc };
 is($@, '', "first gc successful");
 is($removed_count, 3, "3 chunks removed after prune");
+
+# Recheck inventory db
+Brackup::Test::check_inventory_db($target, []);
 
 ############### Add orphan chunks
 

@@ -1,4 +1,7 @@
 
+  - remove orphaned chunks from inventory as part of garbage collection 
+    (Gavin Carr)
+
   - add simple config section inheritance ('inherit' directive) (Gavin Carr)
 
   - convert DigestCache from is-a-Dict to has-a-Dict, allow dictionary type
