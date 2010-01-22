@@ -28,6 +28,7 @@ my ($backup_file, $backup, $target) = do_backup(
                                 $csec->add("path",          $root_dir);
                                 $csec->add("chunk_size",    "2k");
                                 $csec->add("digestdb_file", $digdb_fn);
+                                $csec->add("ignore",        '\.svn');
                             },
                             with_targetsec => sub {
                                 my $tsec = shift;
