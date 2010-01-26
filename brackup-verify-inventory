@@ -111,10 +111,12 @@ my $target = eval { $config->load_target($target_name) } or
 my $inv_db = $target->inventory_db
     or die "Cannot locate target inventory db";
 
-my ($count, $ok, $bad) = (0, 0, 0, 0);
+print "Fetching list of chunks from target\n" if $opt_verbose;
+my %chunks = map { $_ => 1 } $target->chunks;
+
+my ($count, $ok, $bad) = (0, 0, 0);
 my $total = $inv_db->count / 100;
 my %ok = ();
-my %missing = ();
 my $deleting = $opt_delete ? ' - deleting from inventory' : '';
 while (my ($key, $value) = $inv_db->each) {
     $count++;
@@ -129,13 +131,13 @@ while (my ($key, $value) = $inv_db->each) {
         printf "Checking %s, size %s (%0.01f%%)\n", $path, $size, $count / $total;
     }
 
-    if ($ok{$path}) {
+    if ($ok{$dig}) {
         $ok++;
         next;
     }
 
-    if ($missing{$path}) {
-        warn "Error: chunk $path (key $key, dup) is missing on target$deleting\n";
+    if (! $chunks{$dig}) {
+        warn "Error: chunk $path (key $key) is missing on target$deleting\n";
         $inv_db->delete($key) if $opt_delete;
         $bad++;
         next;
@@ -143,7 +145,7 @@ while (my ($key, $value) = $inv_db->each) {
 
     if (my $chunk_size = eval { $target->size($path) }) {
         if ($chunk_size == $size) {
-            $ok{$path} = 1;
+            $ok{$dig} = 1;
             $ok++;
         }
         else {
@@ -152,13 +154,6 @@ while (my ($key, $value) = $inv_db->each) {
             $inv_db->delete($key) if $opt_delete;
             $bad++;
         }
-    }
-
-    else {
-        warn "Error: chunk $path (key $key) is missing on target$deleting\n";
-        $inv_db->delete($key) if $opt_delete;
-        $missing{$path} = 1;
-        $bad++;
     }
 }
 
