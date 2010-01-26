@@ -93,8 +93,10 @@ sub do_backup {
 sub check_inventory_db {
     my ($target, $gpg_args) = @_;
 
+    my $inv_db_file;
     eval {
         my $inv_db = $target->inventory_db                      or die 'cannot open inventory db';
+        $inv_db_file = $inv_db->backing_file ? (' ' . $inv_db->backing_file) : '';
 
         while (my ($key, $value) = $inv_db->each) {
             my ($raw_dig, $gpg_rcpt) = split /;/, $key;
@@ -127,7 +129,7 @@ sub check_inventory_db {
             $raw_dig eq "sha1:".sha1_hex($$dec_ref)       or die "chunk $enc_dig has wrong raw digest";
         }
     };
-    ok(!$@, "inventory db is good")   or diag($@);
+    ok(!$@, "inventory db$inv_db_file is good")   or diag($@);
 }
 
 sub do_restore {

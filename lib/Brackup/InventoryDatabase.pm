@@ -23,6 +23,7 @@ sub set { shift->{dict}->set(@_) }
 sub each { shift->{dict}->each(@_) }
 sub delete { shift->{dict}->delete(@_) }
 sub count { shift->{dict}->count(@_) }
+sub backing_file { shift->{dict}->backing_file(@_) }
 
 
 1;
