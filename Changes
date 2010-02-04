@@ -1,4 +1,7 @@
 
+  - if IO::Compress::Gzip is available, write a compressed brackup metafile in
+    unencrypted mode, and handle properly for reads and restores (Gavin Carr)
+
   - remove orphaned chunks from inventory as part of garbage collection 
     (Gavin Carr)
 

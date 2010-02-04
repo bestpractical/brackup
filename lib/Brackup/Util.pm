@@ -51,7 +51,14 @@ sub tempdir {
 
 sub slurp {
     my $file = shift;
-    sysopen(my $fh, $file, O_RDONLY) or die "Failed to open $file: $!";
+    my $fh;
+    if (eval { require IO::Uncompress::AnyUncompress }) {
+        $fh = IO::Uncompress::AnyUncompress->new($file)
+            or die "Failed to open file $file: $IO::Uncompress::AnyUncompress::AnyUncompressError";
+    }
+    else {
+        sysopen($fh, $file, O_RDONLY) or die "Failed to open $file: $!";
+    }
     return do { local $/; <$fh>; }
 }
 

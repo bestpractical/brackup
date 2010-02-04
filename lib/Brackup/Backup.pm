@@ -7,8 +7,7 @@ use Brackup::CompositeChunk;
 use Brackup::GPGProcManager;
 use Brackup::GPGProcess;
 use File::Basename;
-use File::Temp;
-use Fcntl qw(SEEK_SET);
+use File::Temp qw(tempfile);
 
 sub new {
     my ($class, %opts) = @_;
@@ -103,12 +102,19 @@ sub backup {
     }
 
     # begin temp backup_file
-    my $metafh;
+    my ($metafh, $meta_filename);
     unless ($self->{dryrun}) {
-        $metafh = File::Temp->new(
-                                  DIR => dirname($backup_file),
-                                  TEMPLATE => '.' . basename($backup_file) . 'XXXXX',
+        ($metafh, $meta_filename) = tempfile(
+                                             '.' . basename($backup_file) . 'XXXXX',
+                                             DIR => dirname($backup_file),
         );
+        if (! $gpg_rcpt) {
+            if (eval { require IO::Compress::Gzip }) {
+                close $metafh;
+                $metafh = IO::Compress::Gzip->new($meta_filename)
+                    or die "Cannot open tempfile with IO::Compress::Gzip: $IO::Compress::Gzip::GzipError";
+            }
+        }
         print $metafh $self->backup_header;
     }
 
@@ -274,7 +280,8 @@ sub backup {
     $stats->set('Total File Size Uploaded:', sprintf('%0.01f MB', $n_kb_up / 1024));
 
     unless ($self->{dryrun}) {
-        rename $metafh->filename, $backup_file
+        close $metafh or die "Close on metafile '$backup_file' failed: $!";
+        rename $meta_filename, $backup_file
             or die "Failed to rename temporary backup_file: $!\n";
 
         my ($store_fh, $store_filename);
@@ -291,9 +298,8 @@ sub backup {
             $store_filename = $encfile;
             $is_encrypted = 1;
         } else {
-            # Rewind $metafh
-            seek($metafh, 0, SEEK_SET) or die "Rewind seek on metafile '$backup_file' failed: $!";
-            $store_fh = $metafh;
+            # Reopen $metafh to reset file pointer (no backward seek with IO::Compress::Gzip)
+            open($store_fh, $backup_file) or die "Failed to open metafile '$backup_file': $!\n";
             $store_filename = $backup_file;
         }
 
@@ -303,11 +309,10 @@ sub backup {
         $target->store_backup_meta($name, $store_fh, { filename => $store_filename, is_encrypted => $is_encrypted });
         $stats->timestamp('Metafile Storage');
 
-        # close metafile(s)
-        close $metafh or die "Close on metafile '$backup_file' failed: $!";
+        # cleanup encrypted metafile
         if ($is_encrypted) {
-            unlink $store_filename;
             close $store_fh or die "Close on encrypted metafile failed: $!";
+            unlink $store_filename;
         }
     }
     $self->report_progress(100, "Backup complete.");

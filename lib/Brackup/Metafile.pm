@@ -15,7 +15,13 @@ sub open {
     }
     my $self = __PACKAGE__->new;
     $self->{filename} = $file;
-    open $self->{fh}, "<", $file;
+    if (eval { require IO::Uncompress::AnyUncompress }) {
+        $self->{fh} = IO::Uncompress::AnyUncompress->new($file)
+            or die "Failed to open file $file: $IO::Uncompress::AnyUncompress::AnyUncompressError";
+    }
+    else {
+        open $self->{fh}, "<", $file;
+    }
     $self->{linenum} = 0;
     return $self;
 }
