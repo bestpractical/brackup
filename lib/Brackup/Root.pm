@@ -209,9 +209,10 @@ sub encrypt {
     my $cout = Symbol::gensym();
     my $cin = Symbol::gensym();
 
+    my @recipients = map {("--recipient", $_)} split ' ', $gpg_rcpt;
     my $pid = IPC::Open2::open2($cout, $cin,
         $self->gpg_path, $self->gpg_args,
-        "--recipient", $gpg_rcpt,
+        @recipients,
         "--trust-model=always",
         "--batch",
         "--encrypt",
@@ -264,7 +265,9 @@ The directory to backup (recursively)
 
 =item B<gpg_recipient>
 
-The public key signature to encrypt data with.  See L<Brackup::Manual::Overview/"Using encryption">.
+The public key signature to encrypt data with, or muliple
+space-separated signatures.  See L<Brackup::Manual::Overview/"Using
+encryption">.
 
 =item B<chunk_size>
 
