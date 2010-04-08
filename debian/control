@@ -15,4 +15,6 @@ Architecture: all
 Depends: ${perl:Depends}, ${misc:Depends}, perl-modules (>= 5.8.9),
   libdigest-sha1-perl, libdbd-sqlite3-perl, libio-stringy-perl,
   libstring-escape-perl, libdbi-perl, gnupg
-Description: Flexible backup tool.  Slices, dices, encrypts, and sprays across the net.
+Suggests: libnet-amazon-s3-perl
+Description: Flexible backup tool.  Slices, dices, encrypts, and
+  sprays across the net.
