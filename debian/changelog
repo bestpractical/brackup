@@ -1,0 +1,23 @@
+libbrackup-perl (1.09-01-4) karmic; urgency=low
+
+  * Add missing gnupg dependency
+
+ -- Alex Vandiver <alexmv@bestpractical.com>  Thu, 8 Apr 2010 17:37:26 -0400
+
+libbrackup-perl (1.09-01-3) karmic; urgency=low
+
+  * More minor release fixes
+
+ -- Alex Vandiver <alexmv@bestpractical.com>  Thu, 8 Apr 2010 16:04:26 -0400
+
+libbrackup-perl (1.09-01-2) karmic; urgency=low
+
+  * Release fixes
+
+ -- Alex Vandiver <alexmv@bestpractical.com>  Thu, 8 Apr 2010 15:37:26 -0400
+
+libbrackup-perl (1.09-01-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Alex Vandiver <alexmv@bestpractical.com>  Thu, 8 Apr 2010 14:41:26 -0400
