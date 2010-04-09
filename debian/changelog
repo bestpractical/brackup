@@ -1,3 +1,9 @@
+libbrackup-perl (1.09-01-6) karmic; urgency=low
+
+  * Fix for missing ~/.gnupg/
+
+ -- Alex Vandiver <alexmv@bestpractical.com>  Thu, 8 Apr 2010 19:42:26 -0400
+
 libbrackup-perl (1.09-01-5) karmic; urgency=low
 
   * Upstream added previously-missing files, allowing all tests to run
