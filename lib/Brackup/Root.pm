@@ -130,7 +130,7 @@ sub foreach_file {
                 foreach my $pattern (@{ $self->{ignore} }) {
                     next DENTRY if $path =~ /$pattern/;
                     next DENTRY if $is_dir && "$path/" =~ /$pattern/;
-                    next DENTRY if $path =~ m!(^|/)\.brackup-digest\.db$!;
+                    next DENTRY if $path =~ m!(^|/)\.brackup-digest\.db(-journal)?$!;
                 }
 
                 $statcache{$path} = $statobj;
