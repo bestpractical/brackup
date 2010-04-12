@@ -17,9 +17,6 @@ sub new {
         $self->{gtop_max} = 0;
         $self->{gtop_data} = Brackup::BackupStats::Data->new;
     }
-    else {
-        warn "GTop not found - skipping gtop stats\n";
-    }
 
     return bless $self, $class;
 }
@@ -65,6 +62,9 @@ sub print {
         }
         printf $fh $fmt, 
             'Peak Memory Usage:', sprintf('%0.1f MB', $self->{gtop_max} / (1024 * 1024));
+        print $fh "${hash}\n";
+    } else {
+        print $fh "${hash}GTop not installed, memory usage stats disabled\n";
         print $fh "${hash}\n";
     }
 
