@@ -1,3 +1,13 @@
+libbrackup-perl (1.09-01-7) karmic; urgency=low
+
+  * Move warning about lack of GTop to the statistics output itself
+
+  * Add libgtop-perl as a 'suggests'
+
+  * Skip .brackup-digest.db-journal when backing up
+
+ -- Alex Vandiver <alexmv@bestpractical.com>  Mon, 12 Apr 2010 14:56:17 -0400
+
 libbrackup-perl (1.09-01-6) karmic; urgency=low
 
   * Fix for missing ~/.gnupg/
