@@ -294,6 +294,7 @@ sub backup {
             system($self->{root}->gpg_path, $self->{root}->gpg_args,
                    @recipients,
                    "--trust-model=always",
+                   "--batch",
                    "--encrypt",
                    "--output=$encfile",
                    "--yes",
