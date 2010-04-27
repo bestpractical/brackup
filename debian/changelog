@@ -1,3 +1,11 @@
+libbrackup-perl (1.09-01-8) karmic; urgency=low
+
+  * Encrypt metafiles to all recipients
+
+  * Document missing command-line options to brackup
+
+ -- Alex Vandiver <alexmv@bestpractical.com>  Mon, 26 Apr 2010 20:31:17 -0400
+
 libbrackup-perl (1.09-01-7) karmic; urgency=low
 
   * Move warning about lack of GTop to the statistics output itself
