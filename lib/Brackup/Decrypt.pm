@@ -20,7 +20,7 @@ sub decrypt_data {
     my $decrypted_temp = decrypt_file($dataref_temp,%opts);
     unlink($dataref_temp);
 
-    my $data = Brackup::Util::slurp($decrypted_temp);
+    my $data = slurp($decrypted_temp);
     unlink($decrypted_temp);
 
     return \$data;
