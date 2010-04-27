@@ -30,6 +30,10 @@ for more.
 Optional.  Defaults to "source-target-YYYYMMDD.brackup".  This is the 
 "metafile" index you'll need to do a restore.
 
+=item --config=FILE
+
+Specify the configuration file to use; defaults to ~/.brackup
+
 =item --save-stats[=FILE]
 
 Optional.  Flag to indicate that stats output should be recorded to a
@@ -38,6 +42,21 @@ file. If =FILE is omitted, defaults to "source-target-YYYYMMDD.stats."
 =item --verbose|-v
 
 Show status during backup.
+
+=item --dry-run
+
+Don't actually store any data on the target.
+
+=item --du-stats
+
+Prints the size, in kB, of data underneath each directory
+(recursively) which will be backed up.
+
+=item --zenityprogress
+
+Produces output suitable for piping into C<zenity --progress> to get a
+pretty GUI progress bar while running a backup.  This option is
+incompatable with C<--verbose>, as both print to STDOUT.
 
 =back
 
