@@ -38,7 +38,7 @@ sub write_to_file {
 sub decrypt_file_if_needed {
     my ($filename) = @_;
 
-    my $meta = slurp($filename);
+    my $meta = slurp($filename, decompress => 1);
     if ($meta =~ /[\x00-\x08]/) {  # silly is-binary heuristic
         my $new_file = decrypt_file($filename,no_batch => 1);
         if (defined $new_file) {
