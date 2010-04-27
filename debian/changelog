@@ -1,3 +1,9 @@
+libbrackup-perl (1.09-01-10) karmic; urgency=low
+
+  * Fix slurp's interaction with decrypt_file_if_needed
+
+ -- Alex Vandiver <alexmv@bestpractical.com>  Tue, 27 Apr 2010 01:35:17 -0400
+
 libbrackup-perl (1.09-01-9) karmic; urgency=low
 
   * Restore files that were originally compressed correctly
