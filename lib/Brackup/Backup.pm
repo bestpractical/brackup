@@ -290,9 +290,14 @@ sub backup {
         # store the metafile, encrypted, on the target
         if ($gpg_rcpt) {
             my $encfile = $backup_file . ".enc";
+            my @recipients = map {("--recipient", $_)} split ' ', $gpg_rcpt;
             system($self->{root}->gpg_path, $self->{root}->gpg_args,
+                   @recipients,
                    "--trust-model=always",
-                   "--recipient", $gpg_rcpt, "--encrypt", "--output=$encfile", "--yes", $backup_file)
+                   "--encrypt",
+                   "--output=$encfile",
+                   "--yes",
+                   $backup_file)
                 and die "Failed to run gpg while encryping metafile: $!\n";
             open ($store_fh, $encfile) or die "Failed to open encrypted metafile '$encfile': $!\n";
             $store_filename = $encfile;
