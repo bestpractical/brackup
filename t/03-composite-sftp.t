@@ -24,6 +24,7 @@ if ($ENV{BRACKUP_TEST_SFTP}) {
 }
 
 my $gpg_args = ["--no-default-keyring",
+                "--quiet",
                 "--keyring=$Bin/data/pubring-test.gpg",
                 "--secret-keyring=$Bin/data/secring-test.gpg"];
 
