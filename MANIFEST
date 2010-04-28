@@ -68,6 +68,7 @@ t/05-filename-escaping.t
 t/06-config-inheritance.t
 t/data-2/000-dup1.txt
 t/data-2/000-dup2.txt
+t/data-2/gzip.txt.gz
 t/data-2/my-link.txt
 t/data-2/my_dir/sub_dir/another-file.txt
 t/data-2/my_dir/sub_dir/program.sh
@@ -86,6 +87,7 @@ t/data-weird-filenames/secring-test.gpg
 t/data-weird-filenames/test-file.txt
 t/data/000-dup1.txt
 t/data/000-dup2.txt
+t/data/gzip.txt.gz
 t/data/huge-file.txt
 t/data/my-link.txt
 t/data/my_dir/sub_dir/another-file.txt
