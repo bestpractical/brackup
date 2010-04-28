@@ -13,6 +13,8 @@ WriteMakefile( NAME            => 'Brackup',
                    'String::Escape' => 0,
                    'IO::InnerFile'  => 0,
                    'File::Temp'     => 0.17,   # require a seekable File::Temp
+                   'ExtUtils::Manifest' => 1.52,    # For spaces in files in MANIFEST
+                   'Test::More'         => 0.88,    # For done_testing
                },
                ABSTRACT_FROM => 'lib/Brackup.pm',
                AUTHOR     => 'Brad Fitzpatrick <brad@danga.com>',

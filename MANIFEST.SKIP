@@ -9,6 +9,7 @@ makedocs.pl
 ,v$
 \B\.svn\b
 \B\.bzr\b
+\B\.git\b
 \b_darcs\b
 
 # Avoid Makemaker generated and utility files.
