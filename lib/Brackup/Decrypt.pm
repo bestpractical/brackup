@@ -20,7 +20,7 @@ sub decrypt_data {
     my $decrypted_temp = decrypt_file($dataref_temp,%opts);
     unlink($dataref_temp);
 
-    my $data = Brackup::Util::slurp($decrypted_temp);
+    my $data = slurp($decrypted_temp);
     unlink($decrypted_temp);
 
     return \$data;
@@ -38,7 +38,7 @@ sub write_to_file {
 sub decrypt_file_if_needed {
     my ($filename) = @_;
 
-    my $meta = slurp($filename);
+    my $meta = slurp($filename, decompress => 1);
     if ($meta =~ /[\x00-\x08]/) {  # silly is-binary heuristic
         my $new_file = decrypt_file($filename,no_batch => 1);
         if (defined $new_file) {
