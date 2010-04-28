@@ -27,6 +27,9 @@ END {
     }
 }
 
+# Set the gpg directory, so we don't rely on users having a ~/.gnupg
+$ENV{GNUPGHOME} = tempdir( CLEANUP => 1 );
+
 sub do_backup {
     my %opts = @_;
     my $with_confsec    = delete $opts{'with_confsec'} || sub {};
