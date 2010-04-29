@@ -1,3 +1,5 @@
+  - allow multiple gpg recipients to be specified, any can restore (Alex 
+    Vandiver)
 
   - if IO::Compress::Gzip is available, write a compressed brackup metafile in
     unencrypted mode, and handle properly for reads and restores (Gavin Carr)

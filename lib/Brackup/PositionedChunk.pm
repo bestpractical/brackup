@@ -111,8 +111,8 @@ sub raw_chunkref {
 sub inventory_key {
     my $self = shift;
     my $key = $self->raw_digest;
-    if (my $rcpt = $self->root->gpg_rcpt) {
-        $key .= ";to=$rcpt";
+    if (my @rcpts = $self->root->gpg_rcpts) {
+        $key .= ";to=@rcpts";
     } else {
         $key .= ";raw";
     }

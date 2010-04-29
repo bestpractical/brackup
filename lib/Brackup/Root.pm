@@ -18,7 +18,7 @@ sub new {
 
     $self->{dir}        = $conf->path_value('path');
     $self->{gpg_path}   = $conf->value('gpg_path') || "gpg";
-    $self->{gpg_rcpt}   = $conf->value('gpg_recipient');
+    $self->{gpg_rcpt}   = [ $conf->values('gpg_recipient') ];
     $self->{chunk_size} = $conf->byte_value('chunk_size');
     $self->{ignore}     = [];
 
@@ -53,9 +53,9 @@ sub gpg_args {
     return @{ $self->{gpg_args} };
 }
 
-sub gpg_rcpt {
+sub gpg_rcpts {
     my $self = shift;
-    return $self->{gpg_rcpt};
+    return @{ $self->{gpg_rcpt} };
 }
 
 # returns Brackup::DigestCache object
@@ -119,7 +119,7 @@ sub foreach_file {
                 # GC: seems to work fine as of at least gpg 1.4.5, so commenting out
                 # gpg seems to barf on files ending in whitespace, blowing
                 # stuff up, so we just skip them instead...
-                #if ($self->gpg_rcpt && $path =~ /\s+$/) {
+                #if ($self->gpg_rcpts && $path =~ /\s+$/) {
                 #    warn "Skipping file ending in whitespace: <$path>\n";
                 #    next;
                 #}
@@ -203,15 +203,16 @@ sub du_stats {
 # given filehandle to data, returns encrypted data
 sub encrypt {
     my ($self, $data_fh, $outfn) = @_;
-    my $gpg_rcpt = $self->gpg_rcpt
+    my @gpg_rcpts = $self->gpg_rcpts
         or Carp::confess("Encryption not setup for this root");
 
     my $cout = Symbol::gensym();
     my $cin = Symbol::gensym();
 
+    my @recipients = map {("--recipient", $_)} @gpg_rcpts;
     my $pid = IPC::Open2::open2($cout, $cin,
         $self->gpg_path, $self->gpg_args,
-        "--recipient", $gpg_rcpt,
+        @recipients,
         "--trust-model=always",
         "--batch",
         "--encrypt",
