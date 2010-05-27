@@ -295,9 +295,9 @@ sub backup {
                    @recipients,
                    "--trust-model=always",
                    "--batch",
-                   "--encrypt",
-                   "--output=$encfile",
-                   "--yes",
+                   "--encrypt", 
+                   "--output=$encfile", 
+                   "--yes", 
                    $backup_file)
                 and die "Failed to run gpg while encryping metafile: $!\n";
             open ($store_fh, $encfile) or die "Failed to open encrypted metafile '$encfile': $!\n";
