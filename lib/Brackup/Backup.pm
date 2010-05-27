@@ -40,7 +40,7 @@ sub backup {
 
     my $stats  = Brackup::BackupStats->new;
 
-    my $gpg_rcpt = $self->{root}->gpg_rcpt;
+    my @gpg_rcpts = $self->{root}->gpg_rcpts;
 
     my $n_kb         = 0.0; # num:  kb of all files in root
     my $n_files      = 0;   # int:  # of files in root
@@ -96,7 +96,7 @@ sub backup {
 
     my $gpg_iter;
     my $gpg_pm;   # gpg ProcessManager
-    if ($gpg_rcpt) {
+    if (@gpg_rcpts) {
         ($chunk_iterator, $gpg_iter) = $chunk_iterator->mux_into(2);
         $gpg_pm = Brackup::GPGProcManager->new($gpg_iter, $target);
     }
@@ -108,7 +108,7 @@ sub backup {
                                              '.' . basename($backup_file) . 'XXXXX',
                                              DIR => dirname($backup_file),
         );
-        if (! $gpg_rcpt) {
+        if (! @gpg_rcpts) {
             if (eval { require IO::Compress::Gzip }) {
                 close $metafh;
                 $metafh = IO::Compress::Gzip->new($meta_filename)
@@ -212,7 +212,7 @@ sub backup {
             $schunk = Brackup::StoredChunk->new($pchunk);
 
             # encrypt it
-            if ($gpg_rcpt) {
+            if (@gpg_rcpts) {
                 $schunk->set_encrypted_chunkref($gpg_pm->enc_chunkref_of($pchunk));
             }
 
@@ -288,9 +288,9 @@ sub backup {
         my $is_encrypted = 0;
 
         # store the metafile, encrypted, on the target
-        if ($gpg_rcpt) {
+        if (@gpg_rcpts) {
             my $encfile = $backup_file . ".enc";
-            my @recipients = map {("--recipient", $_)} split ' ', $gpg_rcpt;
+            my @recipients = map {("--recipient", $_)} @gpg_rcpts;
             system($self->{root}->gpg_path, $self->{root}->gpg_args,
                    @recipients,
                    "--trust-model=always",
@@ -367,9 +367,7 @@ sub backup_header {
     $ret .= "TargetName: " . $self->{target}->name . "\n";
     $ret .= "DefaultFileMode: " . $self->default_file_mode . "\n";
     $ret .= "DefaultDirMode: " . $self->default_directory_mode . "\n";
-    if (my $rcpt = $self->{root}->gpg_rcpt) {
-        $ret .= "GPG-Recipient: $rcpt\n";
-    }
+    $ret .= "GPG-Recipient: $_\n" for $self->{root}->gpg_rcpts;
     $ret .= "\n";
     return $ret;
 }
