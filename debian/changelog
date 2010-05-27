@@ -1,3 +1,12 @@
+libbrackup-perl (1.09-01-11) karmic; urgency=low
+
+  * Make multiple recipients be specified by multiple gpg_recipient
+    lines, instead of space-separated
+
+  * Bump minimum Net::SFTP::Foreign version
+
+ -- Alex Vandiver <alexmv@bestpractical.com>  Wed, 26 May 2010 10:58:17 -0400
+
 libbrackup-perl (1.09-01-10) karmic; urgency=low
 
   * Fix slurp's interaction with decrypt_file_if_needed
