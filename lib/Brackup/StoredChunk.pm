@@ -96,7 +96,7 @@ sub root {
 # returns true if encrypted, false otherwise
 sub encrypted {
     my $self = shift;
-    return $self->root->gpg_rcpt ? 1 : 0;
+    return $self->root->gpg_rcpts ? 1 : 0;
 }
 
 sub compressed {

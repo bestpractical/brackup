@@ -32,7 +32,7 @@ Optional.  Defaults to "source-target-YYYYMMDD.brackup".  This is the
 
 =item --config=FILE
 
-Specify the configuration file to use; defaults to ~/.brackup
+Specify the configuration file to use; defaults to ~/.brackup.
 
 =item --save-stats[=FILE]
 

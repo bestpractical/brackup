@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use base 'Brackup::Target::Filebased';
 use File::Basename;
-use Net::SFTP::Foreign;
+use Net::SFTP::Foreign 1.57;                    # versions <= 1.56 emit warnings
 use Net::SFTP::Foreign::Constants qw(:flags);
 
 sub new {

@@ -114,9 +114,8 @@ on paper.  (Worst case you can type it back in, or use OCR.)  Export with:
 
   $ gpg --export-secret-keys --armor
 
-You can encrypt to multiple keys by providing a space-separated list
-of key IDs to encrypt to; any of the keys provided will be able to
-decrypt the backups.
+You can encrypt to multiple keys by providing multiple C<gpg_recipient> 
+lines; any of the keys provided will be able to decrypt the backups.
 
 =head1 Restores
 
