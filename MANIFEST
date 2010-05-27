@@ -73,8 +73,10 @@ t/data-2/my-link.txt
 t/data-2/my_dir/sub_dir/another-file.txt
 t/data-2/my_dir/sub_dir/program.sh
 t/data-2/pubring-test.gpg
+t/data-2/pubring-test2.gpg
 t/data-2/README
 t/data-2/secring-test.gpg
+t/data-2/secring-test2.gpg
 t/data-2/test-file.txt
 t/data-weird-filenames/000-dup1.txt
 t/data-weird-filenames/000-dup2.txt
@@ -93,7 +95,9 @@ t/data/my-link.txt
 t/data/my_dir/sub_dir/another-file.txt
 t/data/my_dir/sub_dir/program.sh
 t/data/pubring-test.gpg
+t/data/pubring-test2.gpg
 t/data/secring-test.gpg
+t/data/secring-test2.gpg
 t/data/test-file.txt
 t/misc/brackup.conf
 TODO
