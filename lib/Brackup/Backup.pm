@@ -22,6 +22,10 @@ sub new {
     $self->{zenityprogress} = delete $opts{zenityprogress};  # bool
 
     $self->{modecounts} = {}; # type -> mode(octal) -> count
+    $self->{idcounts}   = {}; # type -> uid/gid -> count
+
+    $self->{_uid_map} = {};   # uid -> username
+    $self->{_gid_map} = {};   # gid -> group
 
     $self->{saved_files} = [];   # list of Brackup::File objects backed up
     $self->{unflushed_files} = [];   # list of Brackup::File objects not in backup_file
@@ -60,7 +64,7 @@ sub backup {
     $root->foreach_file(sub {
         my ($file) = @_;  # a Brackup::File
         push @files, $file;
-        $self->record_mode($file);
+        $self->record_mode_ids($file);
         $n_files++;
         $n_kb += $file->size / 1024;
     });
@@ -342,6 +346,48 @@ sub _default_mode {
     return (sort { $map->{$b} <=> $map->{$a} } keys %$map)[0];
 }
 
+sub default_uid {
+    my $self = shift;
+    return $self->{_def_uid} ||= $self->_default_id('u');
+}
+
+sub default_gid {
+    my $self = shift;
+    return $self->{_def_gid} ||= $self->_default_id('g');
+}
+
+sub _default_id {
+    my ($self, $type) = @_;
+    my $map = $self->{idcounts}{$type} || {};
+    return (sort { $map->{$b} <=> $map->{$a} } keys %$map)[0];
+}
+
+# space-separated list of local uid:username mappings
+sub uid_map {
+    my $self = shift;
+    my @map;
+    my $uidcounts = $self->{idcounts}{u};
+    for my $uid (sort { $a <=> $b } keys %$uidcounts) {
+      if (my $name = getpwuid($uid)) {
+        push @map, "$uid:$name";
+      }
+    }
+    return join(' ', @map);
+}
+
+# space-separated list of local gid:group mappings
+sub gid_map {
+    my $self = shift;
+    my @map;
+    my $gidcounts = $self->{idcounts}{g};
+    for my $gid (sort { $a <=> $b } keys %$gidcounts) {
+      if (my $name = getgrgid($gid)) {
+        push @map, "$gid:$name";
+      }
+    }
+    return join(' ', @map);
+}
+
 sub backup_time {
     my $self = shift;
     return $self->{backup_time} ||= time();
@@ -367,14 +413,20 @@ sub backup_header {
     $ret .= "TargetName: " . $self->{target}->name . "\n";
     $ret .= "DefaultFileMode: " . $self->default_file_mode . "\n";
     $ret .= "DefaultDirMode: " . $self->default_directory_mode . "\n";
+    $ret .= "DefaultUID: " . $self->default_uid . "\n";
+    $ret .= "DefaultGID: " . $self->default_gid . "\n";
+    $ret .= "UIDMap: " . $self->uid_map . "\n";
+    $ret .= "GIDMap: " . $self->gid_map . "\n";
     $ret .= "GPG-Recipient: $_\n" for $self->{root}->gpg_rcpts;
     $ret .= "\n";
     return $ret;
 }
 
-sub record_mode {
+sub record_mode_ids {
     my ($self, $file) = @_;
     $self->{modecounts}{$file->type}{$file->mode}++;
+    $self->{idcounts}{u}{$file->uid}++;
+    $self->{idcounts}{g}{$file->gid}++;
 }
 
 sub add_unflushed_file {
