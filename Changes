@@ -1,3 +1,6 @@
+  - add uid/gid info to metafile, and use in restores (where possible)
+    (Gavin Carr)
+
   - allow multiple gpg recipients to be specified, any can restore (Alex 
     Vandiver)
 
