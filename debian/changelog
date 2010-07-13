@@ -1,3 +1,11 @@
+libbrackup-perl (1.09-01-12) karmic; urgency=low
+
+  * Capture and restore user/group ownership on files
+
+  * Add --list-targets and --list-targets options
+
+ -- Alex Vandiver <alexmv@bestpractical.com>  Wed, 13 Jul 2010 12:04:17 -0400
+
 libbrackup-perl (1.09-01-11) karmic; urgency=low
 
   * Make multiple recipients be specified by multiple gpg_recipient
