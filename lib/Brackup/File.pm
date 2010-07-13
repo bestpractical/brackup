@@ -188,6 +188,16 @@ sub mode {
     return sprintf('%#o', $self->stat->mode & 0777);
 }
 
+sub uid {
+    my $self = shift;
+    return $self->stat->uid;
+}
+
+sub gid {
+    my $self = shift;
+    return $self->stat->gid;
+}
+
 sub as_rfc822 {
     my ($self, $schunk_list, $backup) = @_;
     my $ret = "";
@@ -221,6 +231,15 @@ sub as_rfc822 {
                 ($type eq "f" && $mode eq $backup->default_file_mode)) {
             $set->("Mode", $mode);
         }
+    }
+
+    my $uid = $self->uid;
+    unless ($uid eq $backup->default_uid) {
+      $set->("UID", $uid);
+    }
+    my $gid = $self->gid;
+    unless ($gid eq $backup->default_gid) {
+      $set->("GID", $gid);
     }
 
     return $ret . "\n";

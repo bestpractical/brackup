@@ -19,6 +19,9 @@ sub new {
     $self->{config}  = delete $opts{config};  # brackup config (if available)
     $self->{verbose} = delete $opts{verbose};
 
+    $self->{_local_uid_map} = {};  # remote/metafile uid -> local uid
+    $self->{_local_gid_map} = {};  # remote/metafile gid -> local gid
+
     $self->{prefix} =~ s/\/$// if $self->{prefix};
 
     $self->{_stats_to_run} = [];  # stack (push/pop) of subrefs to reset stat info on
@@ -120,15 +123,18 @@ sub restore {
         my $full = $self->{to} . "/" . $path;
         my $full_escaped = $self->{to} . "/" . $path_escaped_stripped;
 
-        # restore default modes from header
-        $it->{Mode} ||= $meta->{DefaultFileMode} if $type eq "f";
-        $it->{Mode} ||= $meta->{DefaultDirMode}  if $type eq "d";
+        # restore default modes/user/group from header
+        $it->{Mode} ||= ($type eq 'd' ? $meta->{DefaultDirMode} : $meta->{DefaultFileMode});
+        $it->{UID}  ||= $meta->{DefaultUID};
+        $it->{GID}  ||= $meta->{DefaultGID};
 
         warn " * restoring $path_escaped to $full_escaped\n" if $self->{verbose};
         $self->_restore_link     ($full, $it) if $type eq "l";
         $self->_restore_directory($full, $it) if $type eq "d";
         $self->_restore_fifo     ($full, $it) if $type eq "p";
         $self->_restore_file     ($full, $it) if $type eq "f";
+
+        $self->_chown($full, $it, $type, $meta) if $it->{UID} || $it->{GID};
     }
 
     # clear chunk cached by _restore_file
@@ -143,6 +149,68 @@ sub restore {
     } else {
         die "nothing found matching '$self->{prefix}'.\n" if $self->{prefix};
         die "nothing found to restore.\n";
+    }
+}
+
+sub _lookup_remote_uid {
+    my ($self, $remote_uid, $meta) = @_;
+
+    return $self->{_local_uid_map}->{$remote_uid} 
+        if defined $self->{_local_uid_map}->{$remote_uid};
+
+    # meta remote user map - remote_uid => remote username
+    $self->{_remote_user_map} ||= { map { split /:/, $_, 2 } split /\s+/, $meta->{UIDMap} };
+
+    # try and lookup local uid using remote username
+    if (my $remote_user = $self->{_remote_user_map}->{$remote_uid}) {
+        my $local_uid = getpwnam($remote_user);
+        return $self->{_local_uid_map}->{$remote_uid} = $local_uid
+            if defined $local_uid;
+    }
+
+    # if remote username missing locally, fallback to $remote_uid
+    return $self->{_local_uid_map}->{$remote_uid} = $remote_uid;
+}
+
+sub _lookup_remote_gid {
+    my ($self, $remote_gid, $meta) = @_;
+
+    return $self->{_local_gid_map}->{$remote_gid} 
+        if defined $self->{_local_gid_map}->{$remote_gid};
+
+    # meta remote group map - remote_gid => remote group
+    $self->{_remote_group_map} ||= { map { split /:/, $_, 2 } split /\s+/, $meta->{GIDMap} };
+
+    # try and lookup local gid using remote group
+    if (my $remote_group = $self->{_remote_group_map}->{$remote_gid}) {
+        my $local_gid = getgrnam($remote_group);
+        return $self->{_local_gid_map}->{$remote_gid} = $local_gid
+            if defined $local_gid;
+    }
+
+    # if remote group missing locally, fallback to $remote_gid
+    return $self->{_local_gid_map}->{$remote_gid} = $remote_gid;
+}
+
+sub _chown {
+    my ($self, $full, $it, $type, $meta) = @_;
+
+    my $uid = $self->_lookup_remote_uid($it->{UID}, $meta) if $it->{UID};
+    my $gid = $self->_lookup_remote_gid($it->{GID}, $meta) if $it->{GID};
+
+    if ($type eq 'l') {
+        if (! defined $self->{_lchown}) {
+            no strict 'subs';
+            $self->{_lchown} = eval { require Lchown } && Lchown::LCHOWN_AVAILABLE;
+        }
+        if ($self->{_lchown}) {
+            Lchown::lchown($uid, -1, $full) if defined $uid;
+            Lchown::lchown(-1, $gid, $full) if defined $gid;
+        }
+    } else {
+        # ignore errors, but change uid and gid separately to sidestep unprivileged failures
+        chown $uid, -1, $full if defined $uid;
+        chown -1, $gid, $full if defined $gid;
     }
 }
 

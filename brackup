@@ -58,6 +58,14 @@ Produces output suitable for piping into C<zenity --progress> to get a
 pretty GUI progress bar while running a backup.  This option is
 incompatable with C<--verbose>, as both print to STDOUT.
 
+=item --list-sources
+
+List the names of the sources defined in your configuration file.
+
+=item --list-targets
+
+List the names of the targets defined in your configuration file.
+
 =back
 
 =head1 WARRANTY
@@ -104,6 +112,7 @@ my $opt_dryrun;
 my $opt_verbose;
 my $opt_du_stats;
 my $opt_zenityprogress;
+my ($opt_list_sources, $opt_list_targets);
 
 my $config_file = Brackup::Config->default_config_file_name;
 my $arguments = join(' ', @ARGV);
@@ -120,6 +129,8 @@ usage() unless
                'dry-run'   => \$opt_dryrun,
                'du-stats'  => \$opt_du_stats,
                'config=s'  => \$config_file,
+               'list-sources'   => \$opt_list_sources,
+               'list-targets'   => \$opt_list_targets,
                );
 usage() if @ARGV;
 
@@ -140,6 +151,15 @@ if ($opt_du_stats && $src_name) {
     my $root = eval { $config->load_root($src_name); } or
         die "Bogus --from name";
     $root->du_stats;
+    exit 0;
+}
+
+if ($opt_list_sources) {
+    print join("\n", $config->list_sources), "\n";
+    exit 0;
+}
+if ($opt_list_targets) {
+    print join("\n", $config->list_targets), "\n";
     exit 0;
 }
 
