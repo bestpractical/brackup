@@ -164,6 +164,16 @@ sub load_root {
     return $root;
 }
 
+sub list_sources {
+    my ($self) = @_;
+    return sort map { s/^SOURCE://; $_ } grep(/^SOURCE:/, keys %$self);
+}
+
+sub list_targets {
+    my ($self) = @_;
+    return sort map { s/^TARGET://; $_ } grep(/^TARGET:/, keys %$self);
+}
+
 sub load_target {
     my ($self, $name) = @_;
     my $confsec = $self->{"TARGET:$name"} or
