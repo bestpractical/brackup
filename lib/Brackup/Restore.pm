@@ -296,8 +296,13 @@ sub _restore_file {
     my ($self, $full, $it) = @_;
 
     if (-e $full && -s $full) {
+        if ($self->_digest_matches($it, $full)) {
+            warn "   ** file already exists on disk\n" if $self->{verbose};
+            $self->_update_statinfo($full, $it);
+            return;
+        }
         # TODO: add --conflict={skip,overwrite} option, defaulting to nothing: which dies
-        die "File $full ($it->{Path}) already exists.  Aborting.";
+        die "File $full ($it->{Path}) already exists, and contents differ.  Aborting.";
     }
 
     sysopen(my $fh, $full, O_CREAT|O_WRONLY|O_TRUNC) or die "Failed to open '$full' for writing: $!";
