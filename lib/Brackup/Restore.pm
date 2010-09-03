@@ -8,6 +8,7 @@ use Fcntl qw(O_RDONLY O_CREAT O_WRONLY O_TRUNC);
 use String::Escape qw(unprintable);
 use Brackup::DecryptedFile;
 use Brackup::Decrypt;
+use Brackup::Util qw(io_sha1);
 
 sub new {
     my ($class, %opts) = @_;
@@ -278,6 +279,19 @@ sub _restore_fifo {
     $self->_update_statinfo($full, $it);
 }
 
+sub _digest_matches {
+    my ($self, $it, $path) = @_;
+    my $good_dig = $it->{Digest};
+    return undef unless $good_dig and $good_dig =~ /^sha1:(.+)/;
+    $good_dig = $1;
+    sysopen(my $readfh, $path, O_RDONLY) or die "Failed to open '$path' for verification: $!";
+    binmode($readfh);
+    my $sha1 = Digest::SHA1->new;
+    $sha1->addfile($readfh);
+    my $actual_dig = $sha1->hexdigest;
+    return $actual_dig eq $good_dig;
+}
+
 sub _restore_file {
     my ($self, $full, $it) = @_;
 
@@ -333,22 +347,9 @@ sub _restore_file {
     }
     close($fh) or die "Close failed";
 
-    if (my $good_dig = $it->{Digest}) {
-        die "not capable of verifying digests of from anything but sha1"
-            unless $good_dig =~ /^sha1:(.+)/;
-        $good_dig = $1;
-
-        sysopen(my $readfh, $full, O_RDONLY) or die "Failed to reopen '$full' for verification: $!";
-        binmode($readfh);
-        my $sha1 = Digest::SHA1->new;
-        $sha1->addfile($readfh);
-        my $actual_dig = $sha1->hexdigest;
-
-        # TODO: support --onerror={continue,prompt}, etc, but for now we just die
-        unless ($actual_dig eq $good_dig || $full =~ m!\.brackup-digest\.db\b!) {
-            die "Digest of restored file ($full) doesn't match";
-        }
-    }
+    my $digest_ok = $self->_digest_matches($it, $full);
+    die "Digest of restored file ($full) doesn't match"
+        if defined $digest_ok and not $digest_ok and $full !~ m!\.brackup-digest\.db\b!;
 
     $self->_update_statinfo($full, $it);
 }
