@@ -81,11 +81,13 @@ sub new_from_backup_header {
     my ($class, $header, $confsec) = @_;
 
     my $accesskey     = ($ENV{'AWS_KEY'} || 
+                         $ENV{'AWS_ACCESS_KEY_ID'} ||
                          $header->{AWSAccessKeyID} || 
                          $confsec->value('aws_access_key_id') || 
                          _prompt("Your Amazon AWS access key? "))
         or die "Need your Amazon access key.\n";
     my $sec_accesskey = ($ENV{'AWS_SEC_KEY'} || 
+                         $ENV{'AWS_ACCESS_KEY_SECRET'} ||
                          $confsec->value('aws_secret_access_key') || 
                          _prompt("Your Amazon AWS secret access key? "))
         or die "Need your Amazon secret access key.\n";
