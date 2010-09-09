@@ -134,10 +134,10 @@ sub CMD_list_backups {
         '-' x 11,
         '-' x 8);
     foreach my $si (sort { $b->time <=> $a->time } $target->backups) {
-        printf("%-32s %-30s %10d\n",
+        printf("%-32s %-30s %10s\n",
                $si->filename,
                $si->localtime,
-               $si->size);
+               $si->size || '?');
     }
     return 1;
 }

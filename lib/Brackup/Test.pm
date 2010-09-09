@@ -66,7 +66,7 @@ sub do_backup {
         $confsec->add("inventorydb_file" => $inv_filename);
         $confsec->add("path" => $backup_dir);
         $conf->add_section($confsec);
-        $target = $conf->load_target("test_restore");
+        $target = $conf->load_target("test_restore", testmode => 1);
     }
 
     ok($target, "have a target ($target)");

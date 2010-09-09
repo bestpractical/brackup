@@ -1,3 +1,5 @@
+  - add Riak target, allowing backups to a riak cluster (Gavin Carr)
+
   - add uid/gid info to metafile, and use in restores (where possible)
     (Gavin Carr)
 
