@@ -2,7 +2,7 @@ package Brackup::Target::Riak;
 use strict;
 use warnings;
 use base 'Brackup::Target';
-use Net::Riak 0.08;
+use Net::Riak 0.09;
 
 # fields in object:
 #   host_url
@@ -41,9 +41,6 @@ sub _init {
     # Construct client
     $self->{client} = Net::Riak->new( host => $self->{host_url}, %quorum_attr );
 
-    # The default Net::Riak useragent timeout is only 3s
-    $self->{client}->useragent->timeout(30);
-
     $self->{bucket} = {
       chunk  => $self->{client}->bucket( $self->{bucket_prefix} . "-chunks"  ),
       backup => $self->{client}->bucket( $self->{bucket_prefix} . "-backups" ),
@@ -54,7 +51,7 @@ sub _init {
     };
 }
 
-# w and dw aren't required for stores, so omitted here
+# w and dw aren't required for restores, so omitted here
 sub backup_header {
     my ($self) = @_;
     return {
