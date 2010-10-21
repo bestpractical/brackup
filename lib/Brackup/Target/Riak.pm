@@ -250,7 +250,7 @@ sub size {
 
     my $obj = $self->_load(chunk => $dig) or return 0;
 
-    return $obj->_headers->{'Content-Length'};
+    return $obj->_headers->content_length;
 }
 
 1;
