@@ -1,3 +1,5 @@
+1.10 (2010-10-31)
+
   - permit 0 as a filename.  https://rt.cpan.org/Ticket/Display.html?id=62004
 
   - add Riak target, allowing backups to a riak cluster (Gavin Carr)
@@ -34,8 +36,8 @@
 
   - write metafile as we go, instead of big bang at the end (Gavin Carr)
 
-  - add Brackup::BackupStats implementation, brackup stats output, and 
-    --save-stats argument (Gavin Carr)
+- add Brackup::BackupStats implementation, brackup stats output, and 
+--save-stats argument (Gavin Carr)
 
   - fix filename trailing whitespace problems with open (Gavin Carr)
 
