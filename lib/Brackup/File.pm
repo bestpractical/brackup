@@ -23,7 +23,7 @@ sub new {
     croak("Unknown options: " . join(', ', keys %opts)) if %opts;
 
     die "No root object provided." unless $self->{root} && $self->{root}->isa("Brackup::Root");
-    die "No path provided." unless $self->{path};
+    die "No path provided." unless defined($self->{path});  # note: permit "0"
     $self->{path} =~ s!^\./!!;
 
     return $self;
