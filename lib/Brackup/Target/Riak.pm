@@ -2,7 +2,7 @@ package Brackup::Target::Riak;
 use strict;
 use warnings;
 use base 'Brackup::Target';
-use Net::Riak 0.09;
+use Net::Riak 0.10;
 
 # fields in object:
 #   host_url
