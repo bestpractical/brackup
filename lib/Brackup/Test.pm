@@ -137,16 +137,21 @@ sub check_inventory_db {
 
 sub do_restore {
     my ($backup_file, %opts) = @_;
-    my $prefix     = delete $opts{'prefix'} || "";   # default is restore everything
-    my $restore_should_die = delete $opts{'restore_should_die'};
+    my $prefix              = delete $opts{'prefix'} || "";   # default is restore everything
+    my $restore_should_die  = delete $opts{'restore_should_die'};
+    my $restore_dir         = delete $opts{'restore_dir'};
+    my $conflict            = delete $opts{'conflict'};
     die if %opts;
-    my $restore_dir = tempdir( CLEANUP => $ENV{BRACKUP_TEST_NOCLEANUP} ? 0 : 1 );
-    ok_dir_empty($restore_dir);
+    if (! $restore_dir) {
+        $restore_dir = tempdir( CLEANUP => $ENV{BRACKUP_TEST_NOCLEANUP} ? 0 : 1 );
+        ok_dir_empty($restore_dir);
+    }
 
     my $restore = Brackup::Restore->new(
-                                        to     => $restore_dir,
-                                        prefix => $prefix,
-                                        file   => $backup_file,
+                                        to       => $restore_dir,
+                                        prefix   => $prefix,
+                                        file     => $backup_file,
+                                        conflict => $conflict,
                                         );
     ok($restore, "have restore object");
     my $rv = eval { $restore->restore; };
