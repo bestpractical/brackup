@@ -222,8 +222,10 @@ sub as_rfc822 {
     }
     $set->("Chunks", join("\n ", map { $_->to_meta } @$schunk_list));
 
+    # Record mtime even for links (which we can't restore), for restore --conflict update
+    $set->("Mtime", $st->mtime);
+
     unless ($self->is_link) {
-        $set->("Mtime", $st->mtime);
         $set->("Atime", $st->atime) unless $self->root->noatime;
 
         my $mode = $self->mode;
