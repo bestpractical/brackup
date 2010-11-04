@@ -1,3 +1,7 @@
+
+  - add --conflict [skip|overwrite|update] options to brackup-restore (Gavin
+    Carr)
+
 1.10 (2010-10-31)
 
   - permit 0 as a filename.  https://rt.cpan.org/Ticket/Display.html?id=62004
