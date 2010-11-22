@@ -45,6 +45,12 @@ sub has_chunk {
     die "ERROR: has_chunk not implemented in sub-class $self";
 }
 
+# returns a chunk reference on success, or returns false or dies otherwise
+sub load_chunk {
+    my ($self, $dig) = @_;
+    die "ERROR: load_chunk not implemented in sub-class $self";
+}
+
 # returns true on success, or returns false or dies otherwise.
 sub store_chunk {
     my ($self, $chunk) = @_;
@@ -233,7 +239,9 @@ B<Sftp> -- see L<Brackup::Target::Sftp> for configuration details
 
 B<Amazon> -- see L<Brackup::Target::Amazon> for configuration details
 
-B<Amazon> -- see L<Brackup::Target::CloudFiles> for configuration details
+B<CloudFiles> -- see L<Brackup::Target::CloudFiles> for configuration details
+
+B<Riak> -- see L<Brackup::Target::Riak> for configuration details
 
 =item B<keep_backups>
 
