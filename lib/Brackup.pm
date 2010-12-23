@@ -1,7 +1,7 @@
 package Brackup;
 use strict;
 use vars qw($VERSION);
-$VERSION = '1.09';
+$VERSION = '1.10';
 
 use Brackup::Config;
 use Brackup::ConfigSection;

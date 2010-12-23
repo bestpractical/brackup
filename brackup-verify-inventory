@@ -114,7 +114,8 @@ my $inv_db = $target->inventory_db
 print "Fetching list of chunks from target\n" if $opt_verbose;
 my %chunks = map { $_ => 1 } $target->chunks;
 
-my ($count, $ok, $bad) = (0, 0, 0);
+print "Checking inventory entries\n" if $opt_verbose;
+my ($count, $ok, $bad, $skip) = (0, 0, 0, 0);
 my $total = $inv_db->count / 100;
 my %ok = ();
 my $deleting = $opt_delete ? ' - deleting from inventory' : '';
@@ -143,7 +144,8 @@ while (my ($key, $value) = $inv_db->each) {
         next;
     }
 
-    if (my $chunk_size = eval { $target->size($path) }) {
+    my $chunk_size = eval { $target->size($path) };
+    if (defined $chunk_size) {
         if ($chunk_size == $size) {
             $ok{$dig} = 1;
             $ok++;
@@ -155,9 +157,14 @@ while (my ($key, $value) = $inv_db->each) {
             $bad++;
         }
     }
+    else {
+        warn "Warning: no size returned for chunk $path, skipping\n";
+        $skip++;
+    }
 }
 
-print "Checked $count inventory entries, $ok good, $bad bad.\n" unless $opt_quiet;
+print "Checked $count inventory entries, $ok good, $bad bad, $skip skipped.\n" 
+    unless $opt_quiet;
 exit $bad ? 1 : 0;
 
 # vim:sw=4

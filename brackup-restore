@@ -42,6 +42,17 @@ Restore just the directory named (and all its contents).
 
 Restore just the file named.
 
+=item --conflict=skip|overwrite|update|identical
+
+How to handle files that already exist (with size > zero bytes). 
+'skip' means don't restore, keeping the existing file. 'overwrite'
+means always restore, replacing the existing file. 'update' means
+overwrite iff the file we are restoring is newer than the existing
+one.  'identical' means skip files iff their hash matches the expected
+value.
+
+Default is to abort the restore if a file already exists.
+
 =item --config=NAME
 
 Brackup config file to use instead of default.
@@ -79,7 +90,7 @@ use lib "$Bin/lib";
 use Brackup;
 use Brackup::Util qw(tempfile);
 
-my ($opt_verbose, $meta_file, $opt_help, $restore_dir, $opt_all, $prefix, $config_file);
+my ($opt_verbose, $meta_file, $opt_help, $restore_dir, $opt_all, $prefix, $conflict, $config_file);
 
 usage() unless
     GetOptions(
@@ -89,6 +100,7 @@ usage() unless
                'help'      => \$opt_help,
                'all'       => \$opt_all,
                'just=s'    => \$prefix,
+               'conflict=s'=> \$conflict,
                'config=s'  => \$config_file,
                );
 
@@ -103,6 +115,8 @@ usage("Backup metafile '$meta_file' doesn't exist")  unless -e $meta_file;
 usage("Backup metafile '$meta_file' isn't a file")   unless -f $meta_file;
 usage("Restore directory '$restore_dir' isn't a directory") if -e $restore_dir && ! -d $restore_dir;
 usage("Config file '$config_file' doesn't exist")    if $config_file && ! -f $config_file;
+usage("Invalid --conflict option '$conflict' (not skip|overwrite|update)")
+    if $conflict && $conflict !~ m/^(skip|overwrite|update)$/;
 $prefix ||= "";  # with -all, "", which means everything
 
 if (! -e $restore_dir) {
@@ -117,6 +131,7 @@ my $restore = Brackup::Restore->new(
                                     prefix => $prefix,
                                     file   => $meta_file,
                                     config => $config,
+                                    conflict => $conflict,
                                     verbose => $opt_verbose,
                                     );
 

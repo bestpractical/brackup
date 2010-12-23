@@ -175,7 +175,10 @@ sub list_targets {
 }
 
 sub load_target {
-    my ($self, $name) = @_;
+    my ($self, $name, %opts) = @_;
+    my $testmode = delete $opts{testmode};
+    croak("Unknown options: " . join(', ', keys %opts)) if %opts;
+
     my $confsec = $self->{"TARGET:$name"} or
         die "Unknown target '$name'\n";
 
@@ -190,7 +193,8 @@ sub load_target {
     my $target = $class->new($confsec);
 
     if (my @unk_config = $confsec->unused_config) {
-        die "Unknown config params in TARGET:$name: @unk_config\n";
+        die "Unknown config params in TARGET:$name: @unk_config\n"
+             unless $testmode;
     }
     return $target;
 }
