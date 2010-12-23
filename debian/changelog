@@ -1,3 +1,11 @@
+libbrackup-perl (1.10-01-1) karmic; urgency=low
+
+  * Updates from upstream
+
+  * Add --conflict=identical to skip identical-content files
+
+ -- Alex Vandiver <alexmv@bestpractical.com>  Wed, 23 Dec 2010 16:50:17 -0400
+
 libbrackup-perl (1.09-01-12) karmic; urgency=low
 
   * Capture and restore user/group ownership on files
