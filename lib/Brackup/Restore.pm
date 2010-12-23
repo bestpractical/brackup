@@ -6,8 +6,10 @@ use Digest::SHA1;
 use POSIX qw(mkfifo);
 use Fcntl qw(O_RDONLY O_CREAT O_WRONLY O_TRUNC);
 use String::Escape qw(unprintable);
+use File::stat;
 use Brackup::DecryptedFile;
 use Brackup::Decrypt;
+use Brackup::Util qw(io_sha1);
 
 sub new {
     my ($class, %opts) = @_;
@@ -17,6 +19,7 @@ sub new {
     $self->{prefix}  = delete $opts{prefix};  # directory/file filename prefix, or "" for all
     $self->{filename}= delete $opts{file};    # filename we're restoring from
     $self->{config}  = delete $opts{config};  # brackup config (if available)
+    $self->{conflict} = delete $opts{conflict};
     $self->{verbose} = delete $opts{verbose};
 
     $self->{_local_uid_map} = {};  # remote/metafile uid -> local uid
@@ -244,12 +247,38 @@ sub _exec_statinfo_updates {
     }
 }
 
+# Check if $self->{conflict} setting allows us to skip this item
+sub _can_skip {
+    my ($self, $full, $it) = @_;
+
+    if ($self->{conflict} eq 'skip') {
+        return 1;
+    } elsif ($self->{conflict} eq 'overwrite') {
+        return 0;
+    } elsif ($self->{conflict} eq 'update') {
+        my $st = stat $full
+            or die "stat on '$full' failed: $!\n";
+        return 1 if defined $it->{Mtime} && $st->mtime >= $it->{Mtime};
+    } elsif ($self->{conflict} eq 'identical') {
+        return $self->_digest_matches($it, $full);
+    }
+    else {
+        die "Invalid '--conflict' setting '$self->{conflict}'\n";
+    }
+    return 0;
+}
+
 sub _restore_directory {
     my ($self, $full, $it) = @_;
 
+    # Apply conflict checks to directories
+    if (-d $full && $self->{conflict}) {
+        return if $self->_can_skip($full, $it);
+    }
+
     unless (-d $full) {
         mkdir $full or    # FIXME: permissions on directory
-            die "Failed to make directory: $full ($it->{Path})";
+            die "Failed to make directory: $full ($it->{Path}): $!";
     }
 
     $self->_update_statinfo($full, $it);
@@ -259,18 +288,30 @@ sub _restore_link {
     my ($self, $full, $it) = @_;
 
     if (-e $full) {
-        # TODO: add --conflict={skip,overwrite} option, defaulting to nothing: which dies
-        die "Link $full ($it->{Path}) already exists.  Aborting.";
+        die "Link $full ($it->{Path}) already exists.  Aborting." 
+            unless $self->{conflict};
+        return if $self->_can_skip($full, $it);
+
+        # Can't overwrite symlinks, so unlink explicitly if we're not skipping
+        unlink $full 
+            or die "Failed to unlink link $full: $!";
     }
-    symlink $it->{Link}, $full
-        or die "Failed to link";
+
+    symlink $it->{Link}, $full or
+        die "Failed to link $full: $!";
 }
 
 sub _restore_fifo {
     my ($self, $full, $it) = @_;
 
     if (-e $full) {
-        die "Named pipe/fifo $full ($it->{Path}) already exists.  Aborting.";
+        die "Named pipe/fifo $full ($it->{Path}) already exists.  Aborting."
+            unless $self->{conflict};
+        return if $self->_can_skip($full, $it);
+
+        # Can't overwrite fifos, so unlink explicitly if we're not skipping
+        unlink $full 
+            or die "Failed to unlink fifo $full: $!";
     }
 
     mkfifo($full, $it->{Mode}) or die "mkfifo failed: $!";
@@ -278,12 +319,26 @@ sub _restore_fifo {
     $self->_update_statinfo($full, $it);
 }
 
+sub _digest_matches {
+    my ($self, $it, $path) = @_;
+    my $good_dig = $it->{Digest};
+    return undef unless $good_dig and $good_dig =~ /^sha1:(.+)/;
+    $good_dig = $1;
+    sysopen(my $readfh, $path, O_RDONLY) or die "Failed to open '$path' for verification: $!";
+    binmode($readfh);
+    my $sha1 = Digest::SHA1->new;
+    $sha1->addfile($readfh);
+    my $actual_dig = $sha1->hexdigest;
+    return $actual_dig eq $good_dig;
+}
+
 sub _restore_file {
     my ($self, $full, $it) = @_;
 
     if (-e $full && -s $full) {
-        # TODO: add --conflict={skip,overwrite} option, defaulting to nothing: which dies
-        die "File $full ($it->{Path}) already exists.  Aborting.";
+        die "File $full ($it->{Path}) already exists.  Aborting."
+            unless $self->{conflict};
+        return if $self->_can_skip($full, $it);
     }
 
     sysopen(my $fh, $full, O_CREAT|O_WRONLY|O_TRUNC) or die "Failed to open '$full' for writing: $!";
@@ -333,22 +388,9 @@ sub _restore_file {
     }
     close($fh) or die "Close failed";
 
-    if (my $good_dig = $it->{Digest}) {
-        die "not capable of verifying digests of from anything but sha1"
-            unless $good_dig =~ /^sha1:(.+)/;
-        $good_dig = $1;
-
-        sysopen(my $readfh, $full, O_RDONLY) or die "Failed to reopen '$full' for verification: $!";
-        binmode($readfh);
-        my $sha1 = Digest::SHA1->new;
-        $sha1->addfile($readfh);
-        my $actual_dig = $sha1->hexdigest;
-
-        # TODO: support --onerror={continue,prompt}, etc, but for now we just die
-        unless ($actual_dig eq $good_dig || $full =~ m!\.brackup-digest\.db\b!) {
-            die "Digest of restored file ($full) doesn't match";
-        }
-    }
+    my $digest_ok = $self->_digest_matches($it, $full);
+    die "Digest of restored file ($full) doesn't match"
+        if defined $digest_ok and not $digest_ok and $full !~ m!\.brackup-digest\.db\b!;
 
     $self->_update_statinfo($full, $it);
 }

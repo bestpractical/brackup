@@ -23,7 +23,7 @@ sub new {
     croak("Unknown options: " . join(', ', keys %opts)) if %opts;
 
     die "No root object provided." unless $self->{root} && $self->{root}->isa("Brackup::Root");
-    die "No path provided." unless $self->{path};
+    die "No path provided." unless defined($self->{path});  # note: permit "0"
     $self->{path} =~ s!^\./!!;
 
     return $self;
@@ -222,8 +222,10 @@ sub as_rfc822 {
     }
     $set->("Chunks", join("\n ", map { $_->to_meta } @$schunk_list));
 
+    # Record mtime even for links (which we can't restore), for restore --conflict update
+    $set->("Mtime", $st->mtime);
+
     unless ($self->is_link) {
-        $set->("Mtime", $st->mtime);
         $set->("Atime", $st->atime) unless $self->root->noatime;
 
         my $mode = $self->mode;
