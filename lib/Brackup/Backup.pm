@@ -278,8 +278,10 @@ sub backup {
     }
     $end_file->();
     $comp_chunk->finalize if $comp_chunk;
-    $self->flush_files($metafh);
     $stats->timestamp('Chunk Storage');
+    $self->debug('Flushing files to metafile');
+    $self->flush_files($metafh);
+    $stats->timestamp('Metafile Final Flush');
     $stats->set('Number of Files Uploaded:', $n_files_up);
     $stats->set('Total File Size Uploaded:', sprintf('%0.01f MB', $n_kb_up / 1024));
 
