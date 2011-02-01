@@ -324,6 +324,8 @@ sub _restore_file {
             unless $self->{conflict};
         return if $self->_can_skip($full, $it);
     }
+    # If $full exists, unlink (in case readonly when overwriting would fail)
+    unlink $full if -e $full;
 
     sysopen(my $fh, $full, O_CREAT|O_WRONLY|O_TRUNC) or die "Failed to open '$full' for writing: $!";
     binmode($fh);
