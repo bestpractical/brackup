@@ -244,7 +244,7 @@ sub dir_structure {
 
     find({
         no_chdir => 1,
-        preprocess => sub { return sort @_ },
+        preprocess => sub { return sort grep ! /^\.svn$/, @_ },
         wanted => sub {
             my $path = $_;
             $files{$path} = file_meta($path);
