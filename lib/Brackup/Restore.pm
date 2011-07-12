@@ -294,7 +294,8 @@ sub _restore_link {
             or die "Failed to unlink link $full: $!";
     }
 
-    symlink $it->{Link}, $full or
+    my $link = unprintable($it->{Link});
+    symlink $link, $full or
         die "Failed to link $full: $!";
 }
 

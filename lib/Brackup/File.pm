@@ -217,7 +217,7 @@ sub as_rfc822 {
     } else {
         $set->("Type", $type);
         if ($self->is_link) {
-            $set->("Link", $self->link_target);
+            $set->("Link", printable($self->link_target));
         }
     }
     $set->("Chunks", join("\n ", map { $_->to_meta } @$schunk_list));
