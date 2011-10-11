@@ -106,7 +106,7 @@ if ($opt_help) {
     Pod::Usage::pod2usage( -verbose => 1, -exitval => 0 );
     exit 0;
 }
-$opt_verbose = 1 if $opt_interactive && ! $opt_verbose;
+$opt_verbose ||= 1 if $opt_interactive || $opt_dryrun;
 
 my $config = eval { Brackup::Config->load($config_file) } or
     usage($@);
