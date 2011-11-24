@@ -12,7 +12,7 @@ WriteMakefile( NAME            => 'Brackup',
                    'DBI'          => 0,
                    'String::Escape' => 0,
                    'IO::InnerFile'  => 0,
-                   'File::Temp'     => 0.17,   # require a seekable File::Temp
+                   'File::Temp'     => 0.19,        # require a seekable File::Temp + EXLOCK support
                    'ExtUtils::Manifest' => 1.52,    # For spaces in files in MANIFEST
                    'Test::More'         => 0.88,    # For done_testing
                },

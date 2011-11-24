@@ -34,12 +34,17 @@ sub _get_temp_directory {
 }
 
 sub tempfile {
-    my (@ret) = File::Temp::tempfile(DIR => _get_temp_directory());
+    my (@ret) = File::Temp::tempfile(DIR => _get_temp_directory(),
+                                     EXLOCK => 0,
+                                    );
     return wantarray ? @ret : $ret[0];
 }
 
 sub tempfile_obj {
-    return File::Temp->new(DIR => _get_temp_directory(), CLEANUP => $ENV{BRACKUP_TEST_NOCLEANUP} ? 0 : 1);
+    return File::Temp->new(DIR => _get_temp_directory(),
+                           EXLOCK => 0,
+                           UNLINK => $ENV{BRACKUP_TEST_NOCLEANUP} ? 0 : 1,
+                          );
 }
 
 # Utils::tempdir() accepts the same options as File::Temp::tempdir.
