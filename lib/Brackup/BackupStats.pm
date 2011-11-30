@@ -43,7 +43,7 @@ sub print {
 
     my $start_time = $self->{start_time};
     my $end_time = time;
-    my $fmt = "${hash}%-37s %s\n";
+    my $fmt = "${hash}%-39s %s\n";
     printf $fh $fmt, 'Start Time:',       scalar localtime $start_time;
     printf $fh $fmt, 'End Time:',         scalar localtime $end_time;
 
