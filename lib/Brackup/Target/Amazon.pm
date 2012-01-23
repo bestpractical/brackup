@@ -31,16 +31,16 @@ sub new {
     $self->_common_s3_init;
 
     my $s3      = $self->{s3};
-    my $buckets = $s3->buckets or die "Failed to get bucket list";
+    my $buckets = $s3->buckets or die "Failed to get bucket list: " . $self->{s3}->errstr . "\n";
 
     unless (grep { $_->{bucket} eq $self->{chunk_bucket} } @{ $buckets->{buckets} }) {
         $s3->add_bucket({ bucket => $self->{chunk_bucket}, location_constraint => $self->{location} })
-            or die "Chunk bucket creation failed\n";
+            or die "Chunk bucket creation failed: " . $self->{s3}->errstr . "\n";
     }
 
     unless (grep { $_->{bucket} eq $self->{backup_bucket} } @{ $buckets->{buckets} }) {
         $s3->add_bucket({ bucket => $self->{backup_bucket}, location_constraint => $self->{location} })
-            or die "Backup bucket creation failed\n";
+            or die "Backup bucket creation failed: " . $self->{s3}->errstr . "\n";
     }
 
     return $self;
