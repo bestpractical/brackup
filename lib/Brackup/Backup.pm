@@ -20,6 +20,7 @@ sub new {
     $self->{inventory} = delete $opts{inventory};  # bool
     $self->{savefiles} = delete $opts{savefiles};  # bool
     $self->{zenityprogress} = delete $opts{zenityprogress};  # bool
+    $self->{arguments} = delete $opts{arguments};
 
     $self->{modecounts} = {}; # type -> mode(octal) -> count
     $self->{idcounts}   = {}; # type -> uid/gid -> count
@@ -42,7 +43,7 @@ sub backup {
     my $root   = $self->{root};
     my $target = $self->{target};
 
-    my $stats  = Brackup::BackupStats->new;
+    my $stats  = Brackup::BackupStats->new(arguments => $self->{arguments});
 
     my @gpg_rcpts = $self->{root}->gpg_rcpts;
 
@@ -71,8 +72,8 @@ sub backup {
 
     $self->debug("Number of files: $n_files\n");
     $stats->timestamp('File Discovery');
-    $stats->set('Number of Files' => $n_files);
-    $stats->set('Total File Size' => sprintf('%0.01f MB', $n_kb / 1024));
+    $stats->set(files_checked_count => $n_files, label => 'Number of Files');
+    $stats->set(files_checked_size  => sprintf('%0.01f', $n_kb / 1024), label => 'Total File Size', units => 'MB');
 
     # calc needed chunks
     if ($ENV{CALC_NEEDED}) {
@@ -282,8 +283,8 @@ sub backup {
     $self->debug('Flushing files to metafile');
     $self->flush_files($metafh);
     $stats->timestamp('Metafile Final Flush');
-    $stats->set('Number of Files Uploaded:', $n_files_up);
-    $stats->set('Total File Size Uploaded:', sprintf('%0.01f MB', $n_kb_up / 1024));
+    $stats->set(files_uploaded_count => $n_files_up, label => 'Number of Files Uploaded');
+    $stats->set(files_uploaded_size  => sprintf('%0.01f', $n_kb_up / 1024), label => 'Total File Size Uploaded', units => 'MB');
 
     unless ($self->{dryrun}) {
         close $metafh or die "Close on metafile '$backup_file' failed: $!";

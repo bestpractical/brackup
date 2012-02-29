@@ -36,6 +36,7 @@ sub do_backup {
     my $with_targetsec  = delete $opts{'with_targetsec'} || sub {};
     my $with_root       = delete $opts{'with_root'}    || sub {};
     my $target          = delete $opts{'with_target'};
+    my $arguments       = delete $opts{'with_arguments'};
     die if %opts;
 
     my $initer = shift;
@@ -75,6 +76,7 @@ sub do_backup {
                                       root      => $root,
                                       target    => $target,
                                       savefiles => 1,
+                                      arguments => $arguments,
                                       );
     ok($backup, "have a backup object");
 
@@ -82,7 +84,8 @@ sub do_backup {
     ok(-e $meta_filename, "metafile exists");
     push @to_unlink, $meta_filename;
 
-    ok(eval { $backup->backup($meta_filename) }, "backup succeeded");
+    my $stats;
+    ok($stats = eval { $backup->backup($meta_filename) }, "backup succeeded");
     if ($@) {
         warn "Died running backup: $@\n";
     }
@@ -90,7 +93,7 @@ sub do_backup {
 
     check_inventory_db($target, [$root->gpg_args]);
 
-    return wantarray ? ($meta_filename, $backup, $target) : $meta_filename;
+    return wantarray ? ($meta_filename, $backup, $target, $stats) : $meta_filename;
 }
 
 sub check_inventory_db {

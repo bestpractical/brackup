@@ -70,6 +70,7 @@ t/04-gc-sftp.t
 t/05-filename-escaping.t
 t/06-config-inheritance.t
 t/07-restore-conflict.t
+t/08-stats.t
 t/data-2/000-dup1.txt
 t/data-2/000-dup2.txt
 t/data-2/README
