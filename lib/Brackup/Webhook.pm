@@ -4,7 +4,7 @@ use warnings;
 use Carp qw(croak);
 use JSON;
 use LWP::UserAgent;
-use Data::Dump;
+use Sys::Hostname;
 
 sub new {
     my ($class, %opts) = @_;
@@ -24,9 +24,10 @@ sub new {
     croak("Unknown options: " . join(', ', keys %opts)) if %opts;
 
     $self->{data} = {
-        root    => $self->{root}->name,
-        target  => $self->{target}->name,
-        stats   => $self->{stats}->as_hash,
+        hostname    => hostname,
+        root        => $self->{root}->name,
+        target      => $self->{target}->name,
+        stats       => $self->{stats}->as_hash,
     };
 
     return $self;
@@ -48,6 +49,7 @@ sub fire {
 }
 
 sub dump {
+    require Data::Dump;
     Data::Dump::dump $_[0]->{data};
 }
 
