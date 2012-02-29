@@ -206,12 +206,12 @@ my $backup = Brackup::Backup->new(
                                   dryrun         => $opt_dryrun,
                                   verbose        => $opt_verbose,
                                   zenityprogress => $opt_zenityprogress,
+                                  arguments      => $arguments,
                                   );
 
 if (my $stats = eval { $backup->backup($backup_file) }) {
     warn "Backup complete.\n" if $opt_verbose;
 
-    $stats->set('Run Arguments:' => $arguments);
     if ($opt_dryrun || $opt_verbose) {
         $stats->print;
     }
