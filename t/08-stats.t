@@ -20,6 +20,7 @@ my ($backup_file, $brackup, $target, $stats) = do_backup(
                                 $csec->add("path",          $root_dir);
                                 $csec->add("chunk_size",    "2k");
                                 $csec->add("digestdb_file", $digdb_fn);
+                                $csec->add("ignore",        "\.svn");
                                 $csec->add("webhook_url",   $ENV{BRACKUP_TEST_WEBHOOK_URL})
                                     if $ENV{BRACKUP_TEST_WEBHOOK_URL};
                             },
