@@ -39,7 +39,8 @@ sub stat {
     my $self = shift;
     return $self->{stat} if $self->{stat};
     my $path = $self->fullpath;
-    my $stat = File::stat::lstat($path);
+    my $stat = File::stat::lstat($path)
+      or croak "Failed to lstat '$path': $!";
     return $self->{stat} = $stat;
 }
 
