@@ -1,11 +1,9 @@
 package Brackup::BackupStats;
 use strict;
-use Carp;
 
 sub new {
     my $class = shift;
     my %opts = @_;
-    my $arguments = delete $opts{arguments};
     croak("Unknown options: " . join(', ', keys %opts)) if %opts;
 
     my $self = {
@@ -13,7 +11,6 @@ sub new {
         ts          => Brackup::BackupStats::OrderedData->new,
         data        => Brackup::BackupStats::LabelledData->new,
     };
-    $self->{arguments} = $arguments if $arguments;
 
     if (eval { require GTop }) {
         $self->{gtop} = GTop->new;
@@ -27,8 +24,6 @@ sub new {
 sub print {
     my $self = shift;
     my $stats_file = shift;
-
-    $self->end;
   
     # Reset iterators
     $self->reset;
@@ -47,7 +42,7 @@ sub print {
     print $fh "${hash}\n";
 
     my $start_time = $self->{start_time};
-    my $end_time   = $self->{end_time};
+    my $end_time = time;
     my $fmt = "${hash}%-39s %s\n";
     printf $fh $fmt, 'Start Time:',       scalar localtime $start_time;
     printf $fh $fmt, 'End Time:',         scalar localtime $end_time;
@@ -132,12 +127,6 @@ sub as_hash {
     return $hash;
 }
 
-# Record end time
-sub end {
-    my $self = shift;
-    $self->{end_time} ||= time;
-}
-
 # Check/record max memory usage
 sub check_maxmem {
     my $self = shift;
@@ -161,7 +150,6 @@ sub timestamp {
     $self->check_maxmem;
 }
 
-# Record a datum
 sub set {
     my ($self, $key, $value, %arg) = @_;
     $self->{data}->set($key, $value, %arg);

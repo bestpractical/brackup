@@ -55,6 +55,7 @@ lib/Brackup/Target/Sftp.pm
 lib/Brackup/TargetBackupStatInfo.pm
 lib/Brackup/Test.pm
 lib/Brackup/Util.pm
+lib/Brackup/Webhook.pm
 t/00-use.t
 t/01-backup-filesystem.t
 t/01-backup-ftp.t

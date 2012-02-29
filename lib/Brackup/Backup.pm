@@ -6,6 +6,7 @@ use Brackup::ChunkIterator;
 use Brackup::CompositeChunk;
 use Brackup::GPGProcManager;
 use Brackup::GPGProcess;
+use Brackup::Webhook;
 use File::Basename;
 use File::Temp qw(tempfile);
 
@@ -20,7 +21,6 @@ sub new {
     $self->{inventory} = delete $opts{inventory};  # bool
     $self->{savefiles} = delete $opts{savefiles};  # bool
     $self->{zenityprogress} = delete $opts{zenityprogress};  # bool
-    $self->{arguments} = delete $opts{arguments};
 
     $self->{modecounts} = {}; # type -> mode(octal) -> count
     $self->{idcounts}   = {}; # type -> uid/gid -> count
@@ -43,7 +43,7 @@ sub backup {
     my $root   = $self->{root};
     my $target = $self->{target};
 
-    my $stats  = Brackup::BackupStats->new(arguments => $self->{arguments});
+    my $stats  = Brackup::BackupStats->new;
 
     my @gpg_rcpts = $self->{root}->gpg_rcpts;
 
@@ -329,6 +329,10 @@ sub backup {
         }
     }
     $self->report_progress(100, "Backup complete.");
+
+    if (my $url = $root->webhook_url) {
+        Brackup::Webhook->new(url => $url, root => $root, target => $target, stats => $stats)->fire;
+    }
 
     return $stats;
 }

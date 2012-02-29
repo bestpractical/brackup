@@ -36,12 +36,16 @@ sub new {
     $self->{digcache_file} = $self->{digcache}->backing_file;  # may be empty, if digest cache doesn't use a file
 
     $self->{noatime}    = $conf->value('noatime');
+
+    $self->{webhook_url} = $conf->value('webhook_url');
+
     return $self;
 }
 
 sub merge_files_under  { $_[0]{merge_files_under}  }
 sub max_composite_size { $_[0]{max_composite_size} }
 sub smart_mp3_chunking { $_[0]{smart_mp3_chunking} }
+sub webhook_url        { $_[0]{webhook_url} }
 
 sub gpg_path {
     my $self = shift;
@@ -254,6 +258,7 @@ In your ~/.brackup.conf file:
   ignore = ^\.ee/(minis|icons|previews)/
   ignore = ^build/
   noatime = 1
+  webhook_url = http://example.com/hook
 
 =head1 CONFIG OPTIONS
 
@@ -324,5 +329,12 @@ The example above could also be written:
   ignore = ^\.ee/(minis|icons|previews)/
   ignore = ^build/
   noatime = 1
+
+=item B<webhook_url>
+
+URL to be POSTed to upon backup completion. The post payload is a json
+object with 'root', 'target', and 'stats' members, with the first two
+being the source and target name strings, and 'stats' being a serialised
+L<Brackup::BackupStats> object.
 
 =back
