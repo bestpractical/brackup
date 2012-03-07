@@ -5,6 +5,7 @@ use Carp qw(croak);
 use JSON;
 use LWP::UserAgent;
 use Sys::Hostname;
+use POSIX qw(strftime);
 
 sub new {
     my ($class, %opts) = @_;
@@ -25,6 +26,7 @@ sub new {
 
     $self->{data} = {
         hostname    => hostname,
+        date        => strftime('%Y%m%d', localtime),
         root        => $self->{root}->name,
         target      => $self->{target}->name,
         stats       => $self->{stats}->as_hash,
