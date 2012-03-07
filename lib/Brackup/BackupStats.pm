@@ -98,35 +98,43 @@ sub as_hash {
     $self->reset;
 
     my $hash = {
-        start_time      => $self->{start_time},
-        end_time        => $self->{end_time},
-        run_times       => [],
-        memory_usage    => [],
-        files           => {},
+        start_time          => $self->{start_time},
+        end_time            => $self->{end_time},
+        run_time_seconds    => [],
+        memory_usage_bytes  => [],
+        files               => {},
     };
     $hash->{arguments} = $self->{arguments} if $self->{arguments};
 
     # Run time stats (seconds)
     my $ts = $self->{start_time};
     while (my ($key, $next_ts, $label) = $self->{ts}->next) {
-        push @{$hash->{run_times}}, $key => ($next_ts - $ts) . ' s';
+        push @{$hash->{run_time_seconds}}, $key => ($next_ts - $ts);
         $ts = $next_ts;
     }
-    push @{$hash->{run_times}}, "total" => ($self->{end_time} - $self->{start_time}) . ' s';
+    push @{$hash->{run_time_seconds}}, "total" => ($self->{end_time} - $self->{start_time});
 
-    # Memory stats(MB)
+    # Memory stats (bytes)
     if (my $gtop_data = $self->{gtop_data}) {
         while (my ($key, $size, $label) = $gtop_data->next) {
-            $size /= (1024 * 1024);
-            push @{$hash->{memory_usage}}, "post_$key" => sprintf('%.01f MB', $size);
+            push @{$hash->{memory_usage_bytes}}, "post_$key" => $size;
         }
     }
-    push @{$hash->{memory_usage}}, max => sprintf('%.01f MB', $self->{gtop_max} / (1024 * 1024));
+    push @{$hash->{memory_usage_bytes}}, max => $self->{gtop_max};
 
     # File stats (hashref, key => value)
     for (keys %{$self->{data}}) {
-      $hash->{files}->{$_}  = $self->{data}->{$_}->{value};
-      $hash->{files}->{$_} .= " $self->{data}->{$_}->{units}" if $self->{data}->{$_}->{units};
+        if ($self->{data}->{$_}->{units}) {
+            if ($self->{data}->{$_}->{units} eq 'MB') {
+                $hash->{files}->{$_ . '_bytes'} = $self->{data}->{$_}->{value} * 1024 * 1024;
+            }
+            else {
+                warn "Unhandled units: $self->{data}->{$_}->{units}";
+            }
+        }
+        else {
+            $hash->{files}->{$_}  = $self->{data}->{$_}->{value};
+        }
     }
 
     return $hash;

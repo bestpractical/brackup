@@ -29,10 +29,10 @@ my ($backup_file, $brackup, $target, $stats) = do_backup(
 
 my $stats_hash = $stats->as_hash;
 is($stats_hash->{arguments}, $arguments, '$stats_hash arguments set correctly');
-for (qw(start_time end_time run_times memory_usage files)) {
+for (qw(start_time end_time run_time_seconds memory_usage_bytes files)) {
   ok($stats_hash->{$_}, "\$stats_hash $_ set");
 }
-for (qw(run_times memory_usage)) {
+for (qw(run_time_seconds memory_usage_bytes)) {
   ok(@{$stats_hash->{$_}}, "\$stats_hash $_ count non-zero: " . scalar(@{$stats_hash->{$_}}));
 }
 is($stats_hash->{files}->{files_checked_count}, 17, 'stats files_checked_count ok: ' . $stats_hash->{files}->{files_checked_count});
