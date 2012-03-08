@@ -7,6 +7,7 @@ use POSIX qw(mkfifo);
 use Fcntl qw(O_RDONLY O_CREAT O_WRONLY O_TRUNC);
 use String::Escape qw(unprintable);
 use File::stat;
+use Try::Tiny;
 use Brackup::DecryptedFile;
 use Brackup::Decrypt;
 
@@ -14,12 +15,13 @@ sub new {
     my ($class, %opts) = @_;
     my $self = bless {}, $class;
 
-    $self->{to}      = delete $opts{to};      # directory we're restoring to
-    $self->{prefix}  = delete $opts{prefix};  # directory/file filename prefix, or "" for all
-    $self->{filename}= delete $opts{file};    # filename we're restoring from
-    $self->{config}  = delete $opts{config};  # brackup config (if available)
-    $self->{conflict} = delete $opts{conflict};
-    $self->{verbose} = delete $opts{verbose};
+    $self->{to}       = delete $opts{to};      # directory we're restoring to
+    $self->{prefix}   = delete $opts{prefix};  # directory/file filename prefix, or "" for all
+    $self->{filename} = delete $opts{file};    # filename we're restoring from
+    $self->{config}   = delete $opts{config};  # brackup config (if available)
+    $self->{onerror}  = delete $opts{onerror}  || 'abort';
+    $self->{conflict} = delete $opts{conflict} || 'abort';
+    $self->{verbose}  = delete $opts{verbose};
 
     $self->{_local_uid_map} = {};  # remote/metafile uid -> local uid
     $self->{_local_gid_map} = {};  # remote/metafile gid -> local gid
@@ -98,6 +100,7 @@ sub restore {
     }
     @files = sort { $a->{fst_dig} cmp $b->{fst_dig} } @files;
 
+    my @errors;
     my $restore_count = 0;
     for my $it (@dirs, @files, @rest) {
         my $type = $it->{Type} || "f";
@@ -131,12 +134,18 @@ sub restore {
         $it->{GID}  ||= $meta->{DefaultGID};
 
         warn " * restoring $path_escaped to $full_escaped\n" if $self->{verbose};
-        $self->_restore_link     ($full, $it) if $type eq "l";
-        $self->_restore_directory($full, $it) if $type eq "d";
-        $self->_restore_fifo     ($full, $it) if $type eq "p";
-        $self->_restore_file     ($full, $it) if $type eq "f";
+        try {
+            $self->_restore_link     ($full, $it) if $type eq "l";
+            $self->_restore_directory($full, $it) if $type eq "d";
+            $self->_restore_fifo     ($full, $it) if $type eq "p";
+            $self->_restore_file     ($full, $it) if $type eq "f";
 
-        $self->_chown($full, $it, $type, $meta) if $it->{UID} || $it->{GID};
+            $self->_chown($full, $it, $type, $meta) if $it->{UID} || $it->{GID};
+
+        } catch {
+            die $_ unless $self->{onerror} eq 'continue';
+            push @errors, $_;
+        };
     }
 
     # clear chunk cached by _restore_file
@@ -147,6 +156,7 @@ sub restore {
         warn " * fixing stat info\n" if $self->{verbose};
         $self->_exec_statinfo_updates;
         warn " * done\n" if $self->{verbose};
+        die \@errors if @errors;
         return 1;
     } else {
         die "nothing found matching '$self->{prefix}'.\n" if $self->{prefix};
@@ -269,7 +279,7 @@ sub _restore_directory {
     my ($self, $full, $it) = @_;
 
     # Apply conflict checks to directories
-    if (-d $full && $self->{conflict}) {
+    if (-d $full && $self->{conflict} ne 'abort') {
         return if $self->_can_skip($full, $it);
     }
 
@@ -286,7 +296,7 @@ sub _restore_link {
 
     if (-e $full) {
         die "Link $full ($it->{Path}) already exists.  Aborting." 
-            unless $self->{conflict};
+            if $self->{conflict} eq 'abort';
         return if $self->_can_skip($full, $it);
 
         # Can't overwrite symlinks, so unlink explicitly if we're not skipping
@@ -304,7 +314,7 @@ sub _restore_fifo {
 
     if (-e $full) {
         die "Named pipe/fifo $full ($it->{Path}) already exists.  Aborting."
-            unless $self->{conflict};
+            if $self->{conflict} eq 'abort';
         return if $self->_can_skip($full, $it);
 
         # Can't overwrite fifos, so unlink explicitly if we're not skipping
@@ -322,7 +332,7 @@ sub _restore_file {
 
     if (-e $full && -s $full) {
         die "File $full ($it->{Path}) already exists.  Aborting."
-            unless $self->{conflict};
+            if $self->{conflict} eq 'abort';
         return if $self->_can_skip($full, $it);
     }
     # If $full exists, unlink (in case readonly when overwriting would fail)
@@ -386,9 +396,8 @@ sub _restore_file {
         $sha1->addfile($readfh);
         my $actual_dig = $sha1->hexdigest;
 
-        # TODO: support --onerror={continue,prompt}, etc, but for now we just die
         unless ($actual_dig eq $good_dig || $full =~ m!\.brackup-digest\.db\b!) {
-            die "Digest of restored file ($full) doesn't match";
+            die "Digest of restored file ($full) doesn't match:\n  Got:      $actual_dig\n  Expected: $good_dig\n";
         }
     }
 

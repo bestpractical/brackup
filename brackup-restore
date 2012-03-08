@@ -1,8 +1,6 @@
 #!/usr/bin/perl
 
-# TODO: skip-if-exists (and ignore zero byte files)
-# TODO: continue-on-errors
-# Error doing restore: File restore/.brackup-digest.db (.brackup-digest.db) already exists.  Aborting. at /raid/bradfitz/proj/brackup/trunk/lib/Brackup/Restore.pm line 157, <$fh> line 20.
+# TODO: onerror=prompt?
 
 =head1 NAME
 
@@ -42,14 +40,22 @@ Restore just the directory named (and all its contents).
 
 Restore just the file named.
 
-=item --conflict=skip|overwrite|update
+=item --onerror=abort|continue
+
+How to handle restore errors. 'abort' reports and stops as soon as an
+error is detected. 'continue' continues with the restore, collecting all
+errors and reporting them at the end of the restore.
+
+Default: abort.
+
+=item --conflict=abort|skip|overwrite|update
 
 How to handle files that already exist (with size > zero bytes). 
 'skip' means don't restore, keeping the existing file. 'overwrite'
 means always restore, replacing the existing file. 'update' means
 overwrite iff the file we are restoring is newer than the existing one.
 
-Default is to abort the restore if a file already exists.
+Default: abort.
 
 =item --config=NAME
 
@@ -81,6 +87,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 use File::Path;
+use Try::Tiny;
 
 use FindBin qw($Bin);
 use lib "$Bin/lib";
@@ -88,18 +95,21 @@ use lib "$Bin/lib";
 use Brackup;
 use Brackup::Util qw(tempfile);
 
-my ($opt_verbose, $meta_file, $opt_help, $restore_dir, $opt_all, $prefix, $conflict, $config_file);
+my ($opt_verbose, $meta_file, $opt_help, $restore_dir, $opt_all, $prefix, $config_file);
+my $onerror  = 'abort';
+my $conflict = 'abort';
 
 usage() unless
     GetOptions(
-               'from=s'    => \$meta_file,
-               'to=s'      => \$restore_dir,
-               'verbose'   => \$opt_verbose,
-               'help'      => \$opt_help,
-               'all'       => \$opt_all,
-               'just=s'    => \$prefix,
-               'conflict=s'=> \$conflict,
-               'config=s'  => \$config_file,
+               'from=s'             => \$meta_file,
+               'to=s'               => \$restore_dir,
+               'verbose'            => \$opt_verbose,
+               'help'               => \$opt_help,
+               'all'                => \$opt_all,
+               'just=s'             => \$prefix,
+               'onerror|on-error=s' => \$onerror,
+               'conflict=s'         => \$conflict,
+               'config=s'           => \$config_file,
                );
 
 if ($opt_help) {
@@ -113,8 +123,10 @@ usage("Backup metafile '$meta_file' doesn't exist")  unless -e $meta_file;
 usage("Backup metafile '$meta_file' isn't a file")   unless -f $meta_file;
 usage("Restore directory '$restore_dir' isn't a directory") if -e $restore_dir && ! -d $restore_dir;
 usage("Config file '$config_file' doesn't exist")    if $config_file && ! -f $config_file;
-usage("Invalid --conflict option '$conflict' (not skip|overwrite|update)")
-    if $conflict && $conflict !~ m/^(skip|overwrite|update)$/;
+usage("Invalid --onerror option '$onerror' (not abort|continue)")
+    if $onerror !~ m/^(abort|continue)$/;
+usage("Invalid --conflict option '$conflict' (not abort|skip|overwrite|update)")
+    if $conflict !~ m/^(abort|skip|overwrite|update)$/;
 $prefix ||= "";  # with -all, "", which means everything
 
 if (! -e $restore_dir) {
@@ -125,22 +137,30 @@ $config_file ||= Brackup::Config->default_config_file_name;
 my $config = Brackup::Config->load($config_file) if -f $config_file;
 
 my $restore = Brackup::Restore->new(
-                                    to     => $restore_dir,
-                                    prefix => $prefix,
-                                    file   => $meta_file,
-                                    config => $config,
-                                    conflict => $conflict,
-                                    verbose => $opt_verbose,
+                                    to          => $restore_dir,
+                                    prefix      => $prefix,
+                                    file        => $meta_file,
+                                    config      => $config,
+                                    onerror     => $onerror,
+                                    conflict    => $conflict,
+                                    verbose     => $opt_verbose,
                                     );
 
-if (eval { $restore->restore }){
+try {
+    $restore->restore;
     warn "Restore complete.\n" if $opt_verbose;
     exit 0;
-} else {
-    chomp $@;
-    warn "Error doing restore: $@\n";
+} catch {
+    if (ref $_ and ref $_ eq 'ARRAY') {
+        warn "Restore complete.\n" if $opt_verbose;
+        warn "\n*** Errors encountered doing restore ***\n" . join('', @$_) . "\n";
+    }
+    else {
+        chomp $_;
+        warn "Error doing restore: $_\n";
+    }
     exit 1;
-}
+};
 
 
 sub usage {
