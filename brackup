@@ -121,7 +121,7 @@ usage() unless
     GetOptions(
                'from=s'    => \$src_name,
                'to=s'      => \$target_name,
-               'verbose'   => \$opt_verbose,
+               'verbose+'  => \$opt_verbose,
                'zenity-progress' => \$opt_zenityprogress,
                'output=s'  => \$backup_file,
                'save-stats:s' => \$stats_file,
@@ -218,6 +218,7 @@ if (my $stats = eval { $backup->backup($backup_file) }) {
     if ($stats_file) {
         $stats->print($stats_file);
     }
+    warn "Stats complete.\n" if $opt_verbose;
     exit 0;
 } else {
     warn "Error running backup: $@\n";

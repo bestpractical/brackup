@@ -219,6 +219,7 @@ sub backup {
 
             # encrypt it
             if (@gpg_rcpts) {
+                $self->debug_more("    * encrypting ... \n");
                 $schunk->set_encrypted_chunkref($gpg_pm->enc_chunkref_of($pchunk));
             }
 
@@ -241,12 +242,15 @@ sub backup {
                     $self->flush_files($metafh);
                 }
                 $comp_chunk ||= Brackup::CompositeChunk->new($root, $target);
+                $self->debug_more("    * appending to composite chunk ... \n");
                 $comp_chunk->append_little_chunk($schunk);
             } else {
                 # store it regularly, as its own chunk on the target
+                $self->debug_more("    * storing ... \n");
                 $target->store_chunk($schunk)
                     or die "Chunk storage failed.\n";
                 $target->add_to_inventory($pchunk => $schunk);
+                $self->debug_more("    * chunk stored\n");
             }
 
             # if only this worked... (LWP protocol handler seems to
@@ -469,6 +473,13 @@ sub debug {
     my $line = join("", @m);
     chomp $line;
     print $line, "\n";
+}
+
+sub debug_more {
+    my $self = shift;
+    return unless $self->{verbose} && $self->{verbose} >= 2;
+    $self->report_open_files;
+    $self->debug(@_);
 }
 
 sub report_progress {
