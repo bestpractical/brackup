@@ -9,6 +9,7 @@ brackup-mount
 brackup-restore
 brackup-target
 brackup-verify-inventory
+brackup-verify-chunks
 doc/data-structures.txt
 doc/databases.txt
 doc/design-decisions.txt

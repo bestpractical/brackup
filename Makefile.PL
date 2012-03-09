@@ -6,7 +6,9 @@ use ExtUtils::MakeMaker;
 WriteMakefile( NAME            => 'Brackup',
                VERSION_FROM    => 'lib/Brackup.pm',
                EXE_FILES       => [ 'brackup', 'brackup-restore', 'brackup-target', 
-                                    'brackup-mount', 'brackup-verify-inventory', ],
+                                    'brackup-mount', 'brackup-verify-inventory',
+                                    'brackup-verify-chunks',
+                                  ],
                PREREQ_PM       => {
                    'ExtUtils::Manifest' => 1.52,    # For spaces in files in MANIFEST
                    'DBD::SQLite'        => 0,
