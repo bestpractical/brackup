@@ -115,9 +115,9 @@ print "Fetching list of chunks from target\n" if $opt_verbose;
 my %chunks = map { $_ => 1 } $target->chunks;
 my $chunk_count = scalar keys %chunks;
 
-# Sanity check if in delete mode - abort if chunk mismatch > 10%
-die sprintf("Error: low target chunk count (%d chunks < 90% of %d inventory entries) - aborting\n",
-  $chunk_count, $inv_db->count)
+# Sanity check if in delete mode - abort if target chunk count < 90% of inventory
+die sprintf("Error: target has only %d chunks (%.1f%%) of expected %d chunks in inventory - aborting\n",
+  $chunk_count, $chunk_count * 100 / $inv_db->count, $inv_db->count)
     if $opt_delete && $chunk_count < 0.9 * $inv_db->count;
 
 print "Checking inventory entries\n" if $opt_verbose;
