@@ -124,9 +124,13 @@ sub prune {
     # select backups to delete
     my (%backups, @backups_to_delete) = ();
     foreach my $backup_name (map {$_->filename} $self->backups) {
-        $backup_name =~ /^(.+)-\d+$/;
-        $backups{$1} ||= [];
-        push @{ $backups{$1} }, $backup_name;
+        if ($backup_name =~ /^(.+)-\d+$/) {
+            $backups{$1} ||= [];
+            push @{ $backups{$1} }, $backup_name;
+        }
+        else {
+            warn "Unexpected backup name format: '$backup_name' does not match /-d+\$/";
+        }
     }
     foreach my $source (keys %backups) {
         next if $opt{source} && $source ne $opt{source};
