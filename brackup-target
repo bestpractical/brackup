@@ -25,7 +25,7 @@ Destination to write files to.  Defaults to current working directory.
 
 Be verbose with status.
 
-=item --dry-run
+=item --dry-run|-n
 
 Do not actually execute write operations.
 
@@ -87,14 +87,14 @@ my $opt_interactive;
 my $opt_source;
 usage() unless
     GetOptions(
-               'verbose+' => \$opt_verbose,
-               'dest=s'   => \$destdir,
-               'config=s' => \$config_file,
+               'verbose+'       => \$opt_verbose,
+               'dest=s'         => \$destdir,
+               'config=s'       => \$config_file,
                'keep-backups=i' => \$opt_keep_backups,
-               'dry-run'   => \$opt_dryrun,
-               'interactive' => \$opt_interactive,
-               'source=s' => \$opt_source,
-               'help'     => \$opt_help,
+               'dry-run|n'      => \$opt_dryrun,
+               'interactive'    => \$opt_interactive,
+               'source=s'       => \$opt_source,
+               'help'           => \$opt_help,
                );
 
 if ($destdir) {

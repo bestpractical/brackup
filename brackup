@@ -43,7 +43,7 @@ file. If =FILE is omitted, defaults to "source-target-YYYYMMDD.stats."
 
 Show status during backup.
 
-=item --dry-run
+=item --dry-run|-n
 
 Don't actually store any data on the target.
 
@@ -126,7 +126,7 @@ usage() unless
                'output=s'  => \$backup_file,
                'save-stats:s' => \$stats_file,
                'help'      => \$opt_help,
-               'dry-run'   => \$opt_dryrun,
+               'dry-run|n' => \$opt_dryrun,
                'du-stats'  => \$opt_du_stats,
                'config=s'  => \$config_file,
                'list-sources'   => \$opt_list_sources,
