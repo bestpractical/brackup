@@ -120,6 +120,8 @@ sub foreach_file {
                 # the backup meta files later, so let's skip it.
                 next if $self->{digcache_file} && $path eq $self->{digcache_file};
 
+                next if $path =~ m!(^|/)\.brackup-digest\.db(-journal)?$!;
+
                 # GC: seems to work fine as of at least gpg 1.4.5, so commenting out
                 # gpg seems to barf on files ending in whitespace, blowing
                 # stuff up, so we just skip them instead...
@@ -134,7 +136,6 @@ sub foreach_file {
                 foreach my $pattern (@{ $self->{ignore} }) {
                     next DENTRY if $path =~ /$pattern/;
                     next DENTRY if $is_dir && "$path/" =~ /$pattern/;
-                    next DENTRY if $path =~ m!(^|/)\.brackup-digest\.db(-journal)?$!;
                 }
 
                 $statcache{$path} = $statobj;
