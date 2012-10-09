@@ -10,8 +10,7 @@ Run B<brackup> to initialize your config file.  You'll see:
 
    $ brackup
    Error:
-     Your config file needs tweaking.
-     I put a commented-out template at: /home/bradfitz/.brackup.conf
+     No config file found. I've created a commented-out template at: $HOME/.brackup.conf
 
    brackup --from=[source_name] --to=[target_name] [--output=<backup_metafile.brackup>]
    brackup --help
@@ -24,6 +23,10 @@ Tweak as appropriate.
 
 For details on what's tweakable, see L<Brackup::Root> (a "source"), or
 L<Brackup::Target> (a destination).
+
+If you're running on a unix machine and are setting up system-wide
+backups, you might want to move your config file to
+C</etc/brackup/brackup.conf>.
 
 =head2 Do a backup
 
