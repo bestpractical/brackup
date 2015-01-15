@@ -19,6 +19,8 @@ WriteMakefile( NAME            => 'Brackup',
                    'String::Escape'     => 0,
                    'Try::Tiny'          => 0,
                    'Test::More'         => 0.88,    # For done_testing
+                   'JSON'               => 0,
+                   'LWP::UserAgent'     => 0,
                },
                ABSTRACT_FROM => 'lib/Brackup.pm',
                AUTHOR     => 'Brad Fitzpatrick <brad@danga.com>',
