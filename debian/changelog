@@ -1,3 +1,9 @@
+libbrackup-perl (1.10-01-4) trusty; urgency=low
+
+  * Add missing dependencies
+
+ -- Alex Vandiver <alexmv@bestpractical.com>  Mon, 15 Jan 2015 17:21:17 -0500
+
 libbrackup-perl (1.10-01-3) trusty; urgency=low
 
   * Updates from upstream
