@@ -29,7 +29,14 @@ This must match a [TARGET:NAME] config section in your ~/.brackup.conf.
 
 =item --delete
 
-Optional. Delete orphaned entries found in the inventory.
+Optional. Delete orphaned entries found in the inventory. If orphaned chunks
+comprise more than 10% of the inventory, brackup-verify-inventory will abort
+with an error. Use L<--force> to force deletion in this case.
+
+=item --force|-f
+
+Force deletion of orphaned entries when they comprise more than 10% of the
+inventory.
 
 =item --verbose|-v
 
@@ -70,7 +77,7 @@ use Brackup;
 
 $|=1;
 
-my ($opt_help, $opt_quiet, $opt_verbose, $opt_delete);
+my ($opt_help, $opt_quiet, $opt_verbose, $opt_delete, $opt_force);
 
 my $config_file = Brackup::Config->default_config_file_name;
 
@@ -80,13 +87,14 @@ sub usage {
         $why =~ s/\s+$//;
         $why = "Error: $why\n\n";
     }
-    die "${why}brackup-verify-inventory [-q|-v] [--delete] <target_name>\nbrackup-verify-inventory --help\n";
+    die "${why}brackup-verify-inventory [-q|-v] [--delete] [--force] <target_name>\nbrackup-verify-inventory --help\n";
 }
 
 usage() unless
     GetOptions(
                'config=s'       => \$config_file,
                'delete'         => \$opt_delete,
+               'force|f'        => \$opt_force,
                'quiet|q'        => \$opt_quiet,
                'verbose|v+'     => \$opt_verbose,
                'help|h|?'       => \$opt_help,
@@ -113,6 +121,19 @@ my $inv_db = $target->inventory_db
 
 print "Fetching list of chunks from target\n" if $opt_verbose;
 my %chunks = map { $_ => 1 } $target->chunks;
+my $chunk_count = scalar keys %chunks;
+
+# Sanity check if in delete mode - abort if target chunk count < 90% of inventory
+if ($opt_delete && $chunk_count < 0.9 * $inv_db->count) {
+    if (not $opt_force) {
+        die sprintf("Error: target has only %d chunks (%.1f%%) of expected %d chunks in inventory - aborting\n",
+            $chunk_count, $chunk_count * 100 / $inv_db->count, $inv_db->count);
+    }
+    else {
+        warn sprintf("Warning: target has only %d chunks (%.1f%%) of expected %d chunks in inventory - continuing with --force\n",
+            $chunk_count, $chunk_count * 100 / $inv_db->count, $inv_db->count);
+    }
+}
 
 print "Checking inventory entries\n" if $opt_verbose;
 my ($count, $ok, $bad, $skip) = (0, 0, 0, 0);

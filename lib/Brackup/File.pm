@@ -39,7 +39,8 @@ sub stat {
     my $self = shift;
     return $self->{stat} if $self->{stat};
     my $path = $self->fullpath;
-    my $stat = File::stat::lstat($path);
+    my $stat = File::stat::lstat($path)
+      or croak "Failed to lstat '$path': $!";
     return $self->{stat} = $stat;
 }
 
@@ -217,7 +218,7 @@ sub as_rfc822 {
     } else {
         $set->("Type", $type);
         if ($self->is_link) {
-            $set->("Link", $self->link_target);
+            $set->("Link", printable($self->link_target));
         }
     }
     $set->("Chunks", join("\n ", map { $_->to_meta } @$schunk_list));

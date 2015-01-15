@@ -45,6 +45,12 @@ sub has_chunk {
     die "ERROR: has_chunk not implemented in sub-class $self";
 }
 
+# returns a chunk reference on success, or returns false or dies otherwise
+sub load_chunk {
+    my ($self, $dig) = @_;
+    die "ERROR: load_chunk not implemented in sub-class $self";
+}
+
 # returns true on success, or returns false or dies otherwise.
 sub store_chunk {
     my ($self, $chunk) = @_;
@@ -110,17 +116,21 @@ sub delete_backup {
 sub prune {
     my ($self, %opt) = @_;
 
-    my $keep_backups = $opt{keep_backups} || $self->{keep_backups}
-        or die "ERROR: keep_backups option not set\n";
+    my $keep_backups = $opt{keep_backups} || $self->{keep_backups};
+    die "ERROR: keep_backups option not set\n" if ! defined $keep_backups;
     die "ERROR: keep_backups option must be at least 1\n"
-        unless $keep_backups > 0;
+        unless $keep_backups > 0 || $opt{source};
 
     # select backups to delete
     my (%backups, @backups_to_delete) = ();
     foreach my $backup_name (map {$_->filename} $self->backups) {
-        $backup_name =~ /^(.+)-\d+$/;
-        $backups{$1} ||= [];
-        push @{ $backups{$1} }, $backup_name;
+        if ($backup_name =~ /^(.+)-\d+$/) {
+            $backups{$1} ||= [];
+            push @{ $backups{$1} }, $backup_name;
+        }
+        else {
+            warn "Unexpected backup name format: '$backup_name' does not match /-d+\$/";
+        }
     }
     foreach my $source (keys %backups) {
         next if $opt{source} && $source ne $opt{source};
@@ -233,7 +243,9 @@ B<Sftp> -- see L<Brackup::Target::Sftp> for configuration details
 
 B<Amazon> -- see L<Brackup::Target::Amazon> for configuration details
 
-B<Amazon> -- see L<Brackup::Target::CloudFiles> for configuration details
+B<CloudFiles> -- see L<Brackup::Target::CloudFiles> for configuration details
+
+B<Riak> -- see L<Brackup::Target::Riak> for configuration details
 
 =item B<keep_backups>
 

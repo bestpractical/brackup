@@ -6,6 +6,7 @@ use Brackup::ChunkIterator;
 use Brackup::CompositeChunk;
 use Brackup::GPGProcManager;
 use Brackup::GPGProcess;
+use Brackup::Webhook;
 use File::Basename;
 use File::Temp qw(tempfile);
 
@@ -20,6 +21,7 @@ sub new {
     $self->{inventory} = delete $opts{inventory};  # bool
     $self->{savefiles} = delete $opts{savefiles};  # bool
     $self->{zenityprogress} = delete $opts{zenityprogress};  # bool
+    $self->{arguments} = delete $opts{arguments};
 
     $self->{modecounts} = {}; # type -> mode(octal) -> count
     $self->{idcounts}   = {}; # type -> uid/gid -> count
@@ -42,7 +44,7 @@ sub backup {
     my $root   = $self->{root};
     my $target = $self->{target};
 
-    my $stats  = Brackup::BackupStats->new;
+    my $stats  = Brackup::BackupStats->new(arguments => $self->{arguments});
 
     my @gpg_rcpts = $self->{root}->gpg_rcpts;
 
@@ -71,8 +73,8 @@ sub backup {
 
     $self->debug("Number of files: $n_files\n");
     $stats->timestamp('File Discovery');
-    $stats->set('Number of Files' => $n_files);
-    $stats->set('Total File Size' => sprintf('%0.01f MB', $n_kb / 1024));
+    $stats->set(files_checked_count => $n_files, label => 'Number of Files');
+    $stats->set(files_checked_size  => sprintf('%0.01f', $n_kb / 1024), label => 'Total File Size', units => 'MB');
 
     # calc needed chunks
     if ($ENV{CALC_NEEDED}) {
@@ -217,6 +219,7 @@ sub backup {
 
             # encrypt it
             if (@gpg_rcpts) {
+                $self->debug_more("    * encrypting ... \n");
                 $schunk->set_encrypted_chunkref($gpg_pm->enc_chunkref_of($pchunk));
             }
 
@@ -239,12 +242,15 @@ sub backup {
                     $self->flush_files($metafh);
                 }
                 $comp_chunk ||= Brackup::CompositeChunk->new($root, $target);
+                $self->debug_more("    * appending to composite chunk ... \n");
                 $comp_chunk->append_little_chunk($schunk);
             } else {
                 # store it regularly, as its own chunk on the target
+                $self->debug_more("    * storing ... \n");
                 $target->store_chunk($schunk)
                     or die "Chunk storage failed.\n";
                 $target->add_to_inventory($pchunk => $schunk);
+                $self->debug_more("    * chunk stored\n");
             }
 
             # if only this worked... (LWP protocol handler seems to
@@ -278,10 +284,12 @@ sub backup {
     }
     $end_file->();
     $comp_chunk->finalize if $comp_chunk;
-    $self->flush_files($metafh);
     $stats->timestamp('Chunk Storage');
-    $stats->set('Number of Files Uploaded:', $n_files_up);
-    $stats->set('Total File Size Uploaded:', sprintf('%0.01f MB', $n_kb_up / 1024));
+    $self->debug('Flushing files to metafile');
+    $self->flush_files($metafh);
+    $stats->timestamp('Metafile Final Flush');
+    $stats->set(files_uploaded_count => $n_files_up, label => 'Number of Files Uploaded');
+    $stats->set(files_uploaded_size  => sprintf('%0.01f', $n_kb_up / 1024), label => 'Total File Size Uploaded', units => 'MB');
 
     unless ($self->{dryrun}) {
         close $metafh or die "Close on metafile '$backup_file' failed: $!";
@@ -326,6 +334,10 @@ sub backup {
         }
     }
     $self->report_progress(100, "Backup complete.");
+
+    if (my $url = $root->webhook_url) {
+        Brackup::Webhook->new(url => $url, root => $root, target => $target, stats => $stats)->fire;
+    }
 
     return $stats;
 }
@@ -461,6 +473,13 @@ sub debug {
     my $line = join("", @m);
     chomp $line;
     print $line, "\n";
+}
+
+sub debug_more {
+    my $self = shift;
+    return unless $self->{verbose} && $self->{verbose} >= 2;
+    $self->report_open_files;
+    $self->debug(@_);
 }
 
 sub report_progress {

@@ -29,7 +29,7 @@ sub load {
 
     open (my $fh, $file) or do {
         if (write_dummy_config($file)) {
-            die "Your config file needs tweaking.  I put a commented-out template at: $file\n";
+            die "No config file found. I've created a commented-out template at: $file\n";
         } else {
             die "No config file at: $file\n";
         }
@@ -89,7 +89,12 @@ sub default_config_file_name {
 
     if ($ENV{HOME}) {
         # Default for UNIX folk
-        return "$ENV{HOME}/.brackup.conf";
+        my $home_brackup_conf = "$ENV{HOME}/.brackup.conf";
+        return $home_brackup_conf if -f $home_brackup_conf;
+        my $etc_brackup_conf = "/etc/brackup/brackup.conf";
+        return $etc_brackup_conf if -f $etc_brackup_conf;
+        # Fall back to ~/.brackup.conf if none exist
+        return $home_brackup_conf;
     }
     elsif ($ENV{APPDATA}) {
         # For Windows users

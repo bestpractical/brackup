@@ -9,6 +9,7 @@ brackup-mount
 brackup-restore
 brackup-target
 brackup-verify-inventory
+brackup-verify-chunks
 doc/data-structures.txt
 doc/databases.txt
 doc/design-decisions.txt
@@ -55,6 +56,7 @@ lib/Brackup/Target/Sftp.pm
 lib/Brackup/TargetBackupStatInfo.pm
 lib/Brackup/Test.pm
 lib/Brackup/Util.pm
+lib/Brackup/Webhook.pm
 t/00-use.t
 t/01-backup-filesystem.t
 t/01-backup-ftp.t
@@ -70,6 +72,7 @@ t/04-gc-sftp.t
 t/05-filename-escaping.t
 t/06-config-inheritance.t
 t/07-restore-conflict.t
+t/08-stats.t
 t/data-2/000-dup1.txt
 t/data-2/000-dup2.txt
 t/data-2/README
