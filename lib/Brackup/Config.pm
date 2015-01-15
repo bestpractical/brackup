@@ -67,7 +67,7 @@ sub load {
     # Config section inheritance
     my $loop_count = 0;
     while (keys %inherit) {
-      for my $child_sec (keys %inherit) {
+      for my $child_sec (sort keys %inherit) {
         # If this parent_sec itself inherits from something else, defer this time around
         next if exists $inherit{ $inherit{$child_sec} };
 
