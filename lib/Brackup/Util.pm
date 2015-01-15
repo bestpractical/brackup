@@ -10,7 +10,7 @@ use vars qw(@ISA @EXPORT_OK);
 use File::Path qw();
 use Carp;
 use Fcntl qw(O_RDONLY);
-use Digest::SHA1;
+use Digest::SHA;
 
 my $mainpid = $$;
 my $_temp_directory;
@@ -103,7 +103,7 @@ sub io_print_to_fh {
 sub io_sha1 {
     my ($io_handle) = @_;
     
-    my $sha1 = Digest::SHA1->new;
+    my $sha1 = Digest::SHA->new(1);
     my $buf;
     
     while($io_handle->read($buf, 4096)) {

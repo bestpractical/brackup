@@ -2,7 +2,7 @@ package Brackup::Restore;
 use strict;
 use warnings;
 use Carp qw(croak);
-use Digest::SHA1;
+use Digest::SHA;
 use POSIX qw(mkfifo);
 use Fcntl qw(O_RDONLY O_CREAT O_WRONLY O_TRUNC);
 use String::Escape qw(unprintable);
@@ -337,7 +337,7 @@ sub _digest_matches {
     $good_dig = $1;
     sysopen(my $readfh, $path, O_RDONLY) or die "Failed to open '$path' for verification: $!";
     binmode($readfh);
-    my $sha1 = Digest::SHA1->new;
+    my $sha1 = Digest::SHA->new(1);
     $sha1->addfile($readfh);
     my $actual_dig = $sha1->hexdigest;
     return $actual_dig eq $good_dig;

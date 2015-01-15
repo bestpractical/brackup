@@ -13,7 +13,7 @@ use File::Find;
 use File::stat ();
 use Cwd;
 use Brackup::DecryptedFile;
-use Digest::SHA1 qw/sha1_hex/;
+use Digest::SHA qw/sha1_hex/;
 
 use Brackup;
 
