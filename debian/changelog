@@ -1,3 +1,11 @@
+libbrackup-perl (1.10-01-3) trusty; urgency=low
+
+  * Updates from upstream
+
+  * Switch to Digest::SHA from Digest::SHA1
+
+ -- Alex Vandiver <alexmv@bestpractical.com>  Mon, 15 Jan 2015 17:07:17 -0500
+
 libbrackup-perl (1.10-01-2) karmic; urgency=low
 
   * Show error rationale on bucket operations
