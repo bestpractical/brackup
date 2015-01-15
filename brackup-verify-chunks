@@ -1,0 +1,156 @@
+#!/usr/bin/perl
+
+=head1 NAME
+
+brackup-verify-chunks - utility to check brackup chunk consistency on a
+brackup target, reporting on errors (and optionally deleting bad chunks)
+
+=head1 SYNOPSIS
+
+   brackup-verify-chunks [-v] [-q] [--delete] [--limit=<count>] [<brackup_dir>]
+
+=head2 ARGUMENTS
+
+=over 4
+
+=item <brackup_dir>
+
+Brackup directory root to check. Default: current directory.
+
+=back
+
+=head2 OPTIONS
+
+=over 4
+
+=item --delete
+
+Optional. Delete invalid chunks from the tree.
+
+=item --limit|-l=<count>
+
+Optional. Delete no more than this many chunks (i.e. a safety check).
+
+=item --verbose|-v
+
+Optional. Give more verbose output.
+
+=item --quiet|-q
+
+Optional. Give no output except for errors.
+
+=back
+
+=head1 SEE ALSO
+
+L<brackup>
+
+L<Brackup::Manual::Overview>
+
+=head1 AUTHOR
+
+Gavin Carr <gavin@openfusion.com.au>
+
+Copyright (c) 2008-2012 Gavin Carr.
+
+This module is free software. You may use, modify, and/or redistribute this
+software under the terms of same terms as perl itself.
+
+=cut
+
+use strict;
+use warnings;
+
+use Cwd;
+use Getopt::Long;
+use File::Find::Rule;
+use Digest::SHA qw(sha1_hex);
+
+$|=1;
+
+sub usage { die "brackup-verify-chunks [-q|-v] [--delete] [--limit=<count>] [<brackup_dir>]\nbrackup-verify-chunks --help\n" }
+
+my ($opt_help, $opt_quiet, $opt_verbose, $opt_delete, $opt_limit);
+usage() unless
+    GetOptions(
+               'delete'         => \$opt_delete,
+               'limit|l=i'      => \$opt_limit,
+               'verbose|v+'     => \$opt_verbose,
+               'quiet|q'        => \$opt_quiet,
+               'help|h|?'       => \$opt_help,
+               );
+
+if ($opt_help) {
+    eval "use Pod::Usage;";
+    Pod::Usage::pod2usage( -verbose => 1, -exitval => 0 );
+    exit 0;
+}
+usage() unless @ARGV < 2;
+
+my $dir = shift @ARGV || cwd;
+chdir $dir or die "Failed to chdir to $dir: $!\n";
+
+if ($opt_limit && ! $opt_delete) {
+    warn "--limit is only used with --delete - ignoring\n";
+}
+my $deleting = $opt_delete ? ' - deleting' : '';
+
+my $total = 0;
+if ($opt_verbose) {
+    print "Counting chunks ... ";
+    File::Find::Rule->name('*.chunk')->file()->exec(sub { $total++ })->in($dir);
+    print "found $total\n";
+    $total /= 100;
+}
+
+my ($count, $ok, $bad, $deleted) = (0, 0, 0, 0);
+File::Find::Rule->name('*.chunk')
+                ->file()
+                ->exec( sub {
+                     my ($shortname, $path, $fullname) = @_;
+                     $path =~ s!^$dir/?!!;
+
+                     open my $fh, '<', $fullname
+                       or die "Cannot open '$fullname': $!";
+                     my $text = '';
+                     {
+                         local $/;
+                         $text = <$fh>;
+                     }
+                     close $fh;
+
+                     my $calc_sum = sha1_hex($text);
+                     my ($name_sum) = $shortname =~ m/^sha1[:\.]([0-9A-F]+)/i;
+
+                     if ($opt_verbose && $opt_verbose == 1) {
+                        printf "Checked %s chunks (%0.1f%%)\n", $count, $count / $total
+                            if $count && $count % 100 == 0;
+                     }
+                     elsif ($opt_verbose && $opt_verbose >= 2) {
+                        printf "Checking %s, checksum %s (%0.01f%%)\n", 
+                            "$path/$shortname", $name_sum eq $calc_sum ? 'ok' : $calc_sum, 
+                            $count / $total;
+                     }
+
+                     if ($name_sum ne $calc_sum) {
+                         warn "Error: chunk $path/$shortname\n  has invalid checksum ${calc_sum}$deleting\n";
+                         $bad++;
+                         if ($opt_delete) {
+                             if ($opt_limit && $deleted >= $opt_limit) {
+                                 die "Delete limit exceeded - check terminating\n";
+                             }
+                             unlink $fullname;
+                             $deleted++;
+                         }
+                     } else {
+                         $ok++;
+                     }
+                     $count++;
+                  })
+                ->in($dir);
+
+print "Checked $count chunks: $ok good, $bad bad.\n" unless $opt_quiet;
+exit $bad ? 1 : 0;
+
+# vim:sw=4
+

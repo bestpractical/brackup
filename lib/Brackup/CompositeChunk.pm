@@ -13,7 +13,7 @@ use fields (
             'digest',  # memoized
             'finalized', # if we've written ourselves to the target yet
             'subchunks', # the chunks this composite chunk is made of
-            'sha1',         # Digest::SHA1 object
+            'sha1',         # Digest::SHA object
             '_chunk_fh',  # tempfile file containing the whole composite chunk
             );
 
@@ -25,7 +25,7 @@ sub new {
     $self->{max_size}  = $root->max_composite_size;
     $self->{target}    = $target;
     $self->{subchunks} = [];
-    $self->{sha1}      = Digest::SHA1->new;
+    $self->{sha1}      = Digest::SHA->new(1);
     $self->{_chunk_fh} = tempfile_obj();
     return $self;
 }

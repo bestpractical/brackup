@@ -44,6 +44,7 @@ sub enc_chunkref_of {
 
     $self->_proc_summary_dump;
     my ($cref, $enc_length) = $self->get_proc_chunkref($proc);
+    delete $self->{procs}{$pchunk};
     $self->_proc_summary_dump;
     $self->start_some_processes;
 
@@ -90,7 +91,6 @@ sub next_chunk_to_encrypt {
 sub get_proc_chunkref {
     my ($self, $proc) = @_;
     my $cref = $proc->chunkref;
-    delete $self->{procs}{$proc};
     $self->{uncollected_bytes} -= $proc->size_on_disk;
     $self->{uncollected_chunks}--;
     return ($cref, $proc->size_on_disk);

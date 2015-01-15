@@ -13,7 +13,7 @@ use File::Find;
 use File::stat ();
 use Cwd;
 use Brackup::DecryptedFile;
-use Digest::SHA1 qw/sha1_hex/;
+use Digest::SHA qw/sha1_hex/;
 
 use Brackup;
 
@@ -36,6 +36,7 @@ sub do_backup {
     my $with_targetsec  = delete $opts{'with_targetsec'} || sub {};
     my $with_root       = delete $opts{'with_root'}    || sub {};
     my $target          = delete $opts{'with_target'};
+    my $arguments       = delete $opts{'with_arguments'};
     die if %opts;
 
     my $initer = shift;
@@ -75,6 +76,7 @@ sub do_backup {
                                       root      => $root,
                                       target    => $target,
                                       savefiles => 1,
+                                      arguments => $arguments,
                                       );
     ok($backup, "have a backup object");
 
@@ -82,7 +84,8 @@ sub do_backup {
     ok(-e $meta_filename, "metafile exists");
     push @to_unlink, $meta_filename;
 
-    ok(eval { $backup->backup($meta_filename) }, "backup succeeded");
+    my $stats;
+    ok($stats = eval { $backup->backup($meta_filename) }, "backup succeeded");
     if ($@) {
         warn "Died running backup: $@\n";
     }
@@ -90,7 +93,7 @@ sub do_backup {
 
     check_inventory_db($target, [$root->gpg_args]);
 
-    return wantarray ? ($meta_filename, $backup, $target) : $meta_filename;
+    return wantarray ? ($meta_filename, $backup, $target, $stats) : $meta_filename;
 }
 
 sub check_inventory_db {
@@ -175,6 +178,7 @@ sub ok_dirs_match {
 
     if ($has_diff) {
         use Data::Dumper;
+        $Data::Dumper::Sortkeys = 1;
         my $pre_dump = Dumper($pre_ls);
         my $post_dump = Dumper($post_ls);
         my $diff = Text::Diff::diff(\$pre_dump, \$post_dump);
@@ -192,6 +196,7 @@ sub ok_files_match {
 
     if ($has_diff) {
         use Data::Dumper;
+        $Data::Dumper::Sortkeys = 1;
         my $pre_dump = Dumper($pre_ls);
         my $post_dump = Dumper($post_ls);
         my $diff = Text::Diff::diff(\$pre_dump, \$post_dump);
@@ -244,7 +249,7 @@ sub dir_structure {
 
     find({
         no_chdir => 1,
-        preprocess => sub { return sort @_ },
+        preprocess => sub { return sort grep ! /^\.svn$/, @_ },
         wanted => sub {
             my $path = $_;
             $files{$path} = file_meta($path);

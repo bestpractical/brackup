@@ -1,6 +1,11 @@
 
-  - add --conflict [skip|overwrite|update] options to brackup-restore (Gavin
-    Carr)
+  - gavincarr: add simple webhook support (Root webhook_url setting),
+    firing on backup success with BackupStats data
+
+  - gavincarr: add --onerror [abort|continue] option to brackup-restore
+
+  - gavincarr: add --conflict [abort|skip|overwrite|update] option to
+    brackup-restore
 
 1.10 (2010-10-31)
 

@@ -7,7 +7,7 @@ use warnings;
 use Carp qw(croak);
 use File::stat ();
 use Fcntl qw(S_ISREG S_ISDIR S_ISLNK S_ISFIFO O_RDONLY);
-use Digest::SHA1;
+use Digest::SHA;
 use String::Escape qw(printable);
 use Brackup::PositionedChunk;
 use Brackup::Chunker::Default;
@@ -39,7 +39,8 @@ sub stat {
     my $self = shift;
     return $self->{stat} if $self->{stat};
     my $path = $self->fullpath;
-    my $stat = File::stat::lstat($path);
+    my $stat = File::stat::lstat($path)
+      or croak "Failed to lstat '$path': $!";
     return $self->{stat} = $stat;
 }
 
@@ -151,7 +152,7 @@ sub _calc_full_digest {
     }
 
     unless ($dig) {
-        my $sha1 = Digest::SHA1->new;
+        my $sha1 = Digest::SHA->new(1);
         my $path = $self->fullpath;
         sysopen(my $fh, $path, O_RDONLY) or die "Failed to open $path: $!";
         binmode($fh);
@@ -217,7 +218,7 @@ sub as_rfc822 {
     } else {
         $set->("Type", $type);
         if ($self->is_link) {
-            $set->("Link", $self->link_target);
+            $set->("Link", printable($self->link_target));
         }
     }
     $set->("Chunks", join("\n ", map { $_->to_meta } @$schunk_list));
