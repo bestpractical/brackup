@@ -178,6 +178,7 @@ sub ok_dirs_match {
 
     if ($has_diff) {
         use Data::Dumper;
+        $Data::Dumper::Sortkeys = 1;
         my $pre_dump = Dumper($pre_ls);
         my $post_dump = Dumper($post_ls);
         my $diff = Text::Diff::diff(\$pre_dump, \$post_dump);
@@ -195,6 +196,7 @@ sub ok_files_match {
 
     if ($has_diff) {
         use Data::Dumper;
+        $Data::Dumper::Sortkeys = 1;
         my $pre_dump = Dumper($pre_ls);
         my $post_dump = Dumper($post_ls);
         my $diff = Text::Diff::diff(\$pre_dump, \$post_dump);
